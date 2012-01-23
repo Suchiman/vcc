@@ -89,7 +89,7 @@ namespace Microsoft.Research.Vcc
       | _ -> None
     doHandleConversions' false
     
-  let handlePurePtrEq (helper:Helper.Env) decls =
+  let handlePurePtrEq (helper:TransHelper.TransEnv) decls =
     let rec isNull = function
       | Expr.Cast (_, _, e) -> isNull e
       | Expr.Macro (_, "null", []) -> true
@@ -128,7 +128,7 @@ namespace Microsoft.Research.Vcc
     
   // ============================================================================================================      
   
-  let init (helper:Helper.Env) =
+  let init (helper:TransHelper.TransEnv) =
     let internalFunction = TransUtil.internalFunction helper
  
     // ============================================================================================================
@@ -1065,7 +1065,6 @@ namespace Microsoft.Research.Vcc
                 SizeOf = 0
                 IsNestedAnon = false
                 GenerateEquality = StructEqualityKind.NoEq
-                GenerateFieldOffsetAxioms = false
                 IsSpec = false
                 Parent = None
                 IsVolatile = false
@@ -1257,38 +1256,38 @@ namespace Microsoft.Research.Vcc
                 
     // ============================================================================================================
 
-    helper.AddTransformer ("norm-begin", Helper.DoNothing)
-    helper.AddTransformer ("norm-unfold-constants", Helper.Decl unfoldConstants)
-    helper.AddTransformer ("norm-varargs", Helper.Expr normalizeVarArgs)
-    helper.AddTransformer ("norm-multi-assignments", Helper.Expr normalizeMultiAssignments)
-    helper.AddTransformer ("norm-inline-boogie", Helper.Decl handleBoogieInlineDeclarations)
-    helper.AddTransformer ("norm-expand-contract-macros", Helper.Decl expandContractMacros)
-    helper.AddTransformer ("norm-initializers", Helper.Expr normalizeInitializers)
-    helper.AddTransformer ("norm-use", Helper.Expr normalizeUse)
-    helper.AddTransformer ("norm-fixed-array-parms", Helper.Decl removeFixedSizeArraysAsParameters)
-    helper.AddTransformer ("norm-inline-array-accesses", Helper.Expr normalizeInlineArrayAccesses)
-    helper.AddTransformer ("norm-out-params", Helper.Expr removeDerefFromOutParams)
-    helper.AddTransformer ("norm-comparison", Helper.Expr (doHandleComparison helper))
-    helper.AddTransformer ("norm-conversions", Helper.Expr doHandleConversions)   
-    helper.AddTransformer ("norm-ptr-comparison", Helper.Decl (handlePurePtrEq helper))
-    helper.AddTransformer ("inline-spec-macros", Helper.Decl inlineSpecMacros)
-    helper.AddTransformer ("norm-generic-errors", Helper.Decl reportGenericsErrors) 
-    helper.AddTransformer ("add-assume-to-assert", Helper.Expr handleLemmas)    
-    helper.AddTransformer ("fixup-old", Helper.ExprCtx fixupOld)    
-    helper.AddTransformer ("fixup-claims", Helper.Expr handleClaims)    
-    helper.AddTransformer ("add-explicit-return", Helper.Decl addExplicitReturn)
-    helper.AddTransformer ("norm-embed-stack-arrays", Helper.Decl embedStackArrays)
-    helper.AddTransformer ("norm-fix-as_array-refs", Helper.Expr fixAsArrayRefs)
-    helper.AddTransformer ("norm-atomic-ops", Helper.Expr normalizeAtomicOperations)
-    helper.AddTransformer ("norm-skinny-expose", Helper.Expr normalizeSkinnyExpose)
-    helper.AddTransformer ("norm-bv_lemma", Helper.Decl normalizeBvLemma)
-    helper.AddTransformer ("norm-misc", Helper.Decl miscNorm)
-    helper.AddTransformer ("norm-quant-triggers", Helper.Expr handleTriggerHints)
-    helper.AddTransformer ("deep-split-conjunctions", Helper.Expr deepSplitConjunctions)
-    helper.AddTransformer ("split-assertions", Helper.Expr splitConjunctionsInAssertions)
-    helper.AddTransformer ("norm-writes", Helper.Decl normalizeWrites)
-    helper.AddTransformer ("norm-atomic-inline", Helper.Decl inlineAtomics)
-    helper.AddTransformer ("norm-reintp", Helper.Expr normalizeReinterpretation)
-    helper.AddTransformer ("norm-on-unwrap", Helper.Decl normalizeOnUnwrap)
-    helper.AddTransformer ("norm-strings", Helper.Decl desugarStringLiterals)
-    helper.AddTransformer ("norm-end", Helper.DoNothing)
+    helper.AddTransformer ("norm-begin", TransHelper.DoNothing)
+    helper.AddTransformer ("norm-unfold-constants", TransHelper.Decl unfoldConstants)
+    helper.AddTransformer ("norm-varargs", TransHelper.Expr normalizeVarArgs)
+    helper.AddTransformer ("norm-multi-assignments", TransHelper.Expr normalizeMultiAssignments)
+    helper.AddTransformer ("norm-inline-boogie", TransHelper.Decl handleBoogieInlineDeclarations)
+    helper.AddTransformer ("norm-expand-contract-macros", TransHelper.Decl expandContractMacros)
+    helper.AddTransformer ("norm-initializers", TransHelper.Expr normalizeInitializers)
+    helper.AddTransformer ("norm-use", TransHelper.Expr normalizeUse)
+    helper.AddTransformer ("norm-fixed-array-parms", TransHelper.Decl removeFixedSizeArraysAsParameters)
+    helper.AddTransformer ("norm-inline-array-accesses", TransHelper.Expr normalizeInlineArrayAccesses)
+    helper.AddTransformer ("norm-out-params", TransHelper.Expr removeDerefFromOutParams)
+    helper.AddTransformer ("norm-comparison", TransHelper.Expr (doHandleComparison helper))
+    helper.AddTransformer ("norm-conversions", TransHelper.Expr doHandleConversions)   
+    helper.AddTransformer ("norm-ptr-comparison", TransHelper.Decl (handlePurePtrEq helper))
+    helper.AddTransformer ("inline-spec-macros", TransHelper.Decl inlineSpecMacros)
+    helper.AddTransformer ("norm-generic-errors", TransHelper.Decl reportGenericsErrors) 
+    helper.AddTransformer ("add-assume-to-assert", TransHelper.Expr handleLemmas)    
+    helper.AddTransformer ("fixup-old", TransHelper.ExprCtx fixupOld)    
+    helper.AddTransformer ("fixup-claims", TransHelper.Expr handleClaims)    
+    helper.AddTransformer ("add-explicit-return", TransHelper.Decl addExplicitReturn)
+    helper.AddTransformer ("norm-embed-stack-arrays", TransHelper.Decl embedStackArrays)
+    helper.AddTransformer ("norm-fix-as_array-refs", TransHelper.Expr fixAsArrayRefs)
+    helper.AddTransformer ("norm-atomic-ops", TransHelper.Expr normalizeAtomicOperations)
+    helper.AddTransformer ("norm-skinny-expose", TransHelper.Expr normalizeSkinnyExpose)
+    helper.AddTransformer ("norm-bv_lemma", TransHelper.Decl normalizeBvLemma)
+    helper.AddTransformer ("norm-misc", TransHelper.Decl miscNorm)
+    helper.AddTransformer ("norm-quant-triggers", TransHelper.Expr handleTriggerHints)
+    helper.AddTransformer ("deep-split-conjunctions", TransHelper.Expr deepSplitConjunctions)
+    helper.AddTransformer ("split-assertions", TransHelper.Expr splitConjunctionsInAssertions)
+    helper.AddTransformer ("norm-writes", TransHelper.Decl normalizeWrites)
+    helper.AddTransformer ("norm-atomic-inline", TransHelper.Decl inlineAtomics)
+    helper.AddTransformer ("norm-reintp", TransHelper.Expr normalizeReinterpretation)
+    helper.AddTransformer ("norm-on-unwrap", TransHelper.Decl normalizeOnUnwrap)
+    helper.AddTransformer ("norm-strings", TransHelper.Decl desugarStringLiterals)
+    helper.AddTransformer ("norm-end", TransHelper.DoNothing)

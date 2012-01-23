@@ -16,7 +16,7 @@ namespace Microsoft.Research.Vcc
  
  module Transformers =
  
-  let processPipeOptions (helper:Helper.Env) =
+  let processPipeOptions (helper:TransHelper.TransEnv) =
     let pipeErr msg =
       failwith ("/pipe: error: " + msg)
     let showTypes = ref false
@@ -36,14 +36,14 @@ namespace Microsoft.Research.Vcc
                 | "after" -> 1
                 | "around" -> 2
                 | _ -> pipeErr "dump expects 'before', 'after', or 'around'"
-            let add off = helper.AddTransformerAt ("dump", Helper.Decl (TransUtil.dumpDecls origw !showTypes), w.[2], off)
+            let add off = helper.AddTransformerAt ("dump", TransHelper.Decl (TransUtil.dumpDecls origw !showTypes), w.[2], off)
             if off = 2 then add 0; add 1
             else add off
           | "dump-all" ->
             if w.Length <> 1 then pipeErr "dump-all expects no parameters"
-            let mk (t:Helper.TransDesc) =
+            let mk (t:TransHelper.TransDesc) =
               let name = "after " + t.Name
-              let dump = Helper.TransDesc.Mk ("dump-all " + name, Helper.Decl (TransUtil.dumpDecls name !showTypes))
+              let dump = TransHelper.TransDesc.Mk ("dump-all " + name, TransHelper.Decl (TransUtil.dumpDecls name !showTypes))
               [t; dump]
             helper.InterleaveTransformers mk
           | "active" ->
@@ -67,13 +67,13 @@ namespace Microsoft.Research.Vcc
           | "isabelle" ->
             if w.Length < 2 || w.Length > 3 then pipeErr "isabelle expects one or two parameters"
             let prefix = if w.Length = 3 then w.[2] else ""
-            helper.AddTransformerAfter ("isabelle", Helper.Decl (Isabelle.dump helper (w.[1]) prefix), "begin")       
+            helper.AddTransformerAfter ("isabelle", TransHelper.Decl (Isabelle.dump helper (w.[1]) prefix), "begin")       
           | _ ->
             pipeErr ("unknown command " + w.[0])
             
             
   
-  let pruneDecls (helper:Helper.Env) (decls : list<Top>) : list<Top> =
+  let pruneDecls (helper:TransHelper.TransEnv) (decls : list<Top>) : list<Top> =
     let objToTop = objDict()
     let used = new HashSet<Top>()
     
@@ -154,9 +154,9 @@ namespace Microsoft.Research.Vcc
     List.filter used.Contains decls
 
 
-  let init (helper:Helper.Env) =
-    helper.AddTransformer ("begin", Helper.DoNothing)
-    helper.AddTransformer ("prune", Helper.Decl (pruneDecls helper))
+  let init (helper:TransHelper.TransEnv) =
+    helper.AddTransformer ("begin", TransHelper.DoNothing)
+    helper.AddTransformer ("prune", TransHelper.Decl (pruneDecls helper))
 
     NewSyntax.init helper
     Normalizer.init helper
@@ -170,10 +170,10 @@ namespace Microsoft.Research.Vcc
     Termination.init helper
     TransFinalize.init helper
     
-    helper.AddTransformer ("end", Helper.DoNothing)
+    helper.AddTransformer ("end", TransHelper.DoNothing)
     
     helper.AddTransformerAfter ("add-admissibility-checks", 
-      Helper.Decl (TransSideChecks.handleAdmissibilityChecks helper), "post-assignments")
+      TransHelper.Decl (TransSideChecks.handleAdmissibilityChecks helper), "post-assignments")
     helper.AddTransformerAfter ("add-reads-checks", 
-      Helper.Decl (TransSideChecks.addReadsChecks helper), "final-before-cleanup")    
+      TransHelper.Decl (TransSideChecks.addReadsChecks helper), "final-before-cleanup")    
       

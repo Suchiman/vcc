@@ -116,7 +116,7 @@ namespace Microsoft.Research.Vcc
       | x :: xs -> List.fold (fun acc e -> if e > acc then e else acc) x xs
       | [] -> 0
       
-    type TranslationState(helper:Helper.Env) =
+    type TranslationState(helper:TransHelper.TransEnv) =
       let quantVarTokens = new Dict<_,_>()
       let tokenConstantNames = new HashSet<_>()
       let tokenConstants = ref []

@@ -45,7 +45,7 @@ namespace Microsoft.Research.Vcc
     let td = match p.Type with Ptr (Type.Ref td) -> td | _ -> die()
     List.map stutteringCheck (AddChecks.invariantsOf td (fun _ -> true)) |> List.concat
 
-  let addDefaultAdmissibilityChecks (explicitAdm:Dict<_,_>) (helper:Helper.Env) =
+  let addDefaultAdmissibilityChecks (explicitAdm:Dict<_,_>) (helper:TransHelper.TransEnv) =
     let handleDecl = function
       | Top.TypeDecl td as decl when not (hasCustomAttr AttrNoAdmissibility td.CustomAttr) ->
         let rec isTrivialInvariant = function
@@ -114,7 +114,7 @@ namespace Microsoft.Research.Vcc
       | decl -> [decl]
     List.map handleDecl >> List.concat
  
-  let handleCustomAdmissibilityChecks (explicitAdm:Dict<_,_>) (helper:Helper.Env) decls =
+  let handleCustomAdmissibilityChecks (explicitAdm:Dict<_,_>) (helper:TransHelper.TransEnv) decls =
     let errCheck (f:Function) cb =
       match f.Parameters with
         | [{ Type = Ptr (Type.Ref td) } as p] ->
@@ -198,7 +198,7 @@ namespace Microsoft.Research.Vcc
   let usesRes (expr:Expr) =
     expr.HasSubexpr (function Result (_) -> true | _ -> false)          
       
-  let checkPurePostconditionForm (helper:Helper.Env) = function
+  let checkPurePostconditionForm (helper:TransHelper.TransEnv) = function
     | Top.FunctionDecl f when f.IsPure && f.Body.IsNone && not f.IsWellFounded ->
       let paths = gdict()
       
@@ -288,7 +288,7 @@ namespace Microsoft.Research.Vcc
     | _ -> ()
   
     
-  let addReadsChecks (helper:Helper.Env) decls =
+  let addReadsChecks (helper:TransHelper.TransEnv) decls =
     let calls = new Dict<_,_>()
     
     let readChecks = new Dict<_,_>()

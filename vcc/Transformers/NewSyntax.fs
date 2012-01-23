@@ -11,7 +11,7 @@ open Microsoft.Research.Vcc.TransUtil
 open Microsoft.Research.Vcc.Util
 open Microsoft.Research.Vcc.CAST
 
-let init (helper:Helper.Env) =
+let init (helper:TransHelper.TransEnv) =
 
   let normalizeNewSyntax =  
 
@@ -292,4 +292,4 @@ let init (helper:Helper.Env) =
 
 
   // ============================================================================================================  
-  helper.AddTransformer ("norm-new-syntax", Helper.Decl normalizeNewSyntax)
+  helper.AddTransformer ("norm-new-syntax", TransHelper.Decl normalizeNewSyntax)

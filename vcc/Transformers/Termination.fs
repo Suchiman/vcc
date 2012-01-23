@@ -22,7 +22,7 @@ module Termination =
       mutable LocVisited : bool
     }
 
-  let checkCallCycles (helper:Helper.Env, decls) = 
+  let checkCallCycles (helper:TransHelper.TransEnv, decls) = 
     let recurses = gdict()
     let rec recRoot (f:Function) =
       match recurses.TryGetValue f.UniqueId with
@@ -163,7 +163,7 @@ module Termination =
 
 
 
-  let setDecreasesLevel (helper:Helper.Env) decls =
+  let setDecreasesLevel (helper:TransHelper.TransEnv) decls =
     let aux = function
       | Top.FunctionDecl fn ->
         let checkDecr = function
@@ -189,7 +189,7 @@ module Termination =
       SeenAssertFalse : bool
     }
 
-  let turnIntoPureExpression (helper:Helper.Env) topType (expr:Expr) =
+  let turnIntoPureExpression (helper:TransHelper.TransEnv) topType (expr:Expr) =
     let rec aux (ctx:PureTrCtx) bindings (exprs:list<Expr>) =
       let expr, cont = exprs.Head, exprs.Tail
       //System.Console.WriteLine ("doing (cont={0}) e: {1}/{2}", cont.Length, expr, expr.GetType())
@@ -308,7 +308,7 @@ module Termination =
       } 
     aux ctx Map.empty [expr]
 
-  let insertTerminationChecks (helper:Helper.Env) decls =
+  let insertTerminationChecks (helper:TransHelper.TransEnv) decls =
     let check (currFn:Function) decrRefs (labels:Dict<_,_>) self e =
       let rec computeCheck tok = function
         | ((s:Expr) :: ss, (c:Expr) :: cc) ->
@@ -553,7 +553,7 @@ module Termination =
     List.iter genChecks decls
     decls
 
-  let terminationCheckingPlaceholder (helper:Helper.Env) decls =
+  let terminationCheckingPlaceholder (helper:TransHelper.TransEnv) decls =
     let rec skipChecks = function
       | Expr.Call _ as e ->
         Expr.Macro (e.Common, "skip_termination_check", [Expr.Pure (e.Common, e.ApplyToChildren skipChecks)])
@@ -620,9 +620,9 @@ module Termination =
     List.iter aux decls
     decls
 
-  let init (helper:Helper.Env) =
+  let init (helper:TransHelper.TransEnv) =
 
-    helper.AddTransformerAfter ("termination-compute-cycles", Helper.Decl (fun decls -> checkCallCycles (helper, decls); decls), "begin")
-    helper.AddTransformer ("termination-set-level", Helper.Decl (setDecreasesLevel helper))
-    helper.AddTransformer ("termination-add-checks", Helper.Decl (insertTerminationChecks helper))
-    helper.AddTransformerBefore ("termination-insert-placeholders", Helper.Decl (terminationCheckingPlaceholder helper), "desugar-lambdas")
+    helper.AddTransformerAfter ("termination-compute-cycles", TransHelper.Decl (fun decls -> checkCallCycles (helper, decls); decls), "begin")
+    helper.AddTransformer ("termination-set-level", TransHelper.Decl (setDecreasesLevel helper))
+    helper.AddTransformer ("termination-add-checks", TransHelper.Decl (insertTerminationChecks helper))
+    helper.AddTransformerBefore ("termination-insert-placeholders", TransHelper.Decl (terminationCheckingPlaceholder helper), "desugar-lambdas")

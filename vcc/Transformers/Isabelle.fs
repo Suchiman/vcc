@@ -133,7 +133,7 @@ namespace Microsoft.Research.Vcc
     w.WriteLine "end"
 
 
-  let dump (helper : Helper.Env) (thyname : string) (fprefix : string)
+  let dump (helper : TransHelper.TransEnv) (thyname : string) (fprefix : string)
       (decls : list<Top>) =
     let isIsabelleFunction (f : Function) = 
       hasCustomAttr "isabelle" f.CustomAttr

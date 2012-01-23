@@ -121,11 +121,9 @@
     <value>/aggressivepruning             Remove unreferenced items when verifying specific functions (Short form: /a)
 /boogie:&lt;boogie option list&gt;   Options to pass on to Boogie (Short form: /b)
 /bvd                           Generate counter examples for the Boogie Verification Debugger
-/checked[+|-]                  Generate arithmetic overflow checks (Short form: /c)
 /determinize                   Sort items to generate more deterministic Boogie files (Short form: /det)
 /dumpsource0                   Print source before syntax transformations (Short form: /d0)
 /dumpsource                    Print source after syntax transformations (Short form: /d)
-/eager                         Eager error reporting for contracts and specification functions (Short form: /e)
 /functions:&lt;function list&gt;     List of function roots to verify (Short form: /f)
 /Functions:&lt;function list&gt;     List of exact function names to verify (Short form: /F)
 /help                          Display this usage message (Short form: /?)
@@ -133,11 +131,9 @@
 /inspector                     Run Z3 Inspector to show progress of verification (Short form: /i)
 /ignoreincludes[:&lt;filename&gt;]   Only verify entities from the files on the command line, not included files (Short form: /ii)
                  With filename: verify only entities from that file
-/modifiedpreprocessorfile      Save C preprocessor output to &lt;currentFile&gt;.i.&lt;PID&gt;
 /nopreprocessor                Do not invoke the C preprocessor on the input files (Short form: /n)
 /noverification                Do not run the verification; stop after semantic analysis (Short form: /nv)
 /opsasfuncs                    Translate arithmetic operations into Boogie functions (Short form: /oaf)
-/omitrw                        Omit reads/writes clause checking
 /out:&lt;directory&gt;               Place generated files in &lt;directory&gt; (Short form: /o)
 /preprocessor:&lt;pp option list&gt; Options to pass on to the C preprocessor (Short form: /p)
 /pointersize:&lt;32|64&gt;           Size of the target platform's pointer type in bits (32,64), default is 64 (Short form: /ps)

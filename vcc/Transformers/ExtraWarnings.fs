@@ -16,7 +16,7 @@ namespace Microsoft.Research.Vcc
 
   // ============================================================================================================          
 
-  let init (helper:Helper.Env) =
+  let init (helper:TransHelper.TransEnv) =
 
     let warnForUncheckedGhostLoops decls = 
 
@@ -73,8 +73,8 @@ namespace Microsoft.Research.Vcc
 
   // ============================================================================================================          
 
-    helper.AddTransformer ("warn-begin", Helper.DoNothing)
-    helper.AddTransformer ("warn-two-state-inv-without-volatile", Helper.Decl warnForOldWithoutVolatiles)
-    helper.AddTransformer ("warn-unchecked-ghost-loops", Helper.Decl warnForUncheckedGhostLoops)
-    helper.AddTransformer ("warn-end", Helper.DoNothing)
+    helper.AddTransformer ("warn-begin", TransHelper.DoNothing)
+    helper.AddTransformer ("warn-two-state-inv-without-volatile", TransHelper.Decl warnForOldWithoutVolatiles)
+    helper.AddTransformer ("warn-unchecked-ghost-loops", TransHelper.Decl warnForUncheckedGhostLoops)
+    helper.AddTransformer ("warn-end", TransHelper.DoNothing)
 

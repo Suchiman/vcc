@@ -15,7 +15,7 @@ namespace Microsoft.Research.Vcc
  
  module TransFinalize =
 
-  let init (helper:Helper.Env) =
+  let init (helper:TransHelper.TransEnv) =
     // ============================================================================================================
 
     let addRangeAssumptions =
@@ -594,36 +594,36 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
-    helper.AddTransformer ("final-begin", Helper.DoNothing)
+    helper.AddTransformer ("final-begin", TransHelper.DoNothing)
     
-    helper.AddTransformer ("final-range-assumptions", Helper.Decl addRangeAssumptions)
-    helper.AddTransformer ("final-return-conversions", Helper.Decl addReturnConversions)
-    helper.AddTransformer ("final-free-stack", Helper.Decl handleStackAllocations)
-    helper.AddTransformer ("final-flatten-blocks", Helper.Expr flattenBlocks)
-    helper.AddTransformer ("final-stmt-expressions", Helper.Expr assignExpressionStmts)
-    helper.AddTransformer ("final-linearize", Helper.Decl (ToCoreC.linearizeDecls helper))
-    helper.AddTransformer ("final-keeps-warning", Helper.Decl (List.map theKeepsWarning))
-    helper.AddTransformer ("final-dynamic-owns", Helper.Decl errorForMissingDynamicOwns)
-    helper.AddTransformer ("final-error-old", Helper.Decl errorForOldInOneStateContext)
-    helper.AddTransformer ("final-error-pure", Helper.Decl errorForStateWriteInPureContext)
-    helper.AddTransformer ("final-error-when-claimed", Helper.Decl errorForWhenClaimedOutsideOfClaim)
-    helper.AddTransformer ("final-error-arithmetic-in-trigger", Helper.Expr checkTriggerOps)
-    helper.AddTransformer ("final-error-jump-from-atomic", Helper.Expr (errorWhenJumpingFromAtomic false))
-    helper.AddTransformer ("final-move-test-classifiers", Helper.Decl flattenTestClassifiers)
-    helper.AddTransformer ("final-before-cleanup", Helper.DoNothing)
+    helper.AddTransformer ("final-range-assumptions", TransHelper.Decl addRangeAssumptions)
+    helper.AddTransformer ("final-return-conversions", TransHelper.Decl addReturnConversions)
+    helper.AddTransformer ("final-free-stack", TransHelper.Decl handleStackAllocations)
+    helper.AddTransformer ("final-flatten-blocks", TransHelper.Expr flattenBlocks)
+    helper.AddTransformer ("final-stmt-expressions", TransHelper.Expr assignExpressionStmts)
+    helper.AddTransformer ("final-linearize", TransHelper.Decl (ToCoreC.linearizeDecls helper))
+    helper.AddTransformer ("final-keeps-warning", TransHelper.Decl (List.map theKeepsWarning))
+    helper.AddTransformer ("final-dynamic-owns", TransHelper.Decl errorForMissingDynamicOwns)
+    helper.AddTransformer ("final-error-old", TransHelper.Decl errorForOldInOneStateContext)
+    helper.AddTransformer ("final-error-pure", TransHelper.Decl errorForStateWriteInPureContext)
+    helper.AddTransformer ("final-error-when-claimed", TransHelper.Decl errorForWhenClaimedOutsideOfClaim)
+    helper.AddTransformer ("final-error-arithmetic-in-trigger", TransHelper.Expr checkTriggerOps)
+    helper.AddTransformer ("final-error-jump-from-atomic", TransHelper.Expr (errorWhenJumpingFromAtomic false))
+    helper.AddTransformer ("final-move-test-classifiers", TransHelper.Decl flattenTestClassifiers)
+    helper.AddTransformer ("final-before-cleanup", TransHelper.DoNothing)
     // reads check goes here
 
-    helper.AddTransformer ("datatype-wrap-ctors", Helper.ExprCtx (DataTypes.wrapDatatypeCtors helper))
+    helper.AddTransformer ("datatype-wrap-ctors", TransHelper.ExprCtx (DataTypes.wrapDatatypeCtors helper))
     
-    helper.AddTransformer ("final-fold-ITE", Helper.Expr foldIteBack)
-    helper.AddTransformer ("final-ITE-to-logical", Helper.Expr introduceAndOrs)
-    helper.AddTransformer ("final-bool-conversions", Helper.Decl addBoolConversions)
-    helper.AddTransformer ("final-bv-cleanup", Helper.Expr removeTrivialBitvectorOperations)
-    helper.AddTransformer ("final-error-inv-polarity", Helper.Decl errorForInvWithNegativPolarity)
-    helper.AddTransformer ("final-flatten-old", Helper.Expr flattenOld)
-    helper.AddTransformer ("final-insert-type-arguments", Helper.Expr insertTypeArgumentForWrapUnwrap)
-    helper.AddTransformer ("final-insert-state-arguments", Helper.Expr (ToCoreC.handlePureCalls helper))
-    helper.AddTransformer ("final-remove-trivial", Helper.Decl removeTrivial)
-    helper.AddTransformer ("final-sort-decls", Helper.Decl sortDecls)
+    helper.AddTransformer ("final-fold-ITE", TransHelper.Expr foldIteBack)
+    helper.AddTransformer ("final-ITE-to-logical", TransHelper.Expr introduceAndOrs)
+    helper.AddTransformer ("final-bool-conversions", TransHelper.Decl addBoolConversions)
+    helper.AddTransformer ("final-bv-cleanup", TransHelper.Expr removeTrivialBitvectorOperations)
+    helper.AddTransformer ("final-error-inv-polarity", TransHelper.Decl errorForInvWithNegativPolarity)
+    helper.AddTransformer ("final-flatten-old", TransHelper.Expr flattenOld)
+    helper.AddTransformer ("final-insert-type-arguments", TransHelper.Expr insertTypeArgumentForWrapUnwrap)
+    helper.AddTransformer ("final-insert-state-arguments", TransHelper.Expr (ToCoreC.handlePureCalls helper))
+    helper.AddTransformer ("final-remove-trivial", TransHelper.Decl removeTrivial)
+    helper.AddTransformer ("final-sort-decls", TransHelper.Decl sortDecls)
     
-    helper.AddTransformer ("final-end", Helper.DoNothing)
+    helper.AddTransformer ("final-end", TransHelper.DoNothing)

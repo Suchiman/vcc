@@ -62,6 +62,8 @@
         <File Name="Microsoft.Research.Vcc.Runtime.pdb" />
         <File Name="Microsoft.Research.Vcc.Translator.dll" />
         <File Name="Microsoft.Research.Vcc.Translator.pdb" />
+        <File Name="Microsoft.Research.Vcc.Transformers.dll" />
+        <File Name="Microsoft.Research.Vcc.Transformers.pdb" />
         <File Name="Microsoft.Cci.AstsProjectedAsCodeModel.dll" />
         <File Name="Microsoft.Cci.AstsProjectedAsCodeModel.pdb" />
         <File Name="Microsoft.Cci.CodeModel.dll" />

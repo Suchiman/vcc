@@ -120,7 +120,7 @@ namespace Microsoft.Research.Vcc
       ([B.Stmt.VarDecl ((oldState, tpState), None);
         B.Stmt.Assign (er oldState, bState)], er oldState)
 
-    let translate functionToVerify (helper:Helper.Env) (getPrelude:MyFunc<Microsoft.Boogie.Program>) decls =
+    let translate functionToVerify (helper:TransHelper.TransEnv) (getPrelude:MyFunc<Microsoft.Boogie.Program>) decls =
       let ctx = TranslationState(helper)
       let helper = ctx.Helper
       let bv = BvTranslator(ctx)
@@ -870,59 +870,53 @@ namespace Microsoft.Research.Vcc
 
 
       and writesCheck env tok prim (e:C.Expr) =
-        if helper.Options.OmitReadWriteChecking then
-          bTrue
-        else
-          match e.Type with
-            | C.ObjectT
-            | C.Ptr _ ->
-              inWritesOrIrrelevant false env (trExpr env e) (if prim then Some e else None)
-            | C.MathTypeRef "\\objset" ->
-              xassert (not prim)
-              writesMultiCheck false env tok (fun p -> bCall "$set_in" [p; trExpr env e])
-            | _ -> 
-              helper.Error (e.Token, 9617, "unsupported thing passed to writes check (" + e.ToString() + ")", None)
-              er "$bogus"
+        match e.Type with
+          | C.ObjectT
+          | C.Ptr _ ->
+            inWritesOrIrrelevant false env (trExpr env e) (if prim then Some e else None)
+          | C.MathTypeRef "\\objset" ->
+            xassert (not prim)
+            writesMultiCheck false env tok (fun p -> bCall "$set_in" [p; trExpr env e])
+          | _ -> 
+            helper.Error (e.Token, 9617, "unsupported thing passed to writes check (" + e.ToString() + ")", None)
+            er "$bogus"
 
       and writesInclusion env env'  = ()
 
       and readsCheck env isWf (p:C.Expr) =
-        if helper.Options.OmitReadWriteChecking then
-          [B.Stmt.MkAssert (afmte 8511 "disabled reads check of {0}" [p], bTrue)]
-        else
-          let cond id msg name (args : C.Expr list) = 
-            (afmte id msg args.Tail, trExpr env (C.Macro ({p.Common with Type = C.Bool }, name, args)))
-          let (codeTp, codeTh, suff) =
-            if isWf then (8501, 8502, " (in well-formedness check)")
-            else         (8511, 8512, "")
-          let th =
-            match p with
-              | C.Dot (_, p', f) when not f.Parent.IsUnion ->
-                let msg, isAtomic =
-                  match env.AtomicReads with
-                    | [] -> "", []
-                    | _ ->
-                      "or atomically updated ", List.map (bEq (trExpr env p')) env.AtomicReads
-                let tok, prop = 
-                  if f.IsVolatile then
-                    cond codeTh ("{0} is mutable " + msg + "(accessing volatile field " + f.Name + ")" + suff) "_vcc_mutable" [cState; p']
+        let cond id msg name (args : C.Expr list) = 
+          (afmte id msg args.Tail, trExpr env (C.Macro ({p.Common with Type = C.Bool }, name, args)))
+        let (codeTp, codeTh, suff) =
+          if isWf then (8501, 8502, " (in well-formedness check)")
+          else         (8511, 8512, "")
+        let th =
+          match p with
+            | C.Dot (_, p', f) when not f.Parent.IsUnion ->
+              let msg, isAtomic =
+                match env.AtomicReads with
+                  | [] -> "", []
+                  | _ ->
+                    "or atomically updated ", List.map (bEq (trExpr env p')) env.AtomicReads
+              let tok, prop = 
+                if f.IsVolatile then
+                  cond codeTh ("{0} is mutable " + msg + "(accessing volatile field " + f.Name + ")" + suff) "_vcc_mutable" [cState; p']
+                else
+                  if not f.Type.IsComposite then
+                    cond codeTh ("{0} is thread local " + msg + "(accessing field " + f.Name + ")" + suff) "_vcc_thread_local" [cState; p']
                   else
-                    if not f.Type.IsComposite then
-                      cond codeTh ("{0} is thread local " + msg + "(accessing field " + f.Name + ")" + suff) "_vcc_thread_local" [cState; p']
-                    else
-                      cond codeTh ("{0} is thread local" + suff) "_vcc_thread_local2" [cState; p]
-                tok, bMultiOr (prop :: isAtomic)
-              | _ -> 
-                let msg, isAtomic =
-                  match env.AtomicReads with
-                    | [] -> "", []
-                    | _ ->
-                       // TODO: shouldn't that be $volatile_span()?
-                      " or atomically updated", List.map (fun o -> bCall "$set_in" [trExpr env p; bCall "$span" [o]]) env.AtomicReads
-                let tok, prop =
-                  cond codeTh ("{0} is thread local" + msg + suff) "_vcc_thread_local" [cState; p]
-                tok, bMultiOr (prop :: isAtomic)
-          [B.Stmt.MkAssert th]
+                    cond codeTh ("{0} is thread local" + suff) "_vcc_thread_local2" [cState; p]
+              tok, bMultiOr (prop :: isAtomic)
+            | _ -> 
+              let msg, isAtomic =
+                match env.AtomicReads with
+                  | [] -> "", []
+                  | _ ->
+                      // TODO: shouldn't that be $volatile_span()?
+                    " or atomically updated", List.map (fun o -> bCall "$set_in" [trExpr env p; bCall "$span" [o]]) env.AtomicReads
+              let tok, prop =
+                cond codeTh ("{0} is thread local" + msg + suff) "_vcc_thread_local" [cState; p]
+              tok, bMultiOr (prop :: isAtomic)
+        [B.Stmt.MkAssert th]
       
       and writesMultiCheck use_wr env tok f =
         let name = "#writes" + ctx.TokSuffix tok
@@ -1938,11 +1932,7 @@ namespace Microsoft.Research.Vcc
         let dott = toTypeId baset
         let ptrref = 
           if f.IsSpec then bCall "$ghost_ref" [p; fieldRef]            
-          else           
-            if f.Type.IsComposite || td.GenerateFieldOffsetAxioms || helper.Options.GenerateFieldOffsetAxioms then
-              B.Primitive ("+", [bCall "$ref" [p]; bInt f.ByteOffset])
-            else
-              bCall "$physical_ref" [p; fieldRef]
+          else B.Primitive ("+", [bCall "$ref" [p]; bInt f.ByteOffset])
         let dotdef = bAnd (bEq dot (bCall "$ptr" [dott; ptrref])) (bCall "$extent_hint" [dot; p])
         let dotdef = if useIs then bInvImpl (bCall "$is" [p; we]) dotdef else dotdef
         let dotdef = B.Forall (Token.NoToken, [pv], [[dot]], weight "def-field-dot", dotdef)
