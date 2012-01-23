@@ -1,0 +1,21 @@
+#include <vcc.h>
+#include <stdlib.h>
+
+_(claimable) struct S {
+  volatile int c;
+};
+
+void foo(struct S **s) 
+  _(writes s)
+{
+  struct S *a = (struct S *)malloc(sizeof(struct S) * 10);
+  struct S *b = &a[0];
+  if (a != NULL) {
+    _(wrap b)
+    free((void *)((struct S[10])a));
+  }
+}
+`
+Verification of foo failed.
+testcase(15,5) : error VC8510: Assertion '\extent(p) is writable in call to free((void *)((struct S[10])a))' did not verify.
+`
