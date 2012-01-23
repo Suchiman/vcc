@@ -64,7 +64,7 @@ namespace Microsoft.Research.Vcc.VSPackage
         result += " /i";
       }
 
-      result += "/bvd";
+      result += " /bvd";
 
       return result;
     }
