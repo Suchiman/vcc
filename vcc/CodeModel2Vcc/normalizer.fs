@@ -1065,7 +1065,6 @@ namespace Microsoft.Research.Vcc
                 SizeOf = 0
                 IsNestedAnon = false
                 GenerateEquality = StructEqualityKind.NoEq
-                GenerateFieldOffsetAxioms = false
                 IsSpec = false
                 Parent = None
                 IsVolatile = false

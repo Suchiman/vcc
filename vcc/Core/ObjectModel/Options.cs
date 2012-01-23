@@ -29,15 +29,12 @@ namespace Microsoft.Research.Vcc
     public List<string> FunctionsWithExactName = new List<string>();
     public bool RunningFromCommandLine;
     public uint? VerifyUpToLine;
-    public bool OmitReadWriteChecking;
     public bool RunInBatchMode;
     public Dictionary<long, bool> DisabledWarnings = new Dictionary<long, bool>();
     public bool AggressivePruning;
     public List<string> PipeOperations = new List<string>();
-    public List<string> VcOpt = new List<string>();
     public Dictionary<string, List<string>> PluginOptions = new Dictionary<string, List<string>>();
     public bool DumpBoogie;
-    public bool GenerateFieldOffsetAxioms = true;
     public bool WarningsAsErrors;
     public int WarningLevel = 1;
     public bool DebugOnWarningOrError;
@@ -86,7 +83,6 @@ namespace Microsoft.Research.Vcc
       this.Functions.Clear(); this.Functions.AddRange(other.Functions);
       this.FunctionsWithExactName.Clear(); this.FunctionsWithExactName.AddRange(other.FunctionsWithExactName);
       this.PipeOperations.Clear(); this.PipeOperations.AddRange(other.PipeOperations);
-      this.VcOpt.Clear(); this.VcOpt.AddRange(other.VcOpt);
 
       this.DisabledWarnings.Clear();
       foreach (var kv in other.DisabledWarnings)
@@ -104,11 +100,9 @@ namespace Microsoft.Research.Vcc
       this.ClPath = other.ClPath;
       this.RunningFromCommandLine = other.RunningFromCommandLine;
       this.VerifyUpToLine = other.VerifyUpToLine;
-      this.OmitReadWriteChecking = other.OmitReadWriteChecking;
       this.RunInBatchMode = other.RunInBatchMode;
       this.AggressivePruning = other.AggressivePruning;
       this.DumpBoogie = other.DumpBoogie;
-      this.GenerateFieldOffsetAxioms = other.GenerateFieldOffsetAxioms;
       this.WarningsAsErrors = other.WarningsAsErrors;
       this.WarningLevel = other.WarningLevel;
       this.DebugOnWarningOrError = other.DebugOnWarningOrError;
@@ -240,11 +234,6 @@ namespace Microsoft.Research.Vcc
           this.options.BoogieOptions.AddRange(boogieOptions);
           return true;
         case 'c':
-          bool? checkedArithmetic = this.ParseNamedBoolean(arg, "checked", "c");
-          if (checkedArithmetic != null) {
-            this.options.CheckedArithmetic = checkedArithmetic.Value;
-            return true;
-          }
           string /*?*/ clPath = this.ParseNamedArgument(arg, "clpath", "clpath");
           if (clPath != null) {
             this.options.ClPath = clPath;
@@ -370,15 +359,6 @@ namespace Microsoft.Research.Vcc
             this.options.OutputDir = path;
             return true;
           }
-          if (this.ParseName(arg, "omitrw", "omitrw")) {
-            this.options.OmitReadWriteChecking = true;
-            return true;
-          }
-          bool? fieldOffsetAxioms = this.ParseNamedBoolean(arg, "offsetaxioms", "offsetaxioms");
-          if (fieldOffsetAxioms.HasValue) {
-            this.options.GenerateFieldOffsetAxioms = fieldOffsetAxioms.Value;
-            return true;
-          }
           if (this.ParseName(arg, "opsasfuncs", "oaf")) {
             this.options.OpsAsFunctions = true;
             return true;
@@ -493,21 +473,6 @@ namespace Microsoft.Research.Vcc
           if (this.ParseName(arg, "version", "version")) {
             this.options.DisplayVersion = true;
             return true;
-          }
-
-          bool? vcOpt = this.ParseNamedBoolean(arg, "vo", "vcopt");
-          if (vcOpt != null) {
-            if (vcOpt.Value) this.options.VcOpt.Add("yes");
-            else this.options.VcOpt.Clear();
-            return true;
-          }
-          else
-          {
-            List<string> vcopts = this.ParseNamedArgumentList(arg, "vo", "vcopt");
-            if (vcopts != null) {
-              this.options.VcOpt.AddRange(vcopts);
-              return true;
-            }
           }
 
           return false;

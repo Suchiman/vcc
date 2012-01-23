@@ -166,6 +166,10 @@
       <Project>{AB567043-8047-4CB4-863C-F7FBAB4E239A}</Project>
       <Name>CodeModel2Vcc</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Transformers\Transformers.fsproj">
+      <Project>{F55BA112-7817-4A9F-9250-7CDFECC1F2CE}</Project>
+      <Name>Transformers</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Translator\VccTranslator.fsproj">
       <Project>{CDB01DBB-FD43-40F4-98F0-F5401E8C5919}</Project>
       <Name>VccTranslator</Name>
