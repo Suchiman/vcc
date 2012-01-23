@@ -32,7 +32,7 @@ namespace Microsoft.Research.Vcc
     let assertEc = {(afmte 8503 (lower.ToString() + " <= {0} && {0} <= " + upper.ToString() + " in bitfield assignment") [expr]) with Type = Type.Bool; }
     Expr.Prim(assertEc, Op("&&", Processed), [lowerCheck; upperCheck])
 
-  let init (helper:Helper.Env) =
+  let init (helper:TransHelper.TransEnv) =
   
     // ============================================================================================================
     
@@ -911,7 +911,7 @@ namespace Microsoft.Research.Vcc
             | None -> foundInstances := Some token
             | Some otherToken -> 
               helper.GraveWarning(token, 9302, "more than one access to physical memory in atomic block ('" + 
-                                               token.Value + "' and '" + otherToken.Value + "'); extra accesses might be due to bitfield operations", otherToken)
+                                               token.Value + "' and '" + otherToken.Value + "'); extra accesses might be due to bitfield operations", Some(otherToken))
        
         let countPhysicalAccesses' ctx self = function
           | Deref(_, ptr) when not ctx.IsPure && isHeapAllocatedParOrLocal ptr -> true
@@ -1053,22 +1053,22 @@ namespace Microsoft.Research.Vcc
     
     // ============================================================================================================\
     
-    helper.AddTransformer ("desugar-begin", Helper.DoNothing)
+    helper.AddTransformer ("desugar-begin", TransHelper.DoNothing)
     
-    helper.AddTransformer ("desugar-ite", Helper.Decl removeLazyOps)
-    helper.AddTransformer ("norm-nested-locals", Helper.Decl removeNestedLocals)
-    helper.AddTransformer ("norm-primitive-globals", Helper.Decl wrapPrimitiveGlobals)
-    helper.AddTransformer ("desugar-addr-deref", Helper.Decl cleanupAddrDeref)
-    helper.AddTransformer ("desugar-by-claim", Helper.Decl expandByClaim)
-    helper.AddTransformer ("desugar-approvers", Helper.Decl handleApprovers)
-    helper.AddTransformer ("desugar-assign-ops", Helper.Expr removeAssignOps)
-    helper.AddTransformer ("desugar-lambdas", Helper.Decl desugarLambdas)
-    helper.AddTransformer ("check-spec-code", Helper.Decl checkSpecCode)
-    helper.AddTransformer ("desugar-push-decls-into-blocks", Helper.Decl pushDeclsIntoBlocks)
-    helper.AddTransformer ("desugar-addressable-locals", Helper.Decl heapifyAddressedLocals)
-    helper.AddTransformer ("desugar-globals", Helper.Decl handleGlobals)
-    helper.AddTransformer ("desugar-loops", Helper.Expr (loopAndSwitchDesugaring None))
-    helper.AddTransformer ("fix-group-casts", Helper.Expr fixGroupCasts)
-    helper.AddTransformer ("datatype-wrap-ctors", Helper.Expr (DataTypes.handleSize helper))
+    helper.AddTransformer ("desugar-ite", TransHelper.Decl removeLazyOps)
+    helper.AddTransformer ("norm-nested-locals", TransHelper.Decl removeNestedLocals)
+    helper.AddTransformer ("norm-primitive-globals", TransHelper.Decl wrapPrimitiveGlobals)
+    helper.AddTransformer ("desugar-addr-deref", TransHelper.Decl cleanupAddrDeref)
+    helper.AddTransformer ("desugar-by-claim", TransHelper.Decl expandByClaim)
+    helper.AddTransformer ("desugar-approvers", TransHelper.Decl handleApprovers)
+    helper.AddTransformer ("desugar-assign-ops", TransHelper.Expr removeAssignOps)
+    helper.AddTransformer ("desugar-lambdas", TransHelper.Decl desugarLambdas)
+    helper.AddTransformer ("check-spec-code", TransHelper.Decl checkSpecCode)
+    helper.AddTransformer ("desugar-push-decls-into-blocks", TransHelper.Decl pushDeclsIntoBlocks)
+    helper.AddTransformer ("desugar-addressable-locals", TransHelper.Decl heapifyAddressedLocals)
+    helper.AddTransformer ("desugar-globals", TransHelper.Decl handleGlobals)
+    helper.AddTransformer ("desugar-loops", TransHelper.Expr (loopAndSwitchDesugaring None))
+    helper.AddTransformer ("fix-group-casts", TransHelper.Expr fixGroupCasts)
+    helper.AddTransformer ("datatype-wrap-ctors", TransHelper.Expr (DataTypes.handleSize helper))
      
-    helper.AddTransformer ("desugar-end", Helper.DoNothing)
+    helper.AddTransformer ("desugar-end", TransHelper.DoNothing)

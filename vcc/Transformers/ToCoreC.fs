@@ -36,7 +36,7 @@ namespace Microsoft.Research.Vcc
  
   // ============================================================================================================
 
-  let rec linearize (helper:Helper.Env) enclosing ctx _ (expr:Expr) = 
+  let rec linearize (helper:TransHelper.TransEnv) enclosing ctx _ (expr:Expr) = 
     let selfe prev (expr:Expr) =
       let enclosing = ref prev
       let res = expr.SelfCtxMap (false, linearize helper (Some enclosing))
@@ -140,7 +140,7 @@ namespace Microsoft.Research.Vcc
 
  // ============================================================================================================  
 
-  let handlePureCalls (helper : Helper.Env) self = 
+  let handlePureCalls (helper : TransHelper.TransEnv) self = 
   
     let ecState = { bogusEC with Type = Type.MathState }
     let nowState = Expr.Macro(ecState, "state", [])
@@ -172,7 +172,7 @@ namespace Microsoft.Research.Vcc
             
  
  
-  let init (helper:Helper.Env) =
+  let init (helper:TransHelper.TransEnv) =
   
     // ============================================================================================================
                
@@ -926,26 +926,26 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
-    helper.AddTransformer ("core-begin", Helper.DoNothing)
+    helper.AddTransformer ("core-begin", TransHelper.DoNothing)
     
     // it's important if a transformer is before or after those two
     //   -- it affects how assignments and special calls are seen
     // this is why we're providing hooks here
-    helper.AddTransformer ("pre-assignments", Helper.DoNothing)    
-    helper.AddTransformer ("core-assignments", Helper.ExprCtx assignmentDesugaring)
-    helper.AddTransformer ("core-blocks-with-contracts", Helper.Decl liftBlocksWithContracts) // must run after heapification and assignment processing
-    helper.AddTransformer ("core-keeps", Helper.Decl handleKeeps)    
-    helper.AddTransformer ("core-special-calls", Helper.Expr (handlePureCalls helper))    
-    helper.AddTransformer ("post-assignments", Helper.DoNothing)    
-    helper.AddTransformer ("core-records", Helper.Decl handleRecords)
-    helper.AddTransformer ("core-value-structs", Helper.Decl removeStructsPassedByValue)
-    helper.AddTransformer ("core-parm-writes", Helper.Decl removeWritesToParameters)
-    helper.AddTransformer ("core-pull-out-calls", Helper.ExprCtx pullOutCalls)
-    helper.AddTransformer ("core-out-parameters", Helper.Expr handleOutParameters)
-    helper.AddTransformer ("core-out-parameters-pull-out-from-pure-call",  Helper.Expr pullOutOutpars)
-    helper.AddTransformer ("core-map-eq", Helper.Expr handleMapEquality)
-    helper.AddTransformer ("core-linearize", Helper.Decl (linearizeDecls helper))
+    helper.AddTransformer ("pre-assignments", TransHelper.DoNothing)    
+    helper.AddTransformer ("core-assignments", TransHelper.ExprCtx assignmentDesugaring)
+    helper.AddTransformer ("core-blocks-with-contracts", TransHelper.Decl liftBlocksWithContracts) // must run after heapification and assignment processing
+    helper.AddTransformer ("core-keeps", TransHelper.Decl handleKeeps)    
+    helper.AddTransformer ("core-special-calls", TransHelper.Expr (handlePureCalls helper))    
+    helper.AddTransformer ("post-assignments", TransHelper.DoNothing)    
+    helper.AddTransformer ("core-records", TransHelper.Decl handleRecords)
+    helper.AddTransformer ("core-value-structs", TransHelper.Decl removeStructsPassedByValue)
+    helper.AddTransformer ("core-parm-writes", TransHelper.Decl removeWritesToParameters)
+    helper.AddTransformer ("core-pull-out-calls", TransHelper.ExprCtx pullOutCalls)
+    helper.AddTransformer ("core-out-parameters", TransHelper.Expr handleOutParameters)
+    helper.AddTransformer ("core-out-parameters-pull-out-from-pure-call",  TransHelper.Expr pullOutOutpars)
+    helper.AddTransformer ("core-map-eq", TransHelper.Expr handleMapEquality)
+    helper.AddTransformer ("core-linearize", TransHelper.Decl (linearizeDecls helper))
 
-    helper.AddTransformer ("core-end", Helper.DoNothing)
+    helper.AddTransformer ("core-end", TransHelper.DoNothing)
     
       

@@ -48,7 +48,7 @@ namespace Microsoft.Research.Vcc
        finally this.Stop()
        
     
-  module Helper =
+  module TransHelper =
    
     let alwaysPureCallList =
                 [ 
@@ -238,7 +238,8 @@ namespace Microsoft.Research.Vcc
       static member Mk (name : string, f : Transformer) =
         { Name = name; Func = f; Enabled = true }
       
-    type Env (hostEnv:ISourceEditHost, opts:VccOptions) =
+    type TransEnv (hostEnv:ISourceEditHost, opts:VccOptions) =
+      inherit Helper.Env()
       let stopwatches = ref []
       let sw name = 
         let s = new Stopwatch (name)
@@ -280,49 +281,32 @@ namespace Microsoft.Research.Vcc
       member this.AddPureCall (name, signature) =
         pureCalls.[name] <- signature
 
-      member this.PointerSizeInBytes = opts.PointerSize / 8
+      override this.PointerSizeInBytes = opts.PointerSize / 8
       
-      member this.Oops (tok:Token, msg:string) =
+      override this.Oops (tok:Token, msg:string) =
         if not !errorReported then
           oopsed := true
           hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, 9600, "OOPS: " + msg, false))
       
-      member this.Panic (msg:string) =
-        this.Oops (Token.NoToken, msg)
-        this.Die ()
-
-      member this.Die () : 'a =
+      override this.Die () : 'a =
         failwith "confused, will now die"
 
-      member this.Die(tok : Token) :'a =
+      override this.Die(tok : Token) : 'a =
         this.Oops(tok, "internal compiler error")
         this.Die()
       
-      // 9100 <= code <= 9199; First available: 9127
-      member this.Warning (tok:Token, code, msg:string) =
-        if not (tok.SuppressWarning code) then
-          hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, true))
-
       // see above
-      member this.Warning (tok:Token, code, msg:string, relatedTok) =
+      override this.Warning (tok:Token, code, msg:string, relatedTok) =        
         if not (tok.SuppressWarning code) then
-          hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, true, (Seq.singleton (VisitorHelper.LocationFromToken relatedTok))))
+          match relatedTok with
+            | None -> 
+              hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, true))
+            | Some related ->
+              hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, true, (Seq.singleton (VisitorHelper.LocationFromToken related))))
           
-      // 9300 <= code <= 9399; First available: 9325
-      member this.GraveWarning (tok, code, msg:string) =
-        this.Warning (tok, code, "[possible unsoundness]: " + msg)
-     
-      // see above 
-      member this.GraveWarning (tok, code, msg:string, relatedTok) =
-        this.Warning (tok, code, "[possible unsoundness]: " + msg, relatedTok)
-      
-      // 9601 <= code <= 9799; First available: 9746
-      member this.Error (tok:Token, code, msg:string) =
-        this.Error (tok, code, msg, None)
-        
       // 9601 <= code <= 9699
       // see (and update) comments on the top of transformers.fs for the next available number
-      member this.Error (tok:Token, code, msg:string, relatedTok : Token option) =
+      override this.Error (tok:Token, code, msg:string, relatedTok : Token option) =
         let errorMsg = 
           match relatedTok with
           | None -> new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, false)

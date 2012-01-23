@@ -10,7 +10,7 @@ namespace Microsoft.Research.Vcc
   public abstract class VCGenPlugin
   {
     public abstract string Name { get; }
-    public abstract VC.ConditionGeneration.Outcome VerifyImpl(Helper.Env env, VC.VCGen vcgen, Implementation impl, Program prog, VerifierCallback reporter);
+    public abstract VC.ConditionGeneration.Outcome VerifyImpl(TransHelper.TransEnv env, VC.VCGen vcgen, Implementation impl, Program prog, VerifierCallback reporter);
     public abstract void UseCommandLineOptions(List<string> opts);
   }
 
@@ -18,7 +18,7 @@ namespace Microsoft.Research.Vcc
   {
     readonly Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls;
     readonly VccPlugin parent;
-    readonly Helper.Env env;
+    readonly TransHelper.TransEnv env;
     Boogie.Program currentBoogie;
     bool mustRegenerateBoogie = true;
     VC.VCGen vcgen;
@@ -42,7 +42,7 @@ namespace Microsoft.Research.Vcc
       // "/prover:Z3",
     };
         
-    internal VccFunctionVerifier(VccPlugin parent, Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls, Helper.Env env)
+    internal VccFunctionVerifier(VccPlugin parent, Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls, TransHelper.TransEnv env)
       : base(env, currentDecls)
     {
       this.currentDecls = currentDecls;
@@ -424,7 +424,7 @@ namespace Microsoft.Research.Vcc
       else return true;
     }
 
-    public override void Verify(string fileName, Helper.Env env, Microsoft.FSharp.Collections.FSharpList<CAST.Top> decls)
+    public override void Verify(string fileName, TransHelper.TransEnv env, Microsoft.FSharp.Collections.FSharpList<CAST.Top> decls)
     {
       // this really only dumps the code to the .bpl file
       Init(env, fileName);
@@ -461,7 +461,7 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    private void Init(Helper.Env env, string filename)
+    private void Init(TransHelper.TransEnv env, string filename)
     {
       RegisterStopwatches();
       foreach (var s in env.Stopwatches)
@@ -473,7 +473,7 @@ namespace Microsoft.Research.Vcc
       this.BvdModelFileName = options.SaveModelForBvd ? AddOutputDirIfRequested(Path.ChangeExtension(filename, "model")) : null;
     }
 
-    public override FunctionVerifier GetFunctionVerifier(string fileName, Helper.Env env, Microsoft.FSharp.Collections.FSharpList<CAST.Top> decls)
+    public override FunctionVerifier GetFunctionVerifier(string fileName, TransHelper.TransEnv env, Microsoft.FSharp.Collections.FSharpList<CAST.Top> decls)
     {
       Init(env, fileName);
       decls = env.ApplyTransformers(decls);

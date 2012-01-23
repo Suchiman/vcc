@@ -13,7 +13,7 @@ namespace Microsoft.Research.Vcc
  open Microsoft.Research.Vcc.CAST
  
  module Inference =
-  let init (helper:Helper.Env) =
+  let init (helper:TransHelper.TransEnv) =
 
     let inferLoopInvariants self = function
       | Loop (comm, invs, writes, variants, body) ->
@@ -279,15 +279,15 @@ namespace Microsoft.Research.Vcc
       List.map doDecl                
   
     
-    helper.AddTransformer ("infer-begin", Helper.DoNothing)
+    helper.AddTransformer ("infer-begin", TransHelper.DoNothing)
     
-    helper.AddTransformer ("infer-in_domain", Helper.Decl (inferFn "in_domain" inferInDomain))
-    helper.AddTransformer ("infer-valid_claim", Helper.Decl (inferFn "valid_claim" inferValidClaim))
-    helper.AddTransformer ("infer-always_by_claim", Helper.Decl (inferAny "always_by_claim" inferAlwaysByClaim))
-    helper.AddTransformer ("infer-by_claim", Helper.Decl addByClaim)
-    helper.AddTransformer ("infer-loop_invariants", Helper.Expr inferLoopInvariants)
-    helper.AddTransformer ("infer-set_in", Helper.Decl (inferAny "set_in" inferSetIn))
-    helper.AddTransformer ("infer-empty-owns", Helper.Decl (inferAny "empty_owns" inferEmptyOwns))
-    helper.AddTransformer ("infer-weak_out_param", Helper.Decl (inferAny "weak_out_param" inferWeakOutParam))
+    helper.AddTransformer ("infer-in_domain", TransHelper.Decl (inferFn "in_domain" inferInDomain))
+    helper.AddTransformer ("infer-valid_claim", TransHelper.Decl (inferFn "valid_claim" inferValidClaim))
+    helper.AddTransformer ("infer-always_by_claim", TransHelper.Decl (inferAny "always_by_claim" inferAlwaysByClaim))
+    helper.AddTransformer ("infer-by_claim", TransHelper.Decl addByClaim)
+    helper.AddTransformer ("infer-loop_invariants", TransHelper.Expr inferLoopInvariants)
+    helper.AddTransformer ("infer-set_in", TransHelper.Decl (inferAny "set_in" inferSetIn))
+    helper.AddTransformer ("infer-empty-owns", TransHelper.Decl (inferAny "empty_owns" inferEmptyOwns))
+    helper.AddTransformer ("infer-weak_out_param", TransHelper.Decl (inferAny "weak_out_param" inferWeakOutParam))
    
-    helper.AddTransformer ("infer-end", Helper.DoNothing)
+    helper.AddTransformer ("infer-end", TransHelper.DoNothing)

@@ -1461,11 +1461,11 @@ namespace Microsoft.Research.Vcc
 
               let t1 = if isAdmissibleMapDomainType t1 then t1
                        else 
-                         helper.Error(token (mapTypes.Item(0)), 9702, "Illegal type '" + t1.ToString() + "' in map domain.")
+                         helper.Error(token (mapTypes.Item(0)), 9702, "Illegal type '" + t1.ToString() + "' in map domain.", None)
                          C.Type.Bogus
               let t2 = if isAdmissibleMapRangeType t2 then t2
                        else 
-                         helper.Error(token (mapTypes.Item(1)), 9721, "Illegal type '" + t2.ToString() + "' in map range.")
+                         helper.Error(token (mapTypes.Item(1)), 9721, "Illegal type '" + t2.ToString() + "' in map range.", None)
                          C.Type.Bogus
               typeRes <- C.Type.Map (t1, t2)
             | _ -> assert false
@@ -1634,7 +1634,7 @@ namespace Microsoft.Research.Vcc
         let typeToCheck = this.DoType checkIfInstance.TypeToCheck
         let ec = this.ExprCommon checkIfInstance
         match typeToCheck with
-          | C.Ptr(_) -> helper.Warning(ec.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended")
+          | C.Ptr(_) -> helper.Warning(ec.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended", None)
           | _ -> ()
         // set also the type in ExprCommon so we prevent pruning of the type
         let typeExpr = C.Expr.UserData({C.ExprCommon.Bogus with Type = typeToCheck}, typeToCheck ) 
@@ -2035,7 +2035,7 @@ namespace Microsoft.Research.Vcc
               match args with
                 | [_; C.Expr.Call(_, _, _, [C.Expr.Cast(_,_,e)])] ->
                   match e.Type with
-                    | C.Ptr(C.Ptr(_)) -> helper.Warning(e.Common.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended")
+                    | C.Ptr(C.Ptr(_)) -> helper.Warning(e.Common.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended", None)
                     | _ -> ()
                 | _ -> ()
             let mtc, tArgs =

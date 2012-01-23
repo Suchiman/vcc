@@ -12,7 +12,7 @@ namespace Microsoft.Research.Vcc
  open Microsoft.Research.Vcc.Util
 
  module TransUtil =
-   
+
   // -----------------------------------------------------------------------------
   // Message/token formatting
   // -----------------------------------------------------------------------------
@@ -105,7 +105,7 @@ namespace Microsoft.Research.Vcc
     | Expr.Old (c, Macro (_, "prestate", []), e) -> Some (COld (c, e))
     | _ -> None
       
-  let rec simpleCmp (helper:Helper.Env) failOnError = function
+  let rec simpleCmp (helper:TransHelper.TransEnv) failOnError = function
     | Expr.Ref (_, v), Expr.Ref (_, v') -> v = v'
     | Dot (_, e, f), Dot (_, e', f') -> f = f' && simpleCmp helper failOnError (e, e')
     | Expr.Macro (_, "&", [e]), Expr.Macro (_, "&", [e'])
@@ -239,7 +239,7 @@ namespace Microsoft.Research.Vcc
       | MathInteger Unsigned -> "nat"
       | _ -> failwith "integer type expected"
   
-  let inRange (helper:Helper.Env) ec (expr:Expr) =
+  let inRange (helper:TransHelper.TransEnv) ec (expr:Expr) =
     let castToInt expr = expr
     match expr.Type with
       | Integer k -> Expr.Macro (ec, "in_range_" + Type.IntSuffix k, [expr])
@@ -272,7 +272,7 @@ namespace Microsoft.Research.Vcc
   // Caching
   // ----------------------------------------------------------------------------- 
 
-  let getTmp (helper:Helper.Env) name = Variable.CreateUnique (name + "#" + (helper.UniqueId()).ToString())
+  let getTmp (helper:TransHelper.TransEnv) name = Variable.CreateUnique (name + "#" + (helper.UniqueId()).ToString())
      
   let cacheEx saveRefs helper assign name expr varKind = 
     let rec isSimple = function
@@ -334,7 +334,7 @@ namespace Microsoft.Research.Vcc
   
   // Warning: this function gets rid of multiplication so possible overflow check is gone
   // This usually is OK in spec context.
-  let extractArraySize (helper:Helper.Env) (expr:Expr) (elementType:Type) (byteCount:Expr) =
+  let extractArraySize (helper:TransHelper.TransEnv) (expr:Expr) (elementType:Type) (byteCount:Expr) =
     let typeSz =new bigint(elementType.SizeOf)
     let byteCount =
       match byteCount with
@@ -355,11 +355,11 @@ namespace Microsoft.Research.Vcc
             | _, Expr.IntLiteral (_, allocSz) when allocSz = typeSz -> e1
             | Expr.SizeOf(_, t), _ when t = elementType -> e2
             | _, Expr.SizeOf(_, t) when t = elementType -> e1
-            | _ -> helper.Warning (byteCount.Common.Token, 9102, "don't know how to determine number of elements in array: " + expr.ToString())
+            | _ -> helper.Warning (byteCount.Common.Token, 9102, "don't know how to determine number of elements in array: " + expr.ToString(), None)
                    Prim (byteCount.Common, Op("/", Processed), [byteCount; mkInt elementType.SizeOf])
         | _ when typeSz = one -> byteCount
         | _ ->
-          helper.Warning (byteCount.Common.Token, 9102, "don't know how to determine number of elements in array: " + expr.ToString())
+          helper.Warning (byteCount.Common.Token, 9102, "don't know how to determine number of elements in array: " + expr.ToString(), None)
           Prim (byteCount.Common, Op("/", Processed), [byteCount; mkInt elementType.SizeOf])
           
     match neg elts with
@@ -368,7 +368,7 @@ namespace Microsoft.Research.Vcc
         
         
   // when calling that function make sure that the internal function is not pruned away
-  let internalFunction (helper:Helper.Env) name =
+  let internalFunction (helper: TransHelper.TransEnv) name =
     let name = "_vcc_" + name
     let rec find = function 
       | Top.FunctionDecl hd :: xs -> 
@@ -609,7 +609,7 @@ namespace Microsoft.Research.Vcc
 
     decls |> List.filter needed |> List.map (discardFunctionBodysExceptFor funcName)
       
-  let pruneBy (env:Helper.Env) funcName decls = env.SwPruning.Run doPruneBy funcName decls
+  let pruneBy (env:TransHelper.TransEnv) funcName decls = env.SwPruning.Run doPruneBy funcName decls
   
   let dumpDecls msg showTypes decls = 
     printf ">>> %s\r\n" msg
@@ -622,7 +622,7 @@ namespace Microsoft.Research.Vcc
         | Top.TypeDecl(td) -> List.iter (fun (i:Expr) -> (i.SelfVisit f)) td.Invariants
         | _ -> ()
 
-  let checkTermination (helper:Helper.Env) (fn:Function) =
+  let checkTermination (helper:TransHelper.TransEnv) (fn:Function) =
     if fn.CustomAttr |> hasCustomAttr AttrDefinition || fn.CustomAttr |> hasCustomAttr AttrAbstract then
       helper.Options.TerminationForPure
     // if explicit measure is given, and termination is not disabled, then check it 

@@ -387,13 +387,13 @@ namespace Microsoft.Research.Vcc
       try
       {
 
-        Helper.Env helperenv;
+        TransHelper.TransEnv helperenv;
         FSharp.Collections.FSharpList<CAST.Top> res;
 
         try
         {
           swVisitor.Start();
-          helperenv = new Microsoft.Research.Vcc.Helper.Env(hostEnvironment, commandLineOptions);
+          helperenv = new Microsoft.Research.Vcc.TransHelper.TransEnv(hostEnvironment, commandLineOptions);
           var visitor = new Microsoft.Research.Vcc.Visitor(assem.Compilation.ContractProvider, helperenv);
 
           if (commandLineOptions.VerificationLocation != null)

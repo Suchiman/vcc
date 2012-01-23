@@ -13,7 +13,7 @@ open Microsoft.Research.Vcc.CAST
 
 // for datatype definition check that
 // - the induction is grounded (there is a non-recursive option)
-let checkDatatypeDefinitions (helper:Helper.Env) decls =
+let checkDatatypeDefinitions (helper:TransHelper.TransEnv) decls =
   let cache = gdict()
   let rec grounded (td:TypeDecl) =
     match cache.TryGetValue td with
@@ -31,17 +31,17 @@ let checkDatatypeDefinitions (helper:Helper.Env) decls =
   let aux = function 
     | Top.TypeDecl td when td.IsDataType ->
       if not (grounded td) then
-        helper.Error (td.Token, 9725, "a finite instance of datatype '" + td.Name + "' could never be constructed")
+        helper.Error (td.Token, 9725, "a finite instance of datatype '" + td.Name + "' could never be constructed", None)
     | _ -> ()
   List.iter aux decls
   decls
 
-let handleSize (helper:Helper.Env) self = function
+let handleSize (helper:TransHelper.TransEnv) self = function
   | Macro (ec, "\\size", [e]) ->
     Some (Macro (ec, "size", [self e]))
   | _ -> None
 
-let wrapDatatypeCtors (helper:Helper.Env) (ctx:ExprCtx) self = function
+let wrapDatatypeCtors (helper:TransHelper.TransEnv) (ctx:ExprCtx) self = function
   | Call (ec, fn, tps, args) as e when not ctx.IsPure && fn.IsDatatypeOption ->
     Some (Pure (ec, Call (ec, fn, tps, List.map self args)))
   | _ -> None
@@ -52,7 +52,7 @@ let wrapDatatypeCtors (helper:Helper.Env) (ctx:ExprCtx) self = function
 // - add assert(false) for unused options
 // - each datatype option is used at most once
 
-let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
+let handleMatchStatement (helper:TransHelper.TransEnv) desugarSwitch labels expr =
   let usedCases = gdict() 
   let testHd expr fn =
     Expr.Macro (boolBogusEC(), "dt_testhd", [expr; Expr.UserData (boolBogusEC(), fn)])
@@ -141,5 +141,5 @@ let handleMatchStatement (helper:Helper.Env) desugarSwitch labels expr =
           Some (Expr.MkBlock [])
     | _ -> None
 
-let init (helper:Helper.Env) =
-  helper.AddTransformer ("datatype-check-defs", Helper.Decl (checkDatatypeDefinitions helper))
+let init (helper:TransHelper.TransEnv) =
+  helper.AddTransformer ("datatype-check-defs", TransHelper.Decl (checkDatatypeDefinitions helper))

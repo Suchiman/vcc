@@ -23,7 +23,7 @@ namespace Microsoft.Research.Vcc
 
  type MessageHandler = delegate of string -> unit
  
- type [<AbstractClass>] FunctionVerifier(env:Helper.Env, initialDecls:list<Top>) =
+ type [<AbstractClass>] FunctionVerifier(env:TransHelper.TransEnv, initialDecls:list<Top>) =
    
    abstract FunctionsToVerify : unit -> list<string * string>
    abstract Verify : string -> VerificationResult
@@ -51,8 +51,8 @@ namespace Microsoft.Research.Vcc
    abstract UseCommandLineOptions : GList<string> -> unit
    abstract UseVccOptions : VccOptions -> unit
    // depending on IsModular one uses FunctionVerifier or method Verify
-   abstract GetFunctionVerifier : string * Helper.Env * list<Top> -> FunctionVerifier
-   abstract Verify : string * Helper.Env * list<Top> -> unit
+   abstract GetFunctionVerifier : string * TransHelper.TransEnv * list<Top> -> FunctionVerifier
+   abstract Verify : string * TransHelper.TransEnv * list<Top> -> unit
    
    
    default this.IsModular () = true

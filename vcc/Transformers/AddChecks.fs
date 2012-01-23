@@ -17,7 +17,7 @@ namespace Microsoft.Research.Vcc
   let invariantsOf (td:TypeDecl) preSplitCond = 
     td.Invariants |> List.filter preSplitCond |> List.map splitConjunction |> List.concat
     
-  let invariantCheck (helper:Helper.Env) preSplitCond cond errno suffix prestate (this:Expr) =
+  let invariantCheck (helper:TransHelper.TransEnv) preSplitCond cond errno suffix prestate (this:Expr) =
     match this.Type with
       | Ptr (Type.Ref td) ->
         let replaceThisOld self = function 
@@ -55,7 +55,7 @@ namespace Microsoft.Research.Vcc
     | _ -> false
 
 
-  let init (helper:Helper.Env) =
+  let init (helper:TransHelper.TransEnv) =
   
   
     // ============================================================================================================
@@ -556,10 +556,10 @@ namespace Microsoft.Research.Vcc
       | Expr.Assert (_, Expr.Macro (_, "_vcc_bv_lemma", [e]), _) -> 
         let reportCheckedOpsInBvLemma' self = function 
           | Expr.Cast(ec, (Checked|Processed), _) ->
-            helper.Error (ec.Token, 9659, "casts in bv_lemma(...) need to be unchecked (expression: " + ec.Token.Value + ")")
+            helper.Error (ec.Token, 9659, "casts in bv_lemma(...) need to be unchecked (expression: " + ec.Token.Value + ")", None)
             None
           | Expr.Prim (ec, Op (("+"|"-"|"*"|"/"|"%"), Checked), _) ->
-            helper.Error (ec.Token, 9659, "operators in bv_lemma(...) need to be unchecked (expression: " + ec.Token.Value + ")")
+            helper.Error (ec.Token, 9659, "operators in bv_lemma(...) need to be unchecked (expression: " + ec.Token.Value + ")", None)
             None
           | _ -> None
         let _ = e.Map(false, reportCheckedOpsInBvLemma')
@@ -616,18 +616,18 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
     
-    helper.AddTransformer ("check-begin", Helper.DoNothing)
+    helper.AddTransformer ("check-begin", TransHelper.DoNothing)
     
-    helper.AddTransformer ("check-report-checked-in-bv-lemma", Helper.Expr reportCheckedOpsInBvLemma)
-    helper.AddTransformer ("check-special-calls", Helper.Expr handleSpecialCalls)
-    helper.AddTransformer ("check-memory-access", Helper.ExprCtx (addMemoryChecks false))
-    helper.AddTransformer ("check-ptr-range", Helper.ExprCtx addPointerConversionChecks)
-    helper.AddTransformer ("check-overflows", Helper.ExprCtx addOverflowChecks)
-    helper.AddTransformer ("check-div-by-zero", Helper.ExprCtx addDivByZeroChecks)
-    helper.AddTransformer ("check-shift-bits-in-range", Helper.ExprCtx addShiftWidthChecks)
-    helper.AddTransformer ("check-shift-arg-not-negative", Helper.ExprCtx addShiftArgumentPositiveCheck)
-    helper.AddTransformer ("check-fullstop-in-atomic", Helper.Expr addFullstopCheckInAtomic)
-    helper.AddTransformer ("check-writable", Helper.Expr checkWritable)
-    helper.AddTransformer ("check-remove-checked", Helper.Expr stripRemainingChecked)
+    helper.AddTransformer ("check-report-checked-in-bv-lemma", TransHelper.Expr reportCheckedOpsInBvLemma)
+    helper.AddTransformer ("check-special-calls", TransHelper.Expr handleSpecialCalls)
+    helper.AddTransformer ("check-memory-access", TransHelper.ExprCtx (addMemoryChecks false))
+    helper.AddTransformer ("check-ptr-range", TransHelper.ExprCtx addPointerConversionChecks)
+    helper.AddTransformer ("check-overflows", TransHelper.ExprCtx addOverflowChecks)
+    helper.AddTransformer ("check-div-by-zero", TransHelper.ExprCtx addDivByZeroChecks)
+    helper.AddTransformer ("check-shift-bits-in-range", TransHelper.ExprCtx addShiftWidthChecks)
+    helper.AddTransformer ("check-shift-arg-not-negative", TransHelper.ExprCtx addShiftArgumentPositiveCheck)
+    helper.AddTransformer ("check-fullstop-in-atomic", TransHelper.Expr addFullstopCheckInAtomic)
+    helper.AddTransformer ("check-writable", TransHelper.Expr checkWritable)
+    helper.AddTransformer ("check-remove-checked", TransHelper.Expr stripRemainingChecked)
     
-    helper.AddTransformer ("check-end", Helper.DoNothing)
+    helper.AddTransformer ("check-end", TransHelper.DoNothing)

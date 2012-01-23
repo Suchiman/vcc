@@ -120,7 +120,7 @@ namespace Microsoft.Research.Vcc
       ([B.Stmt.VarDecl ((oldState, tpState), None);
         B.Stmt.Assign (er oldState, bState)], er oldState)
 
-    let translate functionToVerify (helper:Helper.Env) (getPrelude:MyFunc<Microsoft.Boogie.Program>) decls =
+    let translate functionToVerify (helper:TransHelper.TransEnv) (getPrelude:MyFunc<Microsoft.Boogie.Program>) decls =
       let ctx = TranslationState(helper)
       let helper = ctx.Helper
       let bv = BvTranslator(ctx)

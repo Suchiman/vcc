@@ -37,7 +37,7 @@ namespace Microsoft.Research.Vcc
   // ============================================================================================================
   
   
-  let init (helper:Helper.Env) =
+  let init (helper:TransHelper.TransEnv) =
     
     // ============================================================================================================
     
@@ -1408,22 +1408,22 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
-    helper.AddTransformer ("type-begin", Helper.DoNothing)
-    helper.AddTransformer ("type-function-pointer", Helper.Decl handleFunctionPointers)
-    helper.AddTransformer ("type-flatten-arrays", Helper.Decl flattenNestedArrays)
-    helper.AddTransformer ("type-groups", Helper.Decl liftGroups)
-    helper.AddTransformer ("type-mark-nested", Helper.Decl markNestedAnonymousTypes)
-    helper.AddTransformer ("type-remove-bitfields", Helper.Decl removeBitfields)
-    helper.AddTransformer ("type-flatten-unions", Helper.Decl flattenUnions)
-    helper.AddTransformer ("type-remove-nested", Helper.Decl removedNestedAnonymousTypes)
-    helper.AddTransformer ("type-fixup-single-member-unions", Helper.Decl turnSingleMemberUnionsIntoStructs)
-    helper.AddTransformer ("type-assign-by-single-field", Helper.Expr assignSingleFieldStructsByField)
-    helper.AddTransformer ("type-inline-fields", Helper.Decl inlineFieldsByRequest)
-    helper.AddTransformer ("type-fixup-single-member-unions", Helper.Decl turnSingleMemberUnionsIntoStructs)
-    helper.AddTransformer ("type-primitive-structs", Helper.Decl handlePrimitiveStructs)
-    helper.AddTransformer ("type-check-records", Helper.Decl checkRecordValidity)
-    helper.AddTransformer ("type-volatile-modifiers", Helper.Decl handleVolatileModifiers)
-    helper.AddTransformer ("type-remove-volatile-invariants", Helper.Decl removeVolatileInvariants)
-    helper.AddTransformer ("type-struct-equality", Helper.Expr handleStructAndRecordEquality)
-    helper.AddTransformer ("type-globals", Helper.Decl addAxiomsForGlobals)
-    helper.AddTransformer ("type-end", Helper.DoNothing)
+    helper.AddTransformer ("type-begin", TransHelper.DoNothing)
+    helper.AddTransformer ("type-function-pointer", TransHelper.Decl handleFunctionPointers)
+    helper.AddTransformer ("type-flatten-arrays", TransHelper.Decl flattenNestedArrays)
+    helper.AddTransformer ("type-groups", TransHelper.Decl liftGroups)
+    helper.AddTransformer ("type-mark-nested", TransHelper.Decl markNestedAnonymousTypes)
+    helper.AddTransformer ("type-remove-bitfields", TransHelper.Decl removeBitfields)
+    helper.AddTransformer ("type-flatten-unions", TransHelper.Decl flattenUnions)
+    helper.AddTransformer ("type-remove-nested", TransHelper.Decl removedNestedAnonymousTypes)
+    helper.AddTransformer ("type-fixup-single-member-unions", TransHelper.Decl turnSingleMemberUnionsIntoStructs)
+    helper.AddTransformer ("type-assign-by-single-field", TransHelper.Expr assignSingleFieldStructsByField)
+    helper.AddTransformer ("type-inline-fields", TransHelper.Decl inlineFieldsByRequest)
+    helper.AddTransformer ("type-fixup-single-member-unions", TransHelper.Decl turnSingleMemberUnionsIntoStructs)
+    helper.AddTransformer ("type-primitive-structs", TransHelper.Decl handlePrimitiveStructs)
+    helper.AddTransformer ("type-check-records", TransHelper.Decl checkRecordValidity)
+    helper.AddTransformer ("type-volatile-modifiers", TransHelper.Decl handleVolatileModifiers)
+    helper.AddTransformer ("type-remove-volatile-invariants", TransHelper.Decl removeVolatileInvariants)
+    helper.AddTransformer ("type-struct-equality", TransHelper.Expr handleStructAndRecordEquality)
+    helper.AddTransformer ("type-globals", TransHelper.Decl addAxiomsForGlobals)
+    helper.AddTransformer ("type-end", TransHelper.DoNothing)
