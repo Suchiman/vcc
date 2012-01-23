@@ -745,7 +745,6 @@ namespace Microsoft.Research.Vcc
                       SizeOf = int typeDef.SizeOf
                       IsNestedAnon = false
                       GenerateEquality = CAST.StructEqualityKind.NoEq
-                      GenerateFieldOffsetAxioms = false
                       Kind = 
                         // Cci does not know about unions, so a union for us is a struct with more than one member whose all offsets are equal
                         if List.length fields <= 1 || notAllEqual (List.map totalOffset fields) then
@@ -1409,7 +1408,6 @@ namespace Microsoft.Research.Vcc
                   SizeOf = C.Type.ObjectT.SizeOf
                   IsNestedAnon = false
                   GenerateEquality = CAST.StructEqualityKind.NoEq
-                  GenerateFieldOffsetAxioms = false
                   Parent = None
                   IsVolatile = false
                   IsSpec = false

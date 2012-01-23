@@ -1,5 +1,3 @@
-`/omitrw 
-
 #include <vcc.h>
 
 void foo(int *a) {
