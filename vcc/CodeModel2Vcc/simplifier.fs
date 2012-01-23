@@ -287,7 +287,6 @@ namespace Microsoft.Research.Vcc
             Kind = Struct
             IsNestedAnon = false
             GenerateEquality = NoEq
-            GenerateFieldOffsetAxioms = false
             Parent = None
             IsVolatile = false 
             IsSpec = isSpec

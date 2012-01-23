@@ -24,7 +24,6 @@ namespace Microsoft.Research.Vcc
     VC.VCGen vcgen;
     bool errorMode;
     int modelCount;
-    VcOpt.Optimizer vcopt;
     readonly List<string> options = new List<string>();
     readonly string[] standardBoogieOptions = new[] { 
       // report up to 10 errors
@@ -236,9 +235,6 @@ namespace Microsoft.Research.Vcc
 
       try {
         parent.swVcOpt.Start();
-        if (vcopt != null) {
-          impl = vcopt.RoundTrip(impl);
-        }
       } finally {
         parent.swVcOpt.Stop();
       }
@@ -362,17 +358,7 @@ namespace Microsoft.Research.Vcc
             boogieProgram.Emit(writer);
         }
         errorMode = true;
-      } else {
-        if (parent.options.VcOpt.Count > 0) {
-          try {
-            parent.swVcOpt.Start();
-            vcopt = new VcOpt.Optimizer(currentBoogie, env, Microsoft.FSharp.Collections.ListModule.OfSeq(parent.options.VcOpt));
-            vcopt.RemoveExpansionAxioms();
-          } finally {
-            parent.swVcOpt.Stop();
-          }
-        }
-      }
+      } 
 
       return boogieProgram;
 
