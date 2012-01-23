@@ -413,9 +413,9 @@ namespace Microsoft.Research.Vcc
         plugin.UseCommandLineOptions(p1);
     }
 
-    public override void UseVccOptions(VccOptions opts)
+    public override void UseOptions(TransHelper.TransOptions opts)
     {
-      options = opts;
+      options = ((VccOptionWrapper)opts).VccOptions;
     } 
 
     public override bool IsModular()
@@ -432,8 +432,8 @@ namespace Microsoft.Research.Vcc
       if (options.NoVerification) return;
 
       if (env.ShouldContinue) {
-        if (env.Options.AggressivePruning && env.Options.Functions.Count > 0) {
-          decls = TransUtil.pruneBy(env, env.Options.Functions[0], decls);
+        if (env.Options.AggressivePruning && env.Options.Functions.Count() > 0) {
+          decls = TransUtil.pruneBy(env, env.Options.Functions.First(), decls);
         }
         var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, decls);
         var p = TranslateToBoogie(boogieDecls);
@@ -469,7 +469,7 @@ namespace Microsoft.Research.Vcc
 
       Transformers.init(env);
       Transformers.processPipeOptions(env);
-      options = env.Options;
+      options = ((VccOptionWrapper)env.Options).VccOptions;
       this.BvdModelFileName = options.SaveModelForBvd ? AddOutputDirIfRequested(Path.ChangeExtension(filename, "model")) : null;
     }
 

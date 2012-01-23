@@ -9,7 +9,6 @@
 namespace Microsoft.Research.Vcc
   open Microsoft.Research.Vcc
   open Microsoft.Research.Vcc.Util
-  open Microsoft.Cci
 
   type Stopwatch(name:string) =
      let stopwatch = new System.Diagnostics.Stopwatch()
@@ -48,7 +47,7 @@ namespace Microsoft.Research.Vcc
        finally this.Stop()
        
     
-  module TransHelper =
+  module public TransHelper =
    
     let alwaysPureCallList =
                 [ 
@@ -238,7 +237,25 @@ namespace Microsoft.Research.Vcc
       static member Mk (name : string, f : Transformer) =
         { Name = name; Func = f; Enabled = true }
       
-    type TransEnv (hostEnv:ISourceEditHost, opts:VccOptions) =
+
+    [<AbstractClass>]
+    type public TransOptions() =
+      abstract TerminationForPure : bool with get
+      abstract TerminationForGhost : bool with get
+      abstract TerminationForAll : bool with get
+      abstract DefExpansionLevel : int with get
+      abstract YarraMode : bool with get
+      abstract DeterminizeOutput : bool with get
+      abstract OpsAsFunctions : bool with get
+      abstract PipeOperations : string seq with get
+      abstract DumpTriggers : int with get
+      abstract PrintCEVModel : bool with get
+      abstract ExplicitTargetsGiven : bool with get
+      abstract AggressivePruning : bool with get
+      abstract Functions : string seq with get
+
+    [<AbstractClass>]
+    type public TransEnv (opts:TransOptions) =
       inherit Helper.Env()
       let stopwatches = ref []
       let sw name = 
@@ -250,22 +267,14 @@ namespace Microsoft.Research.Vcc
       let swPruning = sw "Pruning"
       
       let errorReported = ref false
-      let oopsed = ref false
-      let currentId = ref 0
       let transformers = new GList<_>()
       let topDecls = ref []
       let times = new Dict<_,_>()
       let pureCalls = new Dict<_,_>()
       let dumpTime = ref false
-      let errorHandler (args:Microsoft.Cci.ErrorEventArgs) =
-        if !errorReported then ()
-        else
-          for msg in args.Errors do
-             if not msg.IsWarning then errorReported := true
              
       do
         List.iter (fun (n, s) -> pureCalls.Add ("_vcc_" + n, s)) alwaysPureCallList
-        hostEnv.Errors.Add errorHandler
      
       member this.Stopwatches = !stopwatches
       
@@ -281,50 +290,21 @@ namespace Microsoft.Research.Vcc
       member this.AddPureCall (name, signature) =
         pureCalls.[name] <- signature
 
-      override this.PointerSizeInBytes = opts.PointerSize / 8
-      
-      override this.Oops (tok:Token, msg:string) =
-        if not !errorReported then
-          oopsed := true
-          hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, 9600, "OOPS: " + msg, false))
-      
       override this.Die () : 'a =
         failwith "confused, will now die"
 
       override this.Die(tok : Token) : 'a =
         this.Oops(tok, "internal compiler error")
         this.Die()
-      
-      // see above
-      override this.Warning (tok:Token, code, msg:string, relatedTok) =        
-        if not (tok.SuppressWarning code) then
-          match relatedTok with
-            | None -> 
-              hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, true))
-            | Some related ->
-              hostEnv.ReportError (new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, true, (Seq.singleton (VisitorHelper.LocationFromToken related))))
-          
-      // 9601 <= code <= 9699
-      // see (and update) comments on the top of transformers.fs for the next available number
-      override this.Error (tok:Token, code, msg:string, relatedTok : Token option) =
-        let errorMsg = 
-          match relatedTok with
-          | None -> new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, false)
-          | Some relatedTok -> new TranslationMessage (VisitorHelper.LocationFromToken tok, code, msg, false, (Seq.singleton (VisitorHelper.LocationFromToken relatedTok)))       
-        hostEnv.ReportError (errorMsg)
-        
+                
       member this.Options =
         opts
       
-      member this.ErrorReported = !errorReported
+      abstract ErrorReported : bool with get  
+
+      abstract ShouldDumpStack : bool with get
       
-      member this.ShouldContinue = not !errorReported
-      
-      member this.ShouldDumpStack = not !errorReported || !oopsed
-      
-      member this.UniqueId () =
-        incr currentId
-        !currentId
+      member this.ShouldContinue = not this.ErrorReported
       
       member this.TopDecls = !topDecls
       
