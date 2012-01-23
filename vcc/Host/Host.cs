@@ -202,7 +202,7 @@ namespace Microsoft.Research.Vcc
         try
         {
           swPlugin.Start();
-          selectedPlugin.UseVccOptions(commandLineOptions);
+          selectedPlugin.UseOptions(new VccOptionWrapper(commandLineOptions));
           if (pluginName != null)
             selectedPlugin.UseCommandLineOptions(commandLineOptions.PluginOptions[pluginName]);
         }
@@ -393,7 +393,7 @@ namespace Microsoft.Research.Vcc
         try
         {
           swVisitor.Start();
-          helperenv = new Microsoft.Research.Vcc.TransHelper.TransEnv(hostEnvironment, commandLineOptions);
+          helperenv = new TransEnv(hostEnvironment, commandLineOptions);
           var visitor = new Microsoft.Research.Vcc.Visitor(assem.Compilation.ContractProvider, helperenv);
 
           if (commandLineOptions.VerificationLocation != null)

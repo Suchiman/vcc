@@ -49,7 +49,7 @@ namespace Microsoft.Research.Vcc
    abstract Help : unit -> string
    abstract IsModular : unit -> bool
    abstract UseCommandLineOptions : GList<string> -> unit
-   abstract UseVccOptions : VccOptions -> unit
+   abstract UseOptions : TransHelper.TransOptions -> unit
    // depending on IsModular one uses FunctionVerifier or method Verify
    abstract GetFunctionVerifier : string * TransHelper.TransEnv * list<Top> -> FunctionVerifier
    abstract Verify : string * TransHelper.TransEnv * list<Top> -> unit
@@ -58,7 +58,7 @@ namespace Microsoft.Research.Vcc
    default this.IsModular () = true
    default this.GetFunctionVerifier (_, _, _) = raise (System.NotImplementedException())
    default this.Verify (_, _, _) = raise (System.NotImplementedException())
-   default this.UseVccOptions _ = ()
+   default this.UseOptions _ = ()
 
 
    member this.MessageHandler = messageHandlerEvent.Publish
