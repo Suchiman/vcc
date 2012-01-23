@@ -236,7 +236,6 @@ module Microsoft.Research.Vcc.CAST
       mutable SizeOf: int;
       mutable IsNestedAnon: bool;
       mutable GenerateEquality: StructEqualityKind;
-      mutable GenerateFieldOffsetAxioms: bool;
       mutable IsSpec: bool;
       Parent : TypeDecl option;
       IsVolatile : bool
@@ -431,7 +430,6 @@ module Microsoft.Research.Vcc.CAST
               DataTypeOptions = []
               IsNestedAnon = false
               GenerateEquality = NoEq
-              GenerateFieldOffsetAxioms = false
               Parent = None
               IsVolatile = false
               IsSpec = true
