@@ -4,5 +4,6 @@ void foo(int *a) {
 	int b = *a;
 }
 `
-Verification of foo succeeded.
+Verification of foo failed.
+testcase(4,11) : error VC8512: Assertion 'a is thread local' did not verify.
 `
