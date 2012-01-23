@@ -1,0 +1,11 @@
+#include <vcc.h>
+
+typedef unsigned __int64 UINT64;
+
+void foo() {
+  _(assert \forall UINT64 i, j; 0 <= i)
+}
+
+`
+Verification of foo succeeded.
+`
