@@ -32,7 +32,49 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AbsInt">
+      <HintPath>..\Boogie\AbsInt.dll</HintPath>
+    </Reference>
+    <Reference Include="AIFramework">
+      <HintPath>..\Boogie\AIFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="BaseTypes">
+      <HintPath>..\Boogie\BaseTypes.dll</HintPath>
+    </Reference>
+    <Reference Include="CodeContractsExtender">
+      <HintPath>..\Boogie\CodeContractsExtender.dll</HintPath>
+    </Reference>
+    <Reference Include="Core">
+      <HintPath>..\Boogie\Core.dll</HintPath>
+    </Reference>
     <Reference Include="FSharp.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Graph">
+      <HintPath>..\Boogie\Graph.dll</HintPath>
+    </Reference>
+    <Reference Include="Houdini">
+      <HintPath>..\Boogie\Houdini.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Contracts">
+      <HintPath>..\Boogie\Microsoft.Contracts.dll</HintPath>
+    </Reference>
+    <Reference Include="Model">
+      <HintPath>..\Boogie\Model.dll</HintPath>
+    </Reference>
+    <Reference Include="ParserHelper">
+      <HintPath>..\Boogie\ParserHelper.dll</HintPath>
+    </Reference>
+    <Reference Include="Provers.Isabelle">
+      <HintPath>..\Boogie\Provers.Isabelle.dll</HintPath>
+    </Reference>
+    <Reference Include="Provers.Simplify">
+      <HintPath>..\Boogie\Provers.Simplify.dll</HintPath>
+    </Reference>
+    <Reference Include="Provers.SMTLib">
+      <HintPath>..\Boogie\Provers.SMTLib.dll</HintPath>
+    </Reference>
+    <Reference Include="Provers.Z3">
+      <HintPath>..\Boogie\Provers.Z3.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -40,9 +82,16 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="VCExpr">
+      <HintPath>..\Boogie\VCExpr.dll</HintPath>
+    </Reference>
+    <Reference Include="VCGeneration">
+      <HintPath>..\Boogie\VCGeneration.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CppDriver.cs" />
+    <Compile Include="PathHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TransEnv.cs" />
     <Compile Include="TransOptions.cs" />
@@ -55,6 +104,10 @@
     <ProjectReference Include="..\Transformers\Transformers.fsproj">
       <Project>{F55BA112-7817-4A9F-9250-7CDFECC1F2CE}</Project>
       <Name>Transformers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Translator\VccTranslator.fsproj">
+      <Project>{CDB01DBB-FD43-40F4-98F0-F5401E8C5919}</Project>
+      <Name>VccTranslator</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
