@@ -15,8 +15,8 @@ namespace Microsoft.Research.Vcc.Cpp
     {
       // reference these so they get copied to the output directory
       #pragma warning disable 168
-      var x = new Microsoft.Boogie.Z3.Factory();
-      var y = new Microsoft.Boogie.SMTLib.Factory();
+      var x = new Boogie.Z3.Factory();
+      var y = new Boogie.SMTLib.Factory();
       #pragma warning restore 168
     }
 
@@ -32,16 +32,14 @@ namespace Microsoft.Research.Vcc.Cpp
       string _preludePath = PathHelper.PreludePath("Vcc3Prelude.bpl");
 
       Program prelude;
-      int _errorCount = Boogie.Parser.Parse(_preludePath, new List<string>(), out prelude);
+      int _errorCount = Parser.Parse(_preludePath, new List<string>(), out prelude);
       if (prelude == null || _errorCount > 0)
       {
         env.Oops(Token.NoToken, "There were errors parsing Vcc3Prelude.bpl.");
         return new Program();
       }
-      else
-      {
-        return prelude;
-      }
+      
+      return prelude;
     }
 
     private Program TranslateToBoogie(FSharpList<CAST.Top> decls)
@@ -51,7 +49,7 @@ namespace Microsoft.Research.Vcc.Cpp
       if (!env.ShouldContinue) return null;
 
       // Translate to Boogie AST
-      var boogieDecls = Translator.translate(null, env, PreparePrelude, decls);
+      var boogieDecls = Translator.translate(null, env, PreparePrelude, tdecls);
       if (!env.ShouldContinue) return null;
 
       // Translate to BoogiePL
@@ -60,7 +58,7 @@ namespace Microsoft.Research.Vcc.Cpp
 
     private static void InstallBoogieOptions()
     {
-      var options = new string[]
+      var options = new[]
                       {
                         "/errorLimit:10",
                         "/typeEncoding:m",
