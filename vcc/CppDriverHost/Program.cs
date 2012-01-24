@@ -22,13 +22,7 @@ namespace Microsoft.Research.Vcc.Cpp
       var decls = FSharpList<CAST.Top>.Cons(fn, FSharpList<CAST.Top>.Empty);
 
       var driver = new CppDriver();
-      driver.Init();
-      var tdecls = driver.ApplyTransformers(decls);
-
-      foreach (var tdecl in tdecls)
-      {
-        Console.WriteLine(tdecl.ToString());
-      }
+      driver.Process(decls, @"\temp\out.bpl");
     }
   }
 }
