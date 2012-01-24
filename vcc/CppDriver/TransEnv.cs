@@ -1,8 +1,9 @@
 ﻿using System;
+using Microsoft.Boogie;
 
 namespace Microsoft.Research.Vcc.Cpp
 {
-  class TransEnv : TransHelper.TransEnv
+  class TransEnv : TransHelper.TransEnv, IErrorSink
   {
 
     public TransEnv() : base(new TransOptions()) {}
@@ -41,6 +42,12 @@ namespace Microsoft.Research.Vcc.Cpp
     public override void Warning(Token tok, int code, string msg, FSharp.Core.FSharpOption<Token> related)
     {
       Console.WriteLine("{0}({1},{2}): warning {3}: {4}", tok.Filename, tok.Line, tok.Column, code, msg);
+    }
+
+    public void Error(IToken tok, string msg)
+    {
+      errorReported = true;
+      Console.WriteLine("{0}({1},{2}): Boogie error: {3}", tok.filename, tok.line, tok.col, msg);
     }
   }
 }
