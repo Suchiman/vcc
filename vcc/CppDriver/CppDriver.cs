@@ -23,7 +23,6 @@ namespace Microsoft.Research.Vcc.Cpp
     public CppDriver()
     {
       CAST.PointerSizeInBytes.Value = env.PointerSizeInBytes;
-      InstallBoogieOptions();
       Transformers.init(env);
       Transformers.processPipeOptions(env);   
     }
@@ -67,9 +66,9 @@ namespace Microsoft.Research.Vcc.Cpp
                         "/typeEncoding:m",
                         "/proverMemoryLimit:0",
                         "/proverWarnings:1",
-                        "/z3opt:/memory:300",
                         "/liveVariableAnalysis:0",
                         "/prover:SMTLib",
+                        "/z3opt:/memory:300",
                         "/z3opt:QI_EAGER_THRESHOLD=1000",
                         "/z3opt:CASE_SPLIT=5"
                       };
@@ -104,6 +103,8 @@ namespace Microsoft.Research.Vcc.Cpp
       var verifierInput = new Program();
       verifierInput.TopLevelDeclarations.AddRange(prelude.TopLevelDeclarations);
       verifierInput.TopLevelDeclarations.AddRange(program.TopLevelDeclarations);
+
+      InstallBoogieOptions();
 
       // prepare for verification
       if (verifierInput.Resolve(this.env) > 0) return false;
