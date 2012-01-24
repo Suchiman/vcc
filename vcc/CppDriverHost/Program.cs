@@ -22,7 +22,8 @@ namespace Microsoft.Research.Vcc.Cpp
       var decls = FSharpList<CAST.Top>.Cons(fn, FSharpList<CAST.Top>.Empty);
 
       var driver = new CppDriver();
-      driver.Process(decls, @"\temp\out.bpl");
+      driver.WriteToBpl(decls, @"\temp\out.bpl");
+      driver.Verify(decls);
     }
   }
 }
