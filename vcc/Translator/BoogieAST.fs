@@ -174,7 +174,7 @@ namespace Microsoft.Research.Vcc
       member this.GetAddInfo () = ai           
       
     let noToken = Microsoft.Boogie.Token.NoToken
-    let tok t = new BoogieToken (t)
+    let tok t = new BoogieToken.Token (t)
       
     let trIdent id =    
       let res = Microsoft.Boogie.Expr.Ident(sanitize id, Microsoft.Boogie.Type.Int)
