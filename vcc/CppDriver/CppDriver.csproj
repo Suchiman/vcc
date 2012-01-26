@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{9E91E491-7791-4872-B937-F9719F15CE43}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Microsoft.Research.Vcc.Cpp</RootNamespace>
+    <AssemblyName>Microsoft.Research.Vcc.Cpp</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="AbsInt">
+      <HintPath>..\Boogie\AbsInt.dll</HintPath>
+    </Reference>
+    <Reference Include="AIFramework">
+      <HintPath>..\Boogie\AIFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="BaseTypes">
+      <HintPath>..\Boogie\BaseTypes.dll</HintPath>
+    </Reference>
+    <Reference Include="CodeContractsExtender">
+      <HintPath>..\Boogie\CodeContractsExtender.dll</HintPath>
+    </Reference>
+    <Reference Include="Core">
+      <HintPath>..\Boogie\Core.dll</HintPath>
+    </Reference>
+    <Reference Include="FSharp.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Graph">
+      <HintPath>..\Boogie\Graph.dll</HintPath>
+    </Reference>
+    <Reference Include="Houdini">
+      <HintPath>..\Boogie\Houdini.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Contracts">
+      <HintPath>..\Boogie\Microsoft.Contracts.dll</HintPath>
+    </Reference>
+    <Reference Include="Model">
+      <HintPath>..\Boogie\Model.dll</HintPath>
+    </Reference>
+    <Reference Include="ParserHelper">
+      <HintPath>..\Boogie\ParserHelper.dll</HintPath>
+    </Reference>
+    <Reference Include="Provers.Isabelle">
+      <HintPath>..\Boogie\Provers.Isabelle.dll</HintPath>
+    </Reference>
+    <Reference Include="Provers.Simplify">
+      <HintPath>..\Boogie\Provers.Simplify.dll</HintPath>
+    </Reference>
+    <Reference Include="Provers.SMTLib">
+      <HintPath>..\Boogie\Provers.SMTLib.dll</HintPath>
+    </Reference>
+    <Reference Include="Provers.Z3">
+      <HintPath>..\Boogie\Provers.Z3.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="VCExpr">
+      <HintPath>..\Boogie\VCExpr.dll</HintPath>
+    </Reference>
+    <Reference Include="VCGeneration">
+      <HintPath>..\Boogie\VCGeneration.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CppDriver.cs" />
+    <Compile Include="PathHelper.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TransEnv.cs" />
+    <Compile Include="TransOptions.cs" />
+    <Compile Include="VerificationErrorReporter.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ast\Ast.fsproj">
+      <Project>{C5203B00-B561-48F9-B56D-C4477A27EA01}</Project>
+      <Name>Ast</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Transformers\Transformers.fsproj">
+      <Project>{F55BA112-7817-4A9F-9250-7CDFECC1F2CE}</Project>
+      <Name>Transformers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Translator\VccTranslator.fsproj">
+      <Project>{CDB01DBB-FD43-40F4-98F0-F5401E8C5919}</Project>
+      <Name>VccTranslator</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
