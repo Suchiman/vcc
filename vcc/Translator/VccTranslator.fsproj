@@ -125,11 +125,6 @@
       <Project>{c5203b00-b561-48f9-b56d-c4477a27ea01}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Core\VccCore.csproj">
-      <Name>VccCore</Name>
-      <Project>{b855d039-8a27-419d-9a81-86ff93227e31}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\Transformers\Transformers.fsproj">
       <Name>Transformers</Name>
       <Project>{f55ba112-7817-4a9f-9250-7cdfecc1f2ce}</Project>
