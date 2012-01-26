@@ -47,7 +47,6 @@
     <Compile Include="..\Common\Include\Version.cs">
       <Link>Build\Version.cs</Link>
     </Compile>
-    <Compile Include="BoogieToken.cs" />
     <Compile Include="ObjectEqualityComparer.cs" />
     <Compile Include="SourceLocationWrapper.cs" />
     <Compile Include="TranslationMessage.cs" />
