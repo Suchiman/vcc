@@ -89,7 +89,7 @@ void ReferenceRundown(Rundown *r _(out \claim res) _(ghost \claim rdi))
   _(atomic r, rdi) {
     _(assume r->count < 0xffffffff)
     InterlockedIncrement(&r->count);
-     _(ghost res = \make_claim({r->self_claim}, r->count > 0 && (r->protected_obj)->\closed && \when_claimed(r->self_claim) == r->self_claim);)
+     _(ghost res = \make_claim({r->self_claim}, r->alive /* TODO <-- was needed with /2 */ && r->count > 0 && (r->protected_obj)->\closed && \when_claimed(r->self_claim) == r->self_claim);)
   }
 }
 
@@ -211,6 +211,7 @@ Resource *KillRundownContainerDead(RundownContainer *cont)
         _(begin_update)
         tmp = rd->self_claim;
         _(ghost rd->\owns -= rd->self_claim);
+        _(ghost rd->\owns -= rsc); // TODO the /2 version worked without this
         rd->alive = 0;
       }
       _(ghost \destroy_claim(tmp, {rd}));
