@@ -6,14 +6,11 @@ Preparation:
    VccDemo -> Properties -> Configuration Properties -> C/C++ -> General ->
    Additional Include Directories'.
 
-2. Examples are in VCC's new syntax.  Set "Verify -> Vcc Options... -> VCC
-   Language Version" to V2 (or use /2 as a VCC switch on the command-line).
-
-3. Open SpinLock.h and make sure that #define SIMPLE_SPIN_LOCKS has not been
+2. Open SpinLock.h and make sure that #define SIMPLE_SPIN_LOCKS has not been
    commented out.
 
-4. If you want to show how model inspection works, remove pre-condition
-   "  requires(access_claim != SpinLock->protected_obj) "
+3. If you want to show how model inspection works, remove pre-condition
+   "  _(requires access_claim != SpinLock->protected_obj)"
    from the Release function in the non-simple case.
 
 Basics:
@@ -29,9 +26,9 @@ Concurrency:
   - spec parameters
   - atomic writes (which do not require an unwrap)
   - ghost updates that happen instantaneous; the latter can be shown by moving
-    the set_closed_owner outside of the atomic block in the Release function,
-    which shows that the invariant is violated at the end of the
-    atomic block, which also shows up nicely in the error model
+    the ownership operation outside of the atomic block in the Release
+    function, which shows that the invariant is violated at the end of the atomic
+    block, which also shows up nicely in the error model
 
   The lock as it is there cannot really be used because we still need to have
   it wrapped (i.e., owned by the current thread) to use it, which defeats the
@@ -62,7 +59,7 @@ Claims:
    aliasing each other. Aha, the lock cannot be used to protect its own access
    claim - makes sense. Add
 
-   requires(access_claim != SpinLock->protected_obj)
+   _(requires access_claim != SpinLock->protected_obj)
 
    to the contract in SpinLock.h and the function verifies ok.
 
@@ -91,9 +88,8 @@ BinarySearch example demo macros
    Shift + D, 1' for step 1, etc.). Note: the 'Assign' button must be
    explicitly used to assign each shortcut.
 
-   VccDemo.vb should be started in the BinarySearch.c buffer. Set "Verify ->
-   Vcc Options... -> VCC Language Version" to V2. Start the demo with the reset
-   command, and then step through the other states.
+   VccDemo.vb should be started in the BinarySearch.c buffer. Start the demo
+   with the reset command, and then step through the other states.
 
    The buffer will be clobbered, but should end up in the original content if
    the VS text editor is configured as follows: in 'Tools -> Options -> Text
