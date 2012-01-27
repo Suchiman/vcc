@@ -158,6 +158,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("begin", TransHelper.DoNothing)
     helper.AddTransformer ("prune", TransHelper.Decl (pruneDecls helper))
 
+    MsCpp.init helper
     NewSyntax.init helper
     Normalizer.init helper
     DataTypes.init helper
