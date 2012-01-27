@@ -6,7 +6,7 @@ namespace Microsoft.Research.Vcc.Cpp
   class TransEnv : TransHelper.TransEnv, IErrorSink
   {
 
-    public TransEnv() : base(new TransOptions()) {}
+    public TransEnv(string [] pipeOperations) : base(new TransOptions(pipeOperations)) {}
 
     private bool errorReported;
 

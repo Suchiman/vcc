@@ -9,7 +9,7 @@ namespace Microsoft.Research.Vcc.Cpp
 {
   public class CppDriver
   {
-    private readonly TransEnv env = new TransEnv();
+    private readonly TransEnv env;
 
     static CppDriver()
     {
@@ -20,8 +20,9 @@ namespace Microsoft.Research.Vcc.Cpp
       #pragma warning restore 168
     }
 
-    public CppDriver()
+    public CppDriver(string[] pipeOperations)
     {
+      env = new TransEnv(pipeOperations);
       CAST.PointerSizeInBytes.Value = env.PointerSizeInBytes;
       Transformers.init(env);
       Transformers.processPipeOptions(env);   
