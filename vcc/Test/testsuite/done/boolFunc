@@ -1,0 +1,13 @@
+#include <vcc.h>
+
+_(pure) bool f();
+
+bool bar() 
+  _(ensures \result == f())
+{
+  return f();
+}
+
+`
+Verification of bar succeeded.
+`

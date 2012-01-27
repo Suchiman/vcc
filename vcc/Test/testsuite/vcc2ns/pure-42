@@ -1,0 +1,15 @@
+
+#include <vcc.h>
+#include <limits.h>
+
+_(logic bool foo(int a) = \forall int blob; a <= blob)
+
+int main()
+{
+_(assert \forall int blob; blob == INT_MIN ==> foo(blob))
+return 0;
+}
+
+`
+Verification of main succeeded.
+`
