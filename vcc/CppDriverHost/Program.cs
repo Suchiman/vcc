@@ -21,7 +21,7 @@ namespace Microsoft.Research.Vcc.Cpp
                             eel, eel, eel, eal, body, false, 0, 0, 0));
       var decls = FSharpList<CAST.Top>.Cons(fn, FSharpList<CAST.Top>.Empty);
 
-      var driver = new CppDriver();
+      var driver = new CppDriver(new string[] {"dump before begin"});
       driver.WriteToBpl(decls, @"\temp\out.bpl");
       driver.Verify(decls);
     }

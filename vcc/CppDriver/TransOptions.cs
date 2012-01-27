@@ -4,6 +4,13 @@ namespace Microsoft.Research.Vcc.Cpp
 {
   class TransOptions : TransHelper.TransOptions
   {
+    private readonly string[] pipeOperations;
+
+    public TransOptions(string[] pipeOperations)
+    {
+      this.pipeOperations = pipeOperations; 
+    }
+
     public override bool AggressivePruning
     {
       get { return false; }
@@ -41,7 +48,7 @@ namespace Microsoft.Research.Vcc.Cpp
 
     public override IEnumerable<string> PipeOperations
     {
-      get { return new string[] {}; }
+      get { return pipeOperations; }
     }
 
     public override bool PrintCEVModel
