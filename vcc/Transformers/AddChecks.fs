@@ -50,11 +50,6 @@ namespace Microsoft.Research.Vcc
                                 Prim (_, Op ("!", _), [CallMacro (_, "_vcc_closed", _, [_; This _])])), _) -> true
     | _ -> false
   
-  let isLemmaInv = function
-    | Macro(_, "labeled_invariant", [Macro(_, "lemma", []); i]) -> true
-    | _ -> false
-
-
   let init (helper:TransHelper.TransEnv) =
   
   
@@ -75,7 +70,7 @@ namespace Microsoft.Research.Vcc
           let body = splitConjunction keeps |> List.map updateFor |> List.concat
           if body.IsEmpty then acc
           else
-            If (bogusEC, None, pureEx cond, Expr.MkBlock (body @ [TransUtil.possiblyUnreachable]), Expr.MkBlock [TransUtil.possiblyUnreachable]) :: acc
+            If (bogusEC, None, pureEx cond, Expr.MkBlock (body @ [CAST.possiblyUnreachable]), Expr.MkBlock [CAST.possiblyUnreachable]) :: acc
         | e -> updateFor e @ acc
       List.fold addToOwns [] checks
     

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Microsoft.Research.Vcc
 {
-  class VccOptionWrapper : Microsoft.Research.Vcc.TransHelper.TransOptions
+  class VccOptionWrapper : Microsoft.Research.Vcc.Helper.Options
   {
     private readonly VccOptions options;
 
