@@ -88,42 +88,51 @@ void BakeryAcquire(Bakery *server, UINT idx _(ghost \claim sc))
     _(ghost cl->waiting = \true)
     _(ghost cl->checked = 0))
 
-  // wait until it's my turn - check that nobody is ahead of me
-  for (checked = 0; checked < N; checked++)
-    cl_coupling_invariant
-    _(invariant checked <= N)
+  _(requires \wrapped(sc) && \claims(sc, server->\closed))
+  _(requires idx < server->N && \wrapped(cl))
+  _(requires N == server->N)
+  _(requires \wrapped(cl) && cl->checked == 0 &&  cl->ticket == max && !cl->flag && cl->ticket > 0)
+  _(writes cl)
+  _(ensures serving(server, idx))
   {
-    Client *cc = &server->c[checked];  // next client to check
-    UINT other_ticket;          // his ticket
 
-    // wait for his flag to be down
-    while (1)
-        cl_coupling_invariant
-    {
-      _(atomic sc, server, cl, cc) {
-        flag = cc->flag;
-        if (!flag) {
-          _(ghost cl->waiting = \false)
-          _(bump_volatile_version cl)
-        }
-      }
-      if (!flag) break;
-    }
-
-    // wait until his ticket is 0 or is bigger than mine
-    while (1)
-      _(invariant !cl->waiting)
+    // wait until it's my turn - check that nobody is ahead of me
+    for (checked = 0; checked < N; checked++)
       cl_coupling_invariant
+      _(invariant checked <= N)
     {
-      _(atomic sc, server, cl, cc) {
-        other_ticket = cc->ticket;
-        _(ghost if (other_ticket == 0 || ticket_order(max, idx, other_ticket, checked)) {
-            cl->checked++;
-            cl->waiting = \true;
-            _(bump_volatile_version cl) })
-
+      Client *cc = &server->c[checked];  // next client to check
+      UINT other_ticket;          // his ticket
+  
+      // wait for his flag to be down
+      while (1)
+          cl_coupling_invariant
+      {
+        _(atomic sc, server, cl, cc) {
+          flag = cc->flag;
+          if (!flag) {
+            _(ghost cl->waiting = \false)
+            _(bump_volatile_version cl)
+          }
+        }
+        if (!flag) break;
       }
-      if (other_ticket == 0 || ticket_order(max, idx, other_ticket, checked)) break;
+  
+      // wait until his ticket is 0 or is bigger than mine
+      while (1)
+        _(invariant !cl->waiting)
+        cl_coupling_invariant
+      {
+        _(atomic sc, server, cl, cc) {
+          other_ticket = cc->ticket;
+          _(ghost if (other_ticket == 0 || ticket_order(max, idx, other_ticket, checked)) {
+              cl->checked++;
+              cl->waiting = \true;
+              _(bump_volatile_version cl) })
+  
+        }
+        if (other_ticket == 0 || ticket_order(max, idx, other_ticket, checked)) break;
+      }
     }
   }
 }
@@ -143,4 +152,5 @@ Verification of Client#adm succeeded.
 Verification of Bakery#adm succeeded.
 Verification of BakeryAcquire succeeded.
 Verification of BakeryRelease succeeded.
+Verification of BakeryAcquire#block#0 succeeded.
 `*/
