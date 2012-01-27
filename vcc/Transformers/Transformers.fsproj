@@ -63,6 +63,7 @@
     <Compile Include="AddChecks.fs" />
     <Compile Include="TransFinalize.fs" />
     <Compile Include="TransSideChecks.fs" />
+    <Compile Include="MsCpp.fs" />
     <Compile Include="transformers.fs" />
     <Compile Include="Plugin.fs" />
     <Compile Include="..\Common\Include\version.fs">
