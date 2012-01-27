@@ -49,7 +49,7 @@ namespace Microsoft.Research.Vcc
    abstract Help : unit -> string
    abstract IsModular : unit -> bool
    abstract UseCommandLineOptions : GList<string> -> unit
-   abstract UseOptions : TransHelper.TransOptions -> unit
+   abstract UseOptions : Helper.Options -> unit
    // depending on IsModular one uses FunctionVerifier or method Verify
    abstract GetFunctionVerifier : string * TransHelper.TransEnv * list<Top> -> FunctionVerifier
    abstract Verify : string * TransHelper.TransEnv * list<Top> -> unit
