@@ -32,9 +32,9 @@ _(volatile_owns) struct Stack {
     _(invariant \this->hd != NULL <==> \this->\owns != {})
     _(invariant \this->hd != NULL <==>\this->hd \in \this->\owns)
     _(invariant \this->hd != NULL ==>
-                  (\forall struct Node *x; {x \in \this->\owns}
-                    x \in \this->\owns ==> x->\valid && x->next != \this->hd)
-               && (\forall struct Node *x; {x->next \in \this->\owns}
+                  (\forall struct Node *x; //{x \in \this->\owns}
+                    x \in \this->\owns ==> /* x->\valid && */ x->next != \this->hd)
+               && (\forall struct Node *x; //{x->next \in \this->\owns}
                     x \in \this->\owns && x->next != NULL ==> x->next \in \this->\owns)
                && \forall struct Node *x; struct Node *y; {x->next, y->next}
                     x \in \this->\owns && y \in \this->\owns && x->next == y->next ==> x == y)

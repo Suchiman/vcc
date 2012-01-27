@@ -392,34 +392,6 @@
   </Fragment>
 
   <Fragment>
-    <DirectoryRef Id="dir99345CE680CD3E48ACDB9AB4212E4BD9BF9358B7" FileSource="$(var.RootDir)\vcc\Test\testsuite\examples">
-      <Component Id="sample99345CE680CD3E48ACDB9AB4212E4BD9BF9358B7" Guid="F43FC648-6671-46CD-8AD3-FCA335827B57"><!-- examples -->
-        <RemoveFolder Id="dir99345CE680CD3E48ACDB9AB4212E4BD9BF9358B7" On="uninstall" />
-        <RegistryValue Root="HKCU" Key="Software\Microsoft Research\Vcc" Name="sample99345CE680CD3E48ACDB9AB4212E4BD9BF9358B7" Type="integer" Value="1" KeyPath="yes" />
-        <File Id="fil3D09D585F11A45721C7366C075FF547CECA3C05B" Name="ArrayList.c" />
-        <File Id="filB96395FAD389D10A2AC44C50F075F2B2100577D7" Name="BitMap.c" />
-        <File Id="filD94FC747D70E2E07A62176D9674232A3971899EC" Name="ByteString.h" />
-        <File Id="filD8449D583680FDA4CE69C2013FEE8831217DB3D4" Name="ClaimOnGroup.c" />
-        <File Id="filC6ADFF8C735F4CD575B979E4CD8EFB6A8CD94812" Name="ClaimPassing.c" />
-        <File Id="filF6E0CC37C0B588297CEDD1937C589B1D3F6F69C1" Name="Handles.c" />
-        <File Id="fil8B7E779408762EE0461F1661824ED265145B3544" Name="Iterator.c" />
-        <File Id="fil35893E58E49771C481EAD73714BC3F3D70953F3C" Name="List.c" />
-        <File Id="fil3D792680F4A3F22FCB3C7D08AE886BA46D1FC127" Name="List.h" />
-        <File Id="filD005D5489976B59C3D6A50D6A6C2AA6E66FE1D68" Name="Lock.c" />
-        <File Id="fil6BAC81AEFB05120693AE5FB08994042FFE4B9866" Name="LockFreeIncr.c" />
-        <File Id="filBD911DBDBAECF26BF4268681A05FFA607195A514" Name="LockFreeStack.c" />
-        <File Id="fil96E5D62F71061FEA0C890756781FB534C3285EC7" Name="PageSet.c" />
-        <File Id="fil8C28119D955CDFF2FADF2815CA94E33F1DF2C6D1" Name="Reserve.c" />
-        <File Id="filEF0DAF4B1849D548FAEAF4DD08EE696A08AFEE9D" Name="Rundown.c" />
-        <File Id="filDF7C2A429DEEBE9795A47C7DADFFD4649FA9FDBC" Name="SingleList.c" />
-        <File Id="fil9A96A319E57282FF7BD17157EE91B78304F94BF7" Name="StackArray.c" />
-        <File Id="fil7315B3E5CD94576AB57E1AD012B7C5819678AD02" Name="StackAsArray.c" />
-        <File Id="fil6603B6D075FE7B5916BDA4B7A567F1411871E135" Name="VolatileAbstractState.c" />
-      </Component>
-    </DirectoryRef>
-  </Fragment>
-
-  <Fragment>
     <DirectoryRef Id="dir25C2175C5A169EAC7645F8C9DB37BEDA010997D8" FileSource="$(var.RootDir)\vcc\Test\testsuite\examples3">
       <Component Id="sample25C2175C5A169EAC7645F8C9DB37BEDA010997D8" Guid="CA76AB4B-25BB-4C19-8200-42446DFF52D5"><!-- examples3 -->
         <RemoveFolder Id="dir25C2175C5A169EAC7645F8C9DB37BEDA010997D8" On="uninstall" />
@@ -764,6 +736,9 @@
         <File Id="filCA7F1E06D6CD49A76CD7BA04DFCB6D9A655578E5" Name="blocks.ns-13" />
         <File Id="filC3754F45D378D91B40DC161DCF1A3A954721FA84" Name="blocks.ns-14" />
         <File Id="fil4F8AC024B4B5CEA82C68C444EECE243E48DEAC02" Name="blocks.ns-15" />
+        <File Id="fil705C8C715672A3112C03244FD870F813FC94738D" Name="blocks.ns-16" />
+        <File Id="filA629CF87DF6989F1C3EE61E8D05D72B843DF61BA" Name="blocks.ns-17" />
+        <File Id="fil474302BB53C36884D11C2AA6112E543CA08EF116" Name="blocks.ns-18" />
         <File Id="fil7027BE83D4E6688E65B641BF8F52F2BFEB337417" Name="bv_lemma-00" />
         <File Id="fil512AAD53206A57294D3EA7B1CCCC5ABE44CA097D" Name="bv_lemma-01" />
         <File Id="filF0A33A3981F5603049C9E6FAE74623023D1A12CF" Name="bv_lemma-02" />
@@ -1218,6 +1193,7 @@
         <File Id="fil2AAA54984EAB78C1546D2FC8EFB1BFA0C97AE797" Name="pure-40" />
         <File Id="filB4747AED8632CA5FEA4893DB0845CFB0021E7682" Name="pure-41" />
         <File Id="fil14BB14CC1874958A820012328389EC56DF45B361" Name="pure-42" />
+        <File Id="fil4627A6FA76A4D7F7AD2CA8F56B24FCBD6B8C5B55" Name="pure-43" />
         <File Id="fil623574B7527BA9EAE3E3FE39542688CE4E07D810" Name="quantRange.ns-00" />
         <File Id="fil76F549F361AC705DCDD733F53C4C53C12AA0C743" Name="quantRange.ns-01" />
         <File Id="fil334D62EBD7C64908F94B34C56C593DCEF10A1F52" Name="quantRange.ns-02" />
@@ -1363,6 +1339,7 @@
         <File Id="filCA4A89BACB0D753D8C6F32DFB613DE554EAEFB03" Name="unions.ns-12" />
         <File Id="fil4701D02E4AC3B0E019DF0F97F78D08C7D9974189" Name="unions.ns-13" />
         <File Id="filC956F69911407F97DDA8BCA4025AADF2DD74B5E8" Name="unions.ns-14" />
+        <File Id="filC4807CAC3282F0E533A321464FA8AB4601E6D8F1" Name="unions.ns-15" />
         <File Id="filD2AFCD8C369AED7B6BE1F1652378585E41463310" Name="unionsNeg.ns-00" />
         <File Id="fil3D27B69E258ACE32D0A4F2486CEA2B518C9CBE71" Name="unionsNeg.ns-01" />
         <File Id="fil262D354B0D40CC9889EDCBC7A591DBDB09B5B9B8" Name="unionsNeg.ns-02" />
@@ -1400,6 +1377,10 @@
         <File Id="filCDA1FAE955D9D9A9DDC3EC9384B5F097DE5E6046" Name="volatileVersion.ns-04" />
         <File Id="fil3E0867861213D19E9BE20C15A168E083ED05E298" Name="volatileVersion.ns-05" />
         <File Id="filA39898E9DF97EAF77AE764C15AD3E68A71831130" Name="volatileVersion.ns-06" />
+        <File Id="filFDFE93CEA45CA2989E671F4218AFC48301FB92D6" Name="writable-00" />
+        <File Id="fil002D59A33AD903D5393E8380C75591DC6E64BD4A" Name="writable-01" />
+        <File Id="filDD5296355FE5030AB9224141A68169DECF387D2E" Name="writable-02" />
+        <File Id="fil6B2AE9709035212CE21D74A6A2421F865636BA34" Name="writable-03" />
         <File Id="fil289AB10FD21AB0C5D6179C30EC64D5B58CD75E80" Name="writes.ns-00" />
         <File Id="filEAC6B5AA3EB703733A299423264205AF18533794" Name="writes.ns-01" />
         <File Id="fil98736AA335C9537EA7ED96528401F216FCF63BC0" Name="writes.ns-02" />
@@ -1525,6 +1506,7 @@
         <File Id="filDE91616DBAAAB676B574847E391880A9AE10BB95" Name="retype-00" />
         <File Id="filAD4E7ECFEB8FCBF2E47866F2806F21750A171964" Name="retype-01" />
         <File Id="fil4809256730FB64E02ADA526A4103FC7B65C135BD" Name="retype-and-valid" />
+        <File Id="fil1531D0CCDD3B746CFBEDC743E1A7D536DEB9EBF2" Name="set-closed-owner-timestamps" />
         <File Id="fil7297D05078CB003469ECCD71BB35284B10DAC0BB" Name="simple-00" />
         <File Id="filE1BA0700083870EF2A8E95EEDA649EF55576306D" Name="simple-01" />
         <File Id="filD218487AAC7226370D3F19E56A01047882CF36C4" Name="simple-02" />
@@ -1532,6 +1514,7 @@
         <File Id="fil3DAFB1187500BFA06EBCA2E890644575C38CCFAE" Name="simple-04" />
         <File Id="filE78C2DD34E0E3336CD723DFDF0800E3CAF0E3165" Name="simple-05" />
         <File Id="filB3135CF702574D7DBA7479700F4488B935297166" Name="simple-06" />
+        <File Id="filFBB4660CB158923E63395726EE496473063279D0" Name="skinnyExpose-06" />
         <File Id="filD2B269C057689AE7FAF68ED86C27DFAA1FD8EB10" Name="specOrPhysical-05" />
         <File Id="fil7FA66809F5C7CF89983FE753F240BFC9C9935C99" Name="stack_alloc_aliasing" />
         <File Id="filCDAE60EE49B1EFA4646DB0CDAEB9E27450AEDD6C" Name="start_here-01" />
@@ -1600,6 +1583,8 @@
         <File Id="fil31C2085403A810962CEE00A150D4E1B29798643C" Name="wrapped_with_deep_domain-0" />
         <File Id="fil175E13393E5771CD1D0F0B61725641621B3BF7E8" Name="wrapped_with_deep_domain-1" />
         <File Id="fil4196AA805D98C92C9E6E47888930D2B994D96005" Name="wrapped_with_deep_domain-2" />
+        <File Id="fil9D0C3FE6AA1B1C9D244742C05B11105216D6B49B" Name="wrap-timestamp-update-soundness-bug-dynamic_owns" />
+        <File Id="filBF10A27B5D71A75F53D148B3196531FA8BEF9EC0" Name="wrap-timestamp-update-soundness-bug-static_owns" />
         <File Id="filEE79BDF9AD774FDF429F31A442890D5EFE10FD67" Name="writes.ns-10" />
         <File Id="fil28135D1BB53A65AD3B643675CF5029588BB1C818" Name="writes-implies-non-null" />
         <File Id="fil4E2BA256550F356630A632A25A1233C40346AB81" Name="yarra-00" />
@@ -1656,6 +1641,7 @@
         <File Id="filF4E0A07C44025FC6B467CF9E6145BDEBC0976C97" Name="arraysNeg-07" />
         <File Id="fil22B3AD77139FE034F41DB33EF4FE292FEC391286" Name="arraysNeg-08" />
         <File Id="filEA86BB3919DE3B3E3CBF4F743409F331839BE14D" Name="as_array-00" />
+        <File Id="fil25333475B56023EEE0D4684AD0074E40E67ACE79" Name="as_array-02" />
         <File Id="fil1FDA7383D3083667D67554A2334FA29225DAF05A" Name="as_array-03" />
         <File Id="fil73AD6812D31F55FC88C7BAB16321FBFA6B6028BF" Name="as_array-05" />
         <File Id="fil327295F839A6447369C9B6938B6F27CAA300DBEB" Name="as_array-06" />
@@ -1810,6 +1796,8 @@
         <File Id="fil14A09343D4D89059B358ABF34E1A42F9145CB364" Name="blocks.ns-13" />
         <File Id="fil1EFD24FCCE78CA79DC0FB0B19B52E8C4942B2613" Name="blocks.ns-14" />
         <File Id="filD336C0E4C986127E34826FB444006E6AAA2F7CD6" Name="blocks.ns-15" />
+        <File Id="fil56EB9B9BDC54AF054C75B3CC48830D946258CF83" Name="blocks.ns-17" />
+        <File Id="filCE50E504B0983C002E7A1C499FCE0BAFFFAD0299" Name="blocks.ns-18" />
         <File Id="filE9B970BA723D41F721EAA21F96970A4911AA4C58" Name="bv_lemma-01" />
         <File Id="fil81DDF492D7F2DED114551D9B7C1FB3986F5B2F89" Name="bv_lemma-02" />
         <File Id="fil269EEA6AA82B431FD5DC27A8F9DBC4F725036297" Name="bv_lemma-03" />
@@ -2132,6 +2120,7 @@
         <File Id="fil941C72689D1ABFE3C0957E71AB514ED8220B995B" Name="packedFraming-04" />
         <File Id="filF43AEB5D45FB0EC0784BDEF10F278E17193571D1" Name="packedFraming-05" />
         <File Id="fil855AEF1375B7DB75D9EE5AE74F02F02014895F8B" Name="packedFraming-06" />
+        <File Id="filCB3FCA55DA3D7BC1232AFD632282BEEDDF476717" Name="packedFraming-07" />
         <File Id="fil6999060075D7A43B2419ED9EA0D69CA864C19742" Name="packedFraming-08" />
         <File Id="fil895A5F0A615E27F181AA8EA385BCA9B3F59DDAC5" Name="parameterPassing-00" />
         <File Id="filC1953AA51B8D594711C8AC6C3D67D9D0EC14969F" Name="parameterPassing-01" />
@@ -2213,6 +2202,7 @@
         <File Id="filE85D877A7B1F3724718E39377BED189488BD766F" Name="pure-39" />
         <File Id="filDF1AB792F3208AE60CFA9B731F432839FE659AEF" Name="pure-40" />
         <File Id="filB535B12C9FC38A4A4244F4A1DE8E85C1B3F03F93" Name="pure-41" />
+        <File Id="fil4C73ACD9D85B6D28CA3A6BA27F24F0AE59C04A28" Name="pure-43" />
         <File Id="fil304E2E690AC396D9E4E4EAFD59347A0DB74C572A" Name="quantRange.ns-00" />
         <File Id="fil863E55AC4129B65A007A9D8245C32A3914FA2947" Name="quantRange.ns-02" />
         <File Id="fil3290AFC9C4D2652DA9D316708270F1E202F09576" Name="quantRange.ns-03" />
@@ -2249,7 +2239,22 @@
         <File Id="filFE8A8A2F513A2773A11DE60085E30D83784EC85D" Name="shift.ns-00" />
         <File Id="filA4976904EC9F758340EE6D989EF601AE4CB626D9" Name="shift.ns-01" />
         <File Id="filC1064EC3207CBAA7BC2AA7314D80C69797A110FC" Name="shift.ns-02" />
+        <File Id="filB7BD4E82C2EEEF6C6B623BAE59970CB569C5A1C2" Name="skinnyExpose-00" />
         <File Id="fil56B6D76E5A3ADF514BE1898DD6E93C9D6AA862AD" Name="skinnyExpose-01" />
+        <File Id="fil26E5FCB2FC3FDE0D1FACB0937BBA82E2B8F31006" Name="skinnyExpose-02" />
+        <File Id="fil5C45B2E71120449F68ABB90D8C227658150C8EA8" Name="skinnyExpose-03" />
+        <File Id="filEAFE8C6159189BE59B5D0899DC3347E26B8B840C" Name="skinnyExpose-04" />
+        <File Id="fil25EFFB964C1965DFD1DF04566959EE40E299BE54" Name="skinnyExpose-05" />
+        <File Id="filCBA1826A7119045BCAEB2F603F87F1DF9436F82F" Name="skinnyExpose-07" />
+        <File Id="filE7114299A5637D3C5BD38330920B9915751F06DE" Name="skinnyExpose-08" />
+        <File Id="filD7EB32C458159B7F08124E24A8DBEAB6C8F2D5A7" Name="skinnyExpose-09" />
+        <File Id="fil600B5B17F223DB7931063DC2BDC5D08BEDBD50AF" Name="skinnyExpose-10" />
+        <File Id="fil866630AB7C0040780DDDA7F5A4F8079DEC108872" Name="skinnyExpose-11" />
+        <File Id="fil5F716AE0546E1007F5EE800F552A51852E9BB387" Name="skinnyExpose-12" />
+        <File Id="fil2B35B0D56AE1841F24A5152DF4AB6E1D4B9D967D" Name="skinnyExpose-13" />
+        <File Id="fil4B5FE739C70872990FD22EACEA428759673EB7AE" Name="skinnyExpose-14" />
+        <File Id="fil849A7E405364DE1A60E89DC63CBB05C795352230" Name="skinnyExpose-15" />
+        <File Id="filC3577BD328F7FA9C24920D1E9E57445D904FBF60" Name="skinnyExpose-16" />
         <File Id="filA39D38A5854699A762C3D1D7B85B5FDA5BDD5648" Name="skipsmoke-00" />
         <File Id="fil3105F36A7B02101D61B7DB54B25FDA2D1FF3D5CD" Name="skipverification-00" />
         <File Id="fil6F66AF85D8525567A97E62391E63C4AC3DAB76E2" Name="skipverification-01" />
@@ -2344,6 +2349,10 @@
         <File Id="filE97C84DCA09767937779D01D53108227FF367544" Name="volatileVersion.ns-04" />
         <File Id="fil310D002974BDB373A69F4E3E335087A31DB96299" Name="volatileVersion.ns-05" />
         <File Id="filF37FCBA1164990C6FD71F4A2E224996B2399CE07" Name="volatileVersion.ns-06" />
+        <File Id="fil4868C181AF8320A3B3E26CAD28C50131A48DCE9F" Name="writable-00" />
+        <File Id="fil31F14D8351AED1BD6214EB907B67038BC617C976" Name="writable-01" />
+        <File Id="fil1BCDE87086D0DC0D968378F2ED5E9A8E8C56B7B6" Name="writable-02" />
+        <File Id="fil6757CE9EF0ACC66AE45DB62B5F7FA6BA12D0134D" Name="writable-03" />
         <File Id="fil5396CBCAC8E97699315D16F5DCA12E96BC3AEF7D" Name="writes.ns-00" />
         <File Id="filA60498F5840CE76B125D258E6163928746A0AAF6" Name="writes.ns-01" />
         <File Id="filC5A7F0F37CD375793DBA6AFB97024DCB7407D444" Name="writes.ns-02" />
@@ -2386,7 +2395,6 @@
     <DirectoryRef Id="INSTALLLOCATION">
       <Directory Id="dirE52C854D5631EEC7468BA4727B4C77EB745F2965" Name="Demo" />
       <Directory Id="dirE5FD9CFE0E8039111D54B588E77B2BB0CAD41C3A" Name="done" />
-      <Directory Id="dir99345CE680CD3E48ACDB9AB4212E4BD9BF9358B7" Name="examples" />
       <Directory Id="dir25C2175C5A169EAC7645F8C9DB37BEDA010997D8" Name="examples3" />
       <Directory Id="dirE735D1D66F5FA9829033331B085384678DE5E713" Name="old_tutorial" />
       <Directory Id="dir2701A94C0EB55CBD958A87DFF3E959673FF1BF53" Name="Tutorial" />
@@ -2402,7 +2410,6 @@
     <ComponentGroup Id="all_samples">
       <ComponentRef Id="sampleE52C854D5631EEC7468BA4727B4C77EB745F2965" /> <!-- Demo -->
       <ComponentRef Id="sampleE5FD9CFE0E8039111D54B588E77B2BB0CAD41C3A" /> <!-- done -->
-      <ComponentRef Id="sample99345CE680CD3E48ACDB9AB4212E4BD9BF9358B7" /> <!-- examples -->
       <ComponentRef Id="sample25C2175C5A169EAC7645F8C9DB37BEDA010997D8" /> <!-- examples3 -->
       <ComponentRef Id="sampleE735D1D66F5FA9829033331B085384678DE5E713" /> <!-- old_tutorial -->
       <ComponentRef Id="sample2701A94C0EB55CBD958A87DFF3E959673FF1BF53" /> <!-- Tutorial -->
