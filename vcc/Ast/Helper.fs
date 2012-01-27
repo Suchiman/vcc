@@ -13,9 +13,26 @@ namespace Microsoft.Research.Vcc
   module Helper =
 
     [<AbstractClass>]
-    type public Env() =
+    type public Options() =
+      abstract TerminationForPure : bool with get
+      abstract TerminationForGhost : bool with get
+      abstract TerminationForAll : bool with get
+      abstract DefExpansionLevel : int with get
+      abstract YarraMode : bool with get
+      abstract DeterminizeOutput : bool with get
+      abstract OpsAsFunctions : bool with get
+      abstract PipeOperations : string seq with get
+      abstract DumpTriggers : int with get
+      abstract PrintCEVModel : bool with get
+      abstract ExplicitTargetsGiven : bool with get
+      abstract AggressivePruning : bool with get
+      abstract Functions : string seq with get
+
+    [<AbstractClass>]
+    type public Env(options:Options) =
 
       let currentId = ref 0
+      let pureCalls = new Dict<string,string>()
 
       abstract PointerSizeInBytes : int with get
 
@@ -24,6 +41,8 @@ namespace Microsoft.Research.Vcc
       abstract member Die : unit -> 'a
 
       abstract member Die : Token -> 'a
+
+      abstract ErrorReported : bool with get
 
       abstract member Error : Token * int * string * Token option -> unit
 
@@ -44,6 +63,16 @@ namespace Microsoft.Research.Vcc
         this.Oops (Token.NoToken, msg)
         this.Die ()
 
+      member this.Options = options
+   
       member this.UniqueId () =
         incr currentId
         !currentId
+
+      member this.PureCallSignature name =
+        match pureCalls.TryGetValue name with
+          | true, s -> Some s
+          | _ -> None
+      
+      member this.AddPureCall (name, signature) =
+        pureCalls.[name] <- signature

@@ -894,9 +894,9 @@ namespace Microsoft.Research.Vcc
       let maybeAdd = function
         | Top.FunctionDecl f ->
           let pref =
-            if TransUtil.hasCustomAttr AttrBoogie0 f.CustomAttr then ""
-            elif TransUtil.hasCustomAttr AttrBoogie1 f.CustomAttr then "S"
-            elif TransUtil.hasCustomAttr AttrBoogie2 f.CustomAttr then "sS"
+            if hasCustomAttr AttrBoogie0 f.CustomAttr then ""
+            elif hasCustomAttr AttrBoogie1 f.CustomAttr then "S"
+            elif hasCustomAttr AttrBoogie2 f.CustomAttr then "sS"
             else null
           if pref <> null then
             let sign = pref + (f.InParameters |> List.map (fun _ -> ".") |> String.concat "")

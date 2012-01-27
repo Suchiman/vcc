@@ -42,8 +42,8 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Util.fs" />
     <Compile Include="Token.fs" />
+    <Compile Include="Util.fs" />
     <Compile Include="CAST.fs" />
     <Compile Include="..\Common\Include\version.fs">
       <Link>version.fs</Link>

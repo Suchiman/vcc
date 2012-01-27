@@ -419,11 +419,11 @@ namespace Microsoft.Research.Vcc
     // Callback
     // -----------------------------------------------------------------------------------
     
-    type DummyOpt (prog:Boogie.Program, helper:TransHelper.TransEnv, options) =
+    type DummyOpt (prog:Boogie.Program, helper:Helper.Env, options) =
       inherit Passyficator(prog, helper, options)      
       override this.Optimize (proc:BlockProc) = ()
       
-    type Optimizer (prog:Boogie.Program, helper:TransHelper.TransEnv, options) =
+    type Optimizer (prog:Boogie.Program, helper:Helper.Env, options) =
       inherit Passyficator(prog, helper, options)
       
       override this.Optimize (proc:BlockProc) =

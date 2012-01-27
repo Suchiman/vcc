@@ -120,7 +120,7 @@ namespace Microsoft.Research.Vcc
       ([B.Stmt.VarDecl ((oldState, tpState), None);
         B.Stmt.Assign (er oldState, bState)], er oldState)
 
-    let translate functionToVerify (helper:TransHelper.TransEnv) (getPrelude:MyFunc<Microsoft.Boogie.Program>) decls =
+    let translate functionToVerify (helper:Helper.Env) (getPrelude:MyFunc<Microsoft.Boogie.Program>) decls =
       let ctx = TranslationState(helper)
       let helper = ctx.Helper
       let bv = BvTranslator(ctx)
@@ -1078,7 +1078,7 @@ namespace Microsoft.Research.Vcc
                 | _ -> objects
             let claim = "claim#" + (!claimId).ToString()
             incr claimId
-            let conditions = TransUtil.splitConjunction expr
+            let conditions = CAST.splitConjunction expr
             let inState = claimIn env (er claim)
             
             let didAlloc = bImpl (bNeq (er claim) (er "$no_claim"))
@@ -1261,8 +1261,8 @@ namespace Microsoft.Research.Vcc
                 let tok = afmtet obj.Token 8524 "chunk {0} of invariant of {1} holds after atomic" [e; obj]
                 B.Stmt.MkAssert (tok, trExpr env' e |> bSubst [("$_this", bobj)])
               td.Invariants 
-              |> List.filter (fun i -> not (AddChecks.isLemmaInv i)) 
-              |> List.map TransUtil.splitConjunction 
+              |> List.filter (fun i -> not (CAST.isLemmaInv i)) 
+              |> List.map CAST.splitConjunction 
               |> List.concat 
               |> List.map mkAssert
             | _ ->
@@ -1598,7 +1598,7 @@ namespace Microsoft.Research.Vcc
                 else [],[],env
               let s2 =
                 match s2 with                   
-                  | C.Expr.Comment(c, "empty") -> TransUtil.possiblyUnreachable
+                  | C.Expr.Comment(c, "empty") -> CAST.possiblyUnreachable
                   | _ -> s2
               captureState "" ec.Token ::
               B.Stmt.Comment ("if (" + c.ToString() + ") ...") ::
@@ -1760,7 +1760,7 @@ namespace Microsoft.Research.Vcc
             let parms = 
               (if header.IsStateless then [] else [bState]) @ [for tv in header.TypeParameters -> typeVarRef tv] 
                                                             @ [for v in header.InParameters -> varRef v]
-            let tok = TransUtil.afmtt header.Token 8022 "the pure function '{0}' is underspecified; please supply ensures(result == ...) contract matching the implementation" [header.Name]
+            let tok = CAST.afmtt header.Token 8022 "the pure function '{0}' is underspecified; please supply ensures(result == ...) contract matching the implementation" [header.Name]
             [B.FreeEnsures (bEq (er "$result") (bCall ("F#" + header.Name) parms))]
           else []
         let (writes, ensures) =
@@ -1828,7 +1828,7 @@ namespace Microsoft.Research.Vcc
           | t -> t
           
       let trField3 (td:C.TypeDecl) (f:C.Field) =
-        let isAsArray = TransUtil.hasCustomAttr C.AttrAsArray f.CustomAttr
+        let isAsArray = CAST.hasCustomAttr C.AttrAsArray f.CustomAttr
         let tdname = er ("^" + td.Name)
         let def =
           [B.Decl.Const ({ Name = fieldName f
@@ -1880,7 +1880,7 @@ namespace Microsoft.Research.Vcc
               allActive := union_active f :: !allActive
               bAnd (union_active f) eq
             else eq
-          let isAsArray = TransUtil.hasCustomAttr C.AttrAsArray f.CustomAttr
+          let isAsArray = CAST.hasCustomAttr C.AttrAsArray f.CustomAttr
           if f.Type.IsComposite || isAsArray then
             let dot = bCall "$dot" [er "p"; er (fieldName f)]
             if isAsArray || compositeFields f.Type |> List.exists (fun f -> f.Type.IsComposite) then
@@ -1942,7 +1942,7 @@ namespace Microsoft.Research.Vcc
         let fieldoff = bEq (bCall "$field_offset" [fieldRef]) (bInt f.ByteOffset)
         
         let isActive = bEq (bCall "$active_option" [s; p]) fieldRef
-        let noInline = if TransUtil.hasCustomAttr C.AttrAsArray f.CustomAttr then "no_inline_" else ""
+        let noInline = if CAST.hasCustomAttr C.AttrAsArray f.CustomAttr then "no_inline_" else ""
         let emb =
           match f.Type with
             | C.Array (_, sz) -> 
@@ -1981,7 +1981,7 @@ namespace Microsoft.Research.Vcc
           B.Decl.Axiom (bCall "$static_field_properties" [fieldRef; we]) ::
             match f.Type with
               | C.Array (t, sz) when not t.IsComposite ->
-                if TransUtil.hasCustomAttr C.AttrAsArray f.CustomAttr then
+                if CAST.hasCustomAttr C.AttrAsArray f.CustomAttr then
                   []
                 elif f.IsVolatile then
                   [B.Decl.Axiom (bCall "$is_primitive_embedded_volatile_array" [fieldRef; bInt sz; dott])]
@@ -2171,7 +2171,7 @@ namespace Microsoft.Research.Vcc
         let isUnion = td.Kind = C.Union
         let isComp (f:C.Field) =
           match f.Type with
-            | C.Array _ when TransUtil.hasCustomAttr C.AttrAsArray f.CustomAttr -> true
+            | C.Array _ when CAST.hasCustomAttr C.AttrAsArray f.CustomAttr -> true
             | _ -> f.Type.IsComposite
 
         let p = er "#p"
@@ -2267,7 +2267,7 @@ namespace Microsoft.Research.Vcc
             match fld.Type with
               | C.Array (t, sz) -> 
                 let add = [toTypeId t; bInt sz]
-                if TransUtil.hasCustomAttr C.AttrAsArray fld.CustomAttr then
+                if CAST.hasCustomAttr C.AttrAsArray fld.CustomAttr then
                   let args = (if meta then [s] else []) @ [q; bCall "$as_array" (dot :: add)]
                   bCall extentName args
                 else
@@ -2316,7 +2316,7 @@ namespace Microsoft.Research.Vcc
           let hasProp (fld:C.Field) dot =
             match fld.Type with
               | C.Array (t, sz) ->
-                if TransUtil.hasCustomAttr C.AttrAsArray fld.CustomAttr then
+                if CAST.hasCustomAttr C.AttrAsArray fld.CustomAttr then
                   prop (bCall "$as_array" [dot; toTypeId t; bInt sz])
                 else 
                   let idx = bCall "$idx" [dot; er "#i"; toTypeId t]
@@ -2621,7 +2621,7 @@ namespace Microsoft.Research.Vcc
           let fnconst = "cf#" + h.Name
           let defconst = B.Decl.Const { Unique = true; Name = fnconst; Type = B.Type.Ref "$pure_function" }
           let frameAxiom =
-            let containsGenerateFrameAxiom = TransUtil.hasCustomAttr C.AttrFrameaxiom h.CustomAttr
+            let containsGenerateFrameAxiom = CAST.hasCustomAttr C.AttrFrameaxiom h.CustomAttr
             if (not containsGenerateFrameAxiom) || h.IsStateless then 
               []
             else
@@ -2657,7 +2657,7 @@ namespace Microsoft.Research.Vcc
 
       let sanityChecks env (h:C.Function) =
         // we disable that by default for now, it seems to be too much of a hassle
-        if not (TransUtil.hasCustomAttr "postcondition_sanity" h.CustomAttr) then []
+        if not (CAST.hasCustomAttr "postcondition_sanity" h.CustomAttr) then []
         else
           let checks = List.map stripFreeFromEnsures h.Ensures
           match checks with
@@ -2831,7 +2831,7 @@ namespace Microsoft.Research.Vcc
                             Body = inState qd.Body
                             Condition =
                               match qd.Condition with
-                                | Some c -> Some (TransUtil.mkAnd goodState (inState c))
+                                | Some c -> Some (CAST.mkAnd goodState (inState c))
                                 | None -> Some goodState
                             Triggers = List.map (List.map inState) qd.Triggers }
                       C.Quant (ec, qd)
@@ -2875,4 +2875,4 @@ namespace Microsoft.Research.Vcc
 
         List.concat (archSpecific() @ res @ [tn; ctx.FlushDecls mapEqAxioms])
         
-      helper.SwTranslator.Run main ()
+      main()

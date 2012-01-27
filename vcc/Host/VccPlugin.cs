@@ -413,7 +413,7 @@ namespace Microsoft.Research.Vcc
         plugin.UseCommandLineOptions(p1);
     }
 
-    public override void UseOptions(TransHelper.TransOptions opts)
+    public override void UseOptions(Helper.Options opts)
     {
       options = ((VccOptionWrapper)opts).VccOptions;
     } 
@@ -435,6 +435,7 @@ namespace Microsoft.Research.Vcc
         if (env.Options.AggressivePruning && env.Options.Functions.Count() > 0) {
           decls = TransUtil.pruneBy(env, env.Options.Functions.First(), decls);
         }
+
         var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, decls);
         var p = TranslateToBoogie(boogieDecls);
         if (env.ShouldContinue) {

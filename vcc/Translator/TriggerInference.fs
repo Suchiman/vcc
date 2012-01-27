@@ -17,7 +17,7 @@ open System
 module C = Microsoft.Research.Vcc.CAST
 module B = Microsoft.Research.Vcc.BoogieAST
 
-type TriggerInference(helper:TransHelper.TransEnv, bodies:Lazy<list<ToBoogieAST.Function>>, quantTok:Token, invMapping:Dict<B.Expr,list<C.Expr>>, quantVars:list<B.Var>) =
+type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>, quantTok:Token, invMapping:Dict<B.Expr,list<C.Expr>>, quantVars:list<B.Var>) =
   let dbg = helper.Options.DumpTriggers >= 5
   let maxQuality = 4
   let quantVars = List.map fst quantVars // we don't care about the type

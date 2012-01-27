@@ -151,5 +151,4 @@ namespace Microsoft.Research.Vcc
       interface System.Collections.IEnumerable with
         member this.GetEnumerator() = l.GetEnumerator() :> System.Collections.IEnumerator
 
-    let ulist() = UniqueList<_>()
-    
+    let ulist() = UniqueList<_>()    
