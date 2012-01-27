@@ -2,7 +2,7 @@
 
 namespace Microsoft.Research.Vcc.Cpp
 {
-  class TransOptions : TransHelper.TransOptions
+  class TransOptions : Helper.Options
   {
     private readonly string[] pipeOperations;
 
