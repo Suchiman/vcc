@@ -845,10 +845,10 @@ namespace Microsoft.Research.Vcc
       let notdetJumpToLabels expr =      
         let rec nondetJumpToLabels' = function
         | [] ->  die()
-        | [lbl] -> Expr.MkBlock([TransUtil.possiblyUnreachable; Expr.Goto(bogusEC, lbl)])
+        | [lbl] -> Expr.MkBlock([CAST.possiblyUnreachable; Expr.Goto(bogusEC, lbl)])
         | lbl :: lbls ->
-          Expr.MkBlock([TransUtil.possiblyUnreachable; 
-                        Expr.If(bogusEC, None, Macro(boolBogusEC(), "*", []), Expr.MkBlock([TransUtil.possiblyUnreachable; Expr.Goto(bogusEC, lbl)]), nondetJumpToLabels' lbls)])
+          Expr.MkBlock([CAST.possiblyUnreachable; 
+                        Expr.If(bogusEC, None, Macro(boolBogusEC(), "*", []), Expr.MkBlock([CAST.possiblyUnreachable; Expr.Goto(bogusEC, lbl)]), nondetJumpToLabels' lbls)])
 
         nondetJumpToLabels' expr
 
@@ -899,7 +899,7 @@ namespace Microsoft.Research.Vcc
                     | lbls ->
                       let branches = notdetJumpToLabels lbls
                       //let branches' = Expr.MkBlock([TransUtil.possiblyUnreachable; branches])
-                      Expr.If(bogusEC, None, Expr.Prim(boolBogusEC(), Op("!", CheckedStatus.Processed), [exitStatus]), branches, TransUtil.possiblyUnreachable)
+                      Expr.If(bogusEC, None, Expr.Prim(boolBogusEC(), Op("!", CheckedStatus.Processed), [exitStatus]), branches, CAST.possiblyUnreachable)
                 Some(Expr.MkBlock(inits @ [exitStatus; labelBranches]))
         | _ as e -> None      
 

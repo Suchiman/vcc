@@ -13,33 +13,6 @@ namespace Microsoft.Research.Vcc
 
  module TransUtil =
 
-  // -----------------------------------------------------------------------------
-  // Message/token formatting
-  // -----------------------------------------------------------------------------
- 
-  let forwardingToken tok related (getmsg : unit -> string) =
-    { Token = (new ForwardingToken (tok, related, getmsg) :> Token)
-      Type = Type.Bool } : ExprCommon
-  
-  //
-  // "id" numbers
-  //      
-  // Verification errors:  between 8001 and 8499: First available: 8034
-  // Assertions:           between 8501 and 8999: First available: 8540
-  //
-
-  let afmt (id:int) fmt (args : list<string>) =
-    System.String.Format ("#VCCERR:{0:0000}#", id) +
-      System.String.Format (fmt, [| for a in args -> (a :> obj) |])
-
-  let afmtt tok id fmt args = forwardingToken tok None (fun () -> afmt id fmt args)
-  
-  let afmte id fmt (args : list<Expr>) =
-    forwardingToken args.Head.Token None (fun () -> afmt id fmt [ for a in args -> a.Token.Value ])
-  
-  let afmter id fmt primary related (args : list<Expr>) =
-    forwardingToken primary related (fun () -> afmt id fmt [ for a in args -> a.Token.Value ])
-
   let rec last = function
     | [x] -> x
     | _ :: xs -> last xs
@@ -70,8 +43,6 @@ namespace Microsoft.Research.Vcc
     let p = ignoreEffects p
     Expr.MkAssert (Expr.Macro (afmte id msg [p], name, [p]))
 
-  let possiblyUnreachable = Expr.MkAssert (Macro (boolBogusEC(), "_vcc_possibly_unreachable", []))
-  
   let addSuffix tok getsuff =
     forwardingToken tok None (fun () -> tok.Value + " " + getsuff())
     
@@ -134,14 +105,6 @@ namespace Microsoft.Research.Vcc
 
   let mkFieldRef (f:Field) = Macro ({ bogusEC with Type = Type.FieldT }, "field",  [Expr.UserData(bogusEC, f)]) 
   
-  let mkBoolOp str (args:list<Expr>) =
-    Prim ((List.head (List.rev args)).Common, Op(str, Processed), args)
-  let mkAnd a b = mkBoolOp "&&" [a; b]
-  let mkOr a b = mkBoolOp "||" [a; b]
-  let mkImpl a b = mkBoolOp "==>" [a; b]
-  let mkNot a = mkBoolOp "!" [a]
-  let mkEq a b = Expr.Prim(boolBogusEC(), Op.Op("==", CheckedStatus.Unchecked), [a; b])
-  
   let typeExpr t =
     let c = { ExprCommon.Bogus with Type = PhysPtr t } // ptr kind does not matter here because it will ve stripped of again later
     Expr.Macro ({ ExprCommon.Bogus with Type = Type.Math "\\type" }, "_vcc_typeof", [Expr.Cast (c, Processed, mkInt 0)])
@@ -154,29 +117,6 @@ namespace Microsoft.Research.Vcc
     | [x] -> x
     | x :: xs -> List.fold (boolOp "&&") x xs
       
-  let rec splitConjunctionEx keepLabels expr = 
-    let splitConjunction = splitConjunctionEx keepLabels
-    match expr with
-      | Macro (c, "labeled_invariant", [lab; i]) -> 
-        if keepLabels then
-          splitConjunction i |> List.map (fun i -> Macro (c, "labeled_invariant", [lab; i]))
-        else
-          splitConjunction i
-      | Macro (_, "ite", [a; b; EFalse])
-      | Prim (_, Op ("&&", _), [a; b]) -> (splitConjunction a) @ (splitConjunction b)
-      | Macro (_, "ite", [a; b; ETrue])
-      | Prim (_, Op ("==>", _), [a; b]) as expr ->
-        match splitConjunction b with
-          | [_] -> [expr]
-          | lst ->
-            let mkOne (e:Expr) =
-              let t = forwardingToken e.Token None (fun () -> a.Token.Value + " ==> " + e.Token.Value)
-              Prim ({ e.Common with Token = t.Token }, Op ("==>", Processed), [a; e])
-            List.map mkOne lst
-      | x -> [x]
-  
-  let splitConjunction = splitConjunctionEx false
-  
   let mapInvariants f decls =
     let fLab = function
       | Macro (c, "labeled_invariant", [lab; i]) -> 
@@ -322,8 +262,6 @@ namespace Microsoft.Research.Vcc
   let staticOwns (td:TypeDecl) = 
     List.forall (function VccAttr (AttrDynamicOwns, _) | VccAttr (AttrVolatileOwns, _) -> false | _ -> true) td.CustomAttr
   
-  let hasCustomAttr n = List.exists (function VccAttr (n', _) -> n = n' | _ -> false)
-
   let inheritedAttrs attrs = 
     let isInherited = function
       | VccAttr(AttrSkipVerification, _)

@@ -239,56 +239,29 @@ namespace Microsoft.Research.Vcc
       
 
     [<AbstractClass>]
-    type public TransOptions() =
-      abstract TerminationForPure : bool with get
-      abstract TerminationForGhost : bool with get
-      abstract TerminationForAll : bool with get
-      abstract DefExpansionLevel : int with get
-      abstract YarraMode : bool with get
-      abstract DeterminizeOutput : bool with get
-      abstract OpsAsFunctions : bool with get
-      abstract PipeOperations : string seq with get
-      abstract DumpTriggers : int with get
-      abstract PrintCEVModel : bool with get
-      abstract ExplicitTargetsGiven : bool with get
-      abstract AggressivePruning : bool with get
-      abstract Functions : string seq with get
-
-    [<AbstractClass>]
-    type public TransEnv (opts:TransOptions) =
-      inherit Helper.Env()
+    type public TransEnv (opts : Helper.Options) as this =
+      inherit Helper.Env(opts)
       let stopwatches = ref []
       let sw name = 
         let s = new Stopwatch (name)
         stopwatches := s :: !stopwatches
         s
+
       let swTransformers = sw "AST transformers"
-      let swTranslator = sw "BPL translation"
       let swPruning = sw "Pruning"
       
       let errorReported = ref false
       let transformers = new GList<_>()
       let topDecls = ref []
       let times = new Dict<_,_>()
-      let pureCalls = new Dict<_,_>()
       let dumpTime = ref false
              
       do
-        List.iter (fun (n, s) -> pureCalls.Add ("_vcc_" + n, s)) alwaysPureCallList
+        List.iter (fun (n, s) ->  this.AddPureCall("_vcc_" + n, s)) alwaysPureCallList
      
       member this.Stopwatches = !stopwatches
       
-      member this.SwTransformers = swTransformers
-      member this.SwTranslator = swTranslator
       member this.SwPruning = swPruning
-
-      member this.PureCallSignature name =
-        match pureCalls.TryGetValue name with
-          | true, s -> Some s
-          | _ -> None
-      
-      member this.AddPureCall (name, signature) =
-        pureCalls.[name] <- signature
 
       override this.Die () : 'a =
         failwith "confused, will now die"
@@ -297,11 +270,6 @@ namespace Microsoft.Research.Vcc
         this.Oops(tok, "internal compiler error")
         this.Die()
                 
-      member this.Options =
-        opts
-      
-      abstract ErrorReported : bool with get  
-
       abstract ShouldDumpStack : bool with get
       
       member this.ShouldContinue = not this.ErrorReported

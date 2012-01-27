@@ -55,10 +55,10 @@ namespace Microsoft.Research.Vcc
       !seen
     
     let afmte id msg exprs =
-      (TransUtil.afmte id msg exprs).Token
+      (CAST.afmte id msg exprs).Token
     
     let afmtet tok id msg (objs:list<C.Expr>) =
-      (TransUtil.forwardingToken tok None (fun () -> TransUtil.afmt id msg [ for o in objs -> o.Token.Value ])).Token
+      (CAST.forwardingToken tok None (fun () -> CAST.afmt id msg [ for o in objs -> o.Token.Value ])).Token
 
     let tpPtr = B.Type.Ref "$ptr"
     let tpPrimitive = B.Type.Ref "$primitive"
@@ -116,7 +116,7 @@ namespace Microsoft.Research.Vcc
       | x :: xs -> List.fold (fun acc e -> if e > acc then e else acc) x xs
       | [] -> 0
       
-    type TranslationState(helper:TransHelper.TransEnv) =
+    type TranslationState(helper:Helper.Env) =
       let quantVarTokens = new Dict<_,_>()
       let tokenConstantNames = new HashSet<_>()
       let tokenConstants = ref []
