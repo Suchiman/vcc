@@ -21,10 +21,10 @@ namespace Microsoft.Research.Vcc
   let prestate = Macro ({ bogusEC with Type = Type.MathState }, "prestate", [])
   
   let admChecks helper p =
-    AddChecks.invariantCheck helper (fun e -> not (AddChecks.isLemmaInv e)) (fun _ -> true) 8012 "is not admissible" prestate (mkRef p)
+    AddChecks.invariantCheck helper (fun e -> not (CAST.isLemmaInv e)) (fun _ -> true) 8012 "is not admissible" prestate (mkRef p)
 
   let lemmaChecks helper p =
-    AddChecks.invariantCheck helper AddChecks.isLemmaInv (fun _ -> true) 8033 "is not a lemma" prestate (mkRef p)
+    AddChecks.invariantCheck helper CAST.isLemmaInv (fun _ -> true) 8033 "is not a lemma" prestate (mkRef p)
   
   let unwrapChecks helper p =
     AddChecks.invariantCheck helper (fun _ -> true) (fun e -> not (AddChecks.isOnUnwrap e)) 8018 "forbids unwrapping" prestate (mkRef p)
@@ -269,7 +269,7 @@ namespace Microsoft.Research.Vcc
           expr
           
       let freebies, normals = f.Ensures |> List.partition (function CallMacro (_, "free_ensures", _, _) -> true | _ -> false)
-      f.Ensures <- freebies @ (normals |> List.map TransUtil.splitConjunction |> List.concat |> List.map checkOne)
+      f.Ensures <- freebies @ (normals |> List.map splitConjunction |> List.concat |> List.map checkOne)
       
       let gave = ref false
       let rec checkSub tok l =
