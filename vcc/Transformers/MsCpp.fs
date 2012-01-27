@@ -28,7 +28,7 @@ namespace Microsoft.Research.Vcc
       let handlePrePostIncrDecr e op isPost =
         let (init, tmp) = cache helper "incdec" e VarKind.Local
         let calc = Expr.Prim(e.Common, Op(op, CheckedStatus.Checked), [tmp; IntLiteral(e.Common, one)])
-        let assign = Macro({e.Common with Type = Type.Void}, "=", [e; calc])
+        let assign = Macro(e.Common, "=", [e; calc])
         if isPost then Expr.MkBlock(init @ [assign]) else Expr.MkBlock(init @ [assign; tmp])
 
       function
@@ -40,8 +40,6 @@ namespace Microsoft.Research.Vcc
 
         | _ -> None
     
-
-
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
