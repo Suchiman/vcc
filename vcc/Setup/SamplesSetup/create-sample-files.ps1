@@ -14,7 +14,6 @@ $samplesConfig = @{
   Tutorial=@("vcc/Docs/tutorial/c", "7E7B1920-5E02-4BBC-AB3F-8DDD689EFE63");
   done=@("vcc/Test/testsuite/done", "4EA5F34A-91E2-4AA0-850D-605D6D3121E8");
   examples3=@("vcc/Test/testsuite/examples3", "CA76AB4B-25BB-4C19-8200-42446DFF52D5");
-  examples=@("vcc/Test/testsuite/examples", "F43FC648-6671-46CD-8AD3-FCA335827B57");
   old_tutorial=@("vcc/Test/testsuite/old_tutorial", "B112E30E-253B-4050-9C73-7B5230CD4DBC");
   "vacid-0"=@("vcc/Test/testsuite/vacid-0", "D5500B06-A1FC-4A84-BB3C-10CAA51AC5D6");
   vcc2=@("vcc/Test/testsuite/vcc2ns", "E29B977C-9E77-4697-94E8-5A5BB4420496");
