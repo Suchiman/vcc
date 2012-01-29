@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 typedef _(claimable) struct _a{

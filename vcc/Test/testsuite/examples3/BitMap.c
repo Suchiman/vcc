@@ -1,4 +1,3 @@
-//`/newsyntax
 #include <vcc.h>
 
 typedef unsigned __int64 UINT64;
@@ -89,7 +88,7 @@ UINT64 Add64(UINT64 x, UINT64 n)
   return x | (1UI64 << n);
 }
 
-bool InSet64(UINT64 x, UINT64 n)
+int InSet64(UINT64 x, UINT64 n)
   _(requires n < 64)
   _(ensures \result == ToBm64(x)[n])
 {
@@ -110,7 +109,7 @@ UINT32 Add32(UINT32 x, UINT64 n)
   return x | (1UI32 << n);
 }
 
-bool InSet32(UINT32 x, UINT64 n)
+int InSet32(UINT32 x, UINT64 n)
   _(requires n < 32)
   _(ensures \result == ToBm32(x)[n])
 {
@@ -172,7 +171,7 @@ typedef struct _toto {
     UINT64 inti;
     }toto, *ptoto;
 
-bool
+int
 test(ptoto ob)
 _(requires \wrapped(ob))
 _(requires ob->inti==0)

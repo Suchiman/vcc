@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 // conversion from Boolean to other integral types.
 int main()

@@ -1,4 +1,4 @@
-`/smoke /newsyntax
+`/smoke 
 #include "vcc.h"
 
 int foo(int *i, int *j) 

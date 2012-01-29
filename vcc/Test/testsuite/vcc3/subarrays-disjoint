@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 void test(int *p, int *q, size_t l) {
   _(assume \arrays_disjoint(p,l,q,l) && l>10)

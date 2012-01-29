@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc2test.h>
 
 typedef  _(claimable) struct { int dummy; } Seal;

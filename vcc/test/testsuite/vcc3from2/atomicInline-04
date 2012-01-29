@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 _(pure) _(atomic_inline) void foo();

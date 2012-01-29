@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 __declspec(align(2)) struct S { __int32 x; };

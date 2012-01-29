@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 _(ghost _(pure) bool m1(unsigned i) _(returns \true))

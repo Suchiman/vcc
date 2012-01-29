@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 _(abstract \integer size() { return 42; })

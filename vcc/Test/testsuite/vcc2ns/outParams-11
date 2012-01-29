@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 _(ghost int foo(int x, int y _(out int o1) _(out int o2))

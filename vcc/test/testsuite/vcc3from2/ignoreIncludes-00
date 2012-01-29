@@ -1,4 +1,4 @@
-`/ignoreincludes /newsyntax
+`/ignoreincludes 
 
 #include <vcc.h>
 #include "ignoreIncludes.h"

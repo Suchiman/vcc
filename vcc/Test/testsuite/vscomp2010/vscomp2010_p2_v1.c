@@ -1,4 +1,3 @@
-//`/newsyntax
 #include <vcc.h>
 #ifndef VERIFY
 #include <stdio.h>

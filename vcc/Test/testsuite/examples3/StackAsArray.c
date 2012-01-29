@@ -1,6 +1,11 @@
-//`/newsyntax
 #include <stdlib.h>
 #include <limits.h>
+
+#ifdef VERIFY
+#define speccast(_TYPE_, _EXPR_) ((_TYPE_)(_EXPR_))
+#else
+#define speccast(_TYPE_, _EXPR_) (_EXPR_)
+#endif
 
 #include <vcc.h>
 
@@ -101,7 +106,7 @@ void DisposeStack(struct Stack *S)
     _(assert S->elementsAsArray \in \domain(S))
     _(unwrap S)
     _(unwrap S->elementsAsArray)
-    free((void*) (void[S->capacity])(S->elements));
+    free((void*) speccast(void[S->capacity], S->elements));
     _(unwrap S->abs)
     free(S);
 }

@@ -1,4 +1,4 @@
-`/newsyntax /yarra
+` /yarra
 #include <vcc.h>
 
 _(yarra) struct Token {

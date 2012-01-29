@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 typedef unsigned char *PUINT8;
 

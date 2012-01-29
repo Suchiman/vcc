@@ -1,4 +1,4 @@
-`/newsyntax /ps:32
+` /ps:32
 
 #include <vcc.h>
 

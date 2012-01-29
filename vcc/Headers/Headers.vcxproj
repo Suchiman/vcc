@@ -74,15 +74,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="vcc.h" />
-    <ClInclude Include="vcc2.h" />
     <ClInclude Include="vcc2test.h" />
     <ClInclude Include="vccp.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Vcc3Prelude.bpl">
-      <DeploymentContent>true</DeploymentContent>
-    </None>
-    <None Include="VccPrelude.bpl">
       <DeploymentContent>true</DeploymentContent>
     </None>
   </ItemGroup>

@@ -1,4 +1,4 @@
-`/newsyntax /pointersize:32
+` /pointersize:32
 #include <vcc.h>
 #include <stdint.h>
 

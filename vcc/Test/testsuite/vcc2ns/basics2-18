@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 typedef unsigned __int8 uint8_t;
 int ToBm8(uint8_t n);

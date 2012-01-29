@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 void __int2c(void);

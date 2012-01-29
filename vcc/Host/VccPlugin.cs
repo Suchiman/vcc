@@ -10,7 +10,7 @@ namespace Microsoft.Research.Vcc
   public abstract class VCGenPlugin
   {
     public abstract string Name { get; }
-    public abstract VC.ConditionGeneration.Outcome VerifyImpl(Helper.Env env, VC.VCGen vcgen, Implementation impl, Program prog, VerifierCallback reporter);
+    public abstract VC.ConditionGeneration.Outcome VerifyImpl(TransHelper.TransEnv env, VC.VCGen vcgen, Implementation impl, Program prog, VerifierCallback reporter);
     public abstract void UseCommandLineOptions(List<string> opts);
   }
 
@@ -18,13 +18,12 @@ namespace Microsoft.Research.Vcc
   {
     readonly Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls;
     readonly VccPlugin parent;
-    readonly Helper.Env env;
+    readonly TransHelper.TransEnv env;
     Boogie.Program currentBoogie;
     bool mustRegenerateBoogie = true;
     VC.VCGen vcgen;
     bool errorMode;
     int modelCount;
-    VcOpt.Optimizer vcopt;
     readonly List<string> options = new List<string>();
     readonly string[] standardBoogieOptions = new[] { 
       // report up to 10 errors
@@ -43,7 +42,7 @@ namespace Microsoft.Research.Vcc
       // "/prover:Z3",
     };
         
-    internal VccFunctionVerifier(VccPlugin parent, Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls, Helper.Env env)
+    internal VccFunctionVerifier(VccPlugin parent, Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls, TransHelper.TransEnv env)
       : base(env, currentDecls)
     {
       this.currentDecls = currentDecls;
@@ -61,12 +60,6 @@ namespace Microsoft.Research.Vcc
     {
       base.Close();
       CloseVcGen();
-      if (modelCount > 0 && parent.options.RunModelViewer && parent.ModelFileName != null) {
-        var p = new System.Diagnostics.Process();
-        p.StartInfo = new System.Diagnostics.ProcessStartInfo(PathHelper.ModelViewerPath, PathHelper.Quote(parent.ModelFileName));
-        p.StartInfo.UseShellExecute = false;
-        p.Start();
-      }
     }
 
     private static string/*?*/ GetStringAttrValue(Implementation impl, string attrName) {
@@ -105,13 +98,8 @@ namespace Microsoft.Research.Vcc
         options.Add(PathHelper.InspectorOption);
 
       options.AddRange(standardBoogieOptions);
-      if (parent.options.Vcc3) {
-        options.Add("/z3opt:QI_EAGER_THRESHOLD=1000");
-      }
-      if (parent.ModelFileName != null) {
-        options.Add("/printModel:1");
-        options.Add("/printModelToFile:" + parent.ModelFileName);
-      }
+      options.Add("/z3opt:QI_EAGER_THRESHOLD=1000");
+
       if (parent.BvdModelFileName != null) {
         options.Add("/mv:" + parent.BvdModelFileName);
       }
@@ -210,6 +198,8 @@ namespace Microsoft.Research.Vcc
         if (isBvLemmaCheck) {
           effectiveOptions.Add("/proverOpt:OPTIMIZE_FOR_BV=true");
           effectiveOptions.Add("/z3opt:CASE_SPLIT=1");
+        } else {
+          effectiveOptions.Add("/z3opt:CASE_SPLIT=5");
         }
 
         if (skipSmoke) {
@@ -245,9 +235,6 @@ namespace Microsoft.Research.Vcc
 
       try {
         parent.swVcOpt.Start();
-        if (vcopt != null) {
-          impl = vcopt.RoundTrip(impl);
-        }
       } finally {
         parent.swVcOpt.Stop();
       }
@@ -371,17 +358,7 @@ namespace Microsoft.Research.Vcc
             boogieProgram.Emit(writer);
         }
         errorMode = true;
-      } else {
-        if (parent.options.VcOpt.Count > 0) {
-          try {
-            parent.swVcOpt.Start();
-            vcopt = new VcOpt.Optimizer(currentBoogie, env, Microsoft.FSharp.Collections.ListModule.OfSeq(parent.options.VcOpt));
-            vcopt.RemoveExpansionAxioms();
-          } finally {
-            parent.swVcOpt.Stop();
-          }
-        }
-      }
+      } 
 
       return boogieProgram;
 
@@ -391,7 +368,6 @@ namespace Microsoft.Research.Vcc
   internal class VccPlugin : Plugin
   {
     internal VccOptions options;
-    internal string ModelFileName;
     internal string BvdModelFileName;
     internal VCGenPlugin plugin;
 
@@ -437,9 +413,9 @@ namespace Microsoft.Research.Vcc
         plugin.UseCommandLineOptions(p1);
     }
 
-    public override void UseVccOptions(VccOptions opts)
+    public override void UseOptions(Helper.Options opts)
     {
-      options = opts;
+      options = ((VccOptionWrapper)opts).VccOptions;
     } 
 
     public override bool IsModular()
@@ -448,7 +424,7 @@ namespace Microsoft.Research.Vcc
       else return true;
     }
 
-    public override void Verify(string fileName, Helper.Env env, Microsoft.FSharp.Collections.FSharpList<CAST.Top> decls)
+    public override void Verify(string fileName, TransHelper.TransEnv env, Microsoft.FSharp.Collections.FSharpList<CAST.Top> decls)
     {
       // this really only dumps the code to the .bpl file
       Init(env, fileName);
@@ -456,9 +432,10 @@ namespace Microsoft.Research.Vcc
       if (options.NoVerification) return;
 
       if (env.ShouldContinue) {
-        if (env.Options.AggressivePruning && env.Options.Functions.Count > 0) {
-          decls = TransUtil.pruneBy(env, env.Options.Functions[0], decls);
+        if (env.Options.AggressivePruning && env.Options.Functions.Count() > 0) {
+          decls = TransUtil.pruneBy(env, env.Options.Functions.First(), decls);
         }
+
         var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, decls);
         var p = TranslateToBoogie(boogieDecls);
         if (env.ShouldContinue) {
@@ -485,7 +462,7 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    private void Init(Helper.Env env, string filename)
+    private void Init(TransHelper.TransEnv env, string filename)
     {
       RegisterStopwatches();
       foreach (var s in env.Stopwatches)
@@ -493,12 +470,11 @@ namespace Microsoft.Research.Vcc
 
       Transformers.init(env);
       Transformers.processPipeOptions(env);
-      options = env.Options;
-      this.ModelFileName = options.SaveModel ? AddOutputDirIfRequested(Path.ChangeExtension(filename, "vccmodel")) : null;
+      options = ((VccOptionWrapper)env.Options).VccOptions;
       this.BvdModelFileName = options.SaveModelForBvd ? AddOutputDirIfRequested(Path.ChangeExtension(filename, "model")) : null;
     }
 
-    public override FunctionVerifier GetFunctionVerifier(string fileName, Helper.Env env, Microsoft.FSharp.Collections.FSharpList<CAST.Top> decls)
+    public override FunctionVerifier GetFunctionVerifier(string fileName, TransHelper.TransEnv env, Microsoft.FSharp.Collections.FSharpList<CAST.Top> decls)
     {
       Init(env, fileName);
       decls = env.ApplyTransformers(decls);

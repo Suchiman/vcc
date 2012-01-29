@@ -1,4 +1,3 @@
-//`/newsyntax
 #include "02_rand.c"
 
 /*{begin}*/

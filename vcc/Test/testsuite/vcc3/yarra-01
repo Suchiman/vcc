@@ -1,4 +1,4 @@
-`/newsyntax /yarra
+` /yarra
 #include <vcc.h>
 
 typedef _(yarra) struct 

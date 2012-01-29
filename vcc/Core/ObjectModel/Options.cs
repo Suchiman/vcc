@@ -29,33 +29,21 @@ namespace Microsoft.Research.Vcc
     public List<string> FunctionsWithExactName = new List<string>();
     public bool RunningFromCommandLine;
     public uint? VerifyUpToLine;
-    public bool EagerTranslation;
-    public bool OmitReadWriteChecking;
     public bool RunInBatchMode;
-    public bool ModifiedPreprocessorFiles;
     public Dictionary<long, bool> DisabledWarnings = new Dictionary<long, bool>();
     public bool AggressivePruning;
     public List<string> PipeOperations = new List<string>();
-    public List<string> VcOpt = new List<string>();
     public Dictionary<string, List<string>> PluginOptions = new Dictionary<string, List<string>>();
     public bool DumpBoogie;
-    public bool GenerateFieldOffsetAxioms = true;
     public bool WarningsAsErrors;
     public int WarningLevel = 1;
     public bool DebugOnWarningOrError;
-    public bool SaveModel;
     public bool SaveModelForBvd;
-    public bool RunModelViewer;
     public bool RunInspector;
     public bool DetailedTimes;
     public bool PrintCEVModel;
     public int PointerSize = 64;
-    public bool NewSyntax;
-    public bool DetectSyntax;
-    public bool Vcc3;
     public bool YarraMode;
-    public string PreludePath = "VccPrelude.bpl"; // we might want an option for setting it
-    public bool InferTriggers;
     public int DumpTriggers; // 0-none, 1-C syntax, 2-C+Boogie syntax
     public bool KeepPreprocessorFiles;
     public bool OpsAsFunctions;
@@ -95,7 +83,6 @@ namespace Microsoft.Research.Vcc
       this.Functions.Clear(); this.Functions.AddRange(other.Functions);
       this.FunctionsWithExactName.Clear(); this.FunctionsWithExactName.AddRange(other.FunctionsWithExactName);
       this.PipeOperations.Clear(); this.PipeOperations.AddRange(other.PipeOperations);
-      this.VcOpt.Clear(); this.VcOpt.AddRange(other.VcOpt);
 
       this.DisabledWarnings.Clear();
       foreach (var kv in other.DisabledWarnings)
@@ -113,31 +100,20 @@ namespace Microsoft.Research.Vcc
       this.ClPath = other.ClPath;
       this.RunningFromCommandLine = other.RunningFromCommandLine;
       this.VerifyUpToLine = other.VerifyUpToLine;
-      this.EagerTranslation = other.EagerTranslation;
-      this.OmitReadWriteChecking = other.OmitReadWriteChecking;
       this.RunInBatchMode = other.RunInBatchMode;
-      this.ModifiedPreprocessorFiles = other.ModifiedPreprocessorFiles;
       this.AggressivePruning = other.AggressivePruning;
       this.DumpBoogie = other.DumpBoogie;
-      this.GenerateFieldOffsetAxioms = other.GenerateFieldOffsetAxioms;
       this.WarningsAsErrors = other.WarningsAsErrors;
       this.WarningLevel = other.WarningLevel;
       this.DebugOnWarningOrError = other.DebugOnWarningOrError;
-      this.SaveModel = other.SaveModel;
       this.SaveModelForBvd = other.SaveModelForBvd;
-      this.RunModelViewer = other.RunModelViewer;
       this.RunInspector = other.RunInspector;
       this.DetailedTimes = other.DetailedTimes;
       this.PrintCEVModel = other.PrintCEVModel;
       this.PointerSize = other.PointerSize;
-      this.NewSyntax = other.NewSyntax;
-      this.Vcc3 = other.Vcc3;
-      this.PreludePath = other.PreludePath;
-      this.InferTriggers = other.InferTriggers;
       this.DumpTriggers = other.DumpTriggers;
       this.KeepPreprocessorFiles = other.KeepPreprocessorFiles;
       this.OpsAsFunctions = other.OpsAsFunctions;
-      this.DetectSyntax = other.DetectSyntax;
       this.OutputDir = other.OutputDir;
       this.VerificationLocation = other.VerificationLocation;
       this.YarraMode = other.YarraMode;
@@ -160,15 +136,6 @@ namespace Microsoft.Research.Vcc
 
     private static void CheckOptions(MetadataHostEnvironment hostEnvironment, VccOptions options)
     {
-      if (options.Vcc3 && options.SaveModel) {
-        options.SaveModel = false;
-        options.PrintCEVModel = true;
-        options.SaveModelForBvd = true;
-      }
-
-      if (!options.Vcc3)
-        options.TerminationLevel = 0;
-
       if (options.RunTestSuite &&
           options.RunTestSuiteMultiThreaded != -1 &&
           !String.IsNullOrEmpty(options.XmlLogFile)) {
@@ -243,25 +210,7 @@ namespace Microsoft.Research.Vcc
       this.options.HandledOptions.Add(arg);
       ch = arg[1];
       switch (ch)
-      {
-        case '2':
-          bool? vcc2 = this.ParseNamedBoolean(arg, "2", "2");
-          if (vcc2 != null) {
-            this.options.NewSyntax = vcc2.Value;
-            return true;
-          }
-          return false;
-        case '3':
-          bool? vcc3 = this.ParseNamedBoolean(arg, "3", "3");
-          if (vcc3 != null) {
-            this.options.Vcc3 = vcc3.Value;
-            this.options.PreludePath = "Vcc3Prelude.bpl";
-            this.options.InferTriggers = true;
-            this.options.NewSyntax = true;
-            this.options.Z3Options.Add("CASE_SPLIT=5");
-            return true;
-          }
-          return false;
+      {          
         case 'a':
           bool? aggressivePruning = this.ParseNamedBoolean(arg, "aggressivepruning", "a");
           if (aggressivePruning != null) {
@@ -285,11 +234,6 @@ namespace Microsoft.Research.Vcc
           this.options.BoogieOptions.AddRange(boogieOptions);
           return true;
         case 'c':
-          bool? checkedArithmetic = this.ParseNamedBoolean(arg, "checked", "c");
-          if (checkedArithmetic != null) {
-            this.options.CheckedArithmetic = checkedArithmetic.Value;
-            return true;
-          }
           string /*?*/ clPath = this.ParseNamedArgument(arg, "clpath", "clpath");
           if (clPath != null) {
             this.options.ClPath = clPath;
@@ -331,24 +275,9 @@ namespace Microsoft.Research.Vcc
           }
 
           return
-            this.TryParseNamedBoolean(arg, "detectsyntax", "ds", ref this.options.DetectSyntax) ||
             this.TryParseNamedBoolean(arg, "dumpboogie", "db", ref this.options.DumpBoogie) ||
             this.TryParseNamedInteger(arg, "dumptriggers", "dt", ref this.options.DumpTriggers);
 
-        case 'e':
-          bool? eager = this.ParseNamedBoolean(arg, "eager", "e");
-          if (eager != null) {
-            this.options.EagerTranslation = eager.Value;
-            return true;
-          }
-
-          bool? exe = this.ParseNamedBoolean(arg, "exe", "exe");
-          if (exe != null) {
-            this.options.EagerTranslation = eager.Value;
-            return true;
-          }
-
-          return false;
         case 'f':
           var functions = this.ParseNamedArgumentList(arg, "functions", "f");
           if (functions == null || functions.Count == 0) return false;
@@ -396,7 +325,7 @@ namespace Microsoft.Research.Vcc
               return true;
           }
 
-          return this.TryParseNamedBoolean(arg, "infertriggers", "it", ref this.options.InferTriggers);
+          return false;
 
         case 'k':
           return this.TryParseNamedBoolean(arg, "keepppoutput", "keepppoutput", ref this.options.KeepPreprocessorFiles);
@@ -414,21 +343,6 @@ namespace Microsoft.Research.Vcc
 
           break;
 
-        case 'm':
-          if (this.ParseName(arg, "modifiedpreprocessorfile", "modifiedpreprocessorfile")) {
-            this.options.ModifiedPreprocessorFiles = true;
-            return true;
-          }
-          if (this.ParseName(arg, "modelviewer", "mv")) {
-            this.options.SaveModel = true;
-            this.options.RunModelViewer = true;
-            return true;
-          }
-          if (this.ParseName(arg, "model", "m")) {
-            this.options.SaveModel = true;
-            return true;
-          }
-          return false;
         case 'n':
           if (this.ParseName(arg, "nopreprocessor", "n")) {
             this.options.NoPreprocessor = true;
@@ -438,10 +352,6 @@ namespace Microsoft.Research.Vcc
             this.options.NoVerification = true;
             return true;
           }
-          if (this.ParseName(arg, "newsyntax", "ns")) {
-            this.options.NewSyntax = true;
-            return true;
-          }
           return false;
         case 'o':
           string /*?*/ path = this.ParseNamedArgument(arg, "out", "o");
@@ -449,21 +359,8 @@ namespace Microsoft.Research.Vcc
             this.options.OutputDir = path;
             return true;
           }
-          if (this.ParseName(arg, "omitrw", "omitrw")) {
-            this.options.OmitReadWriteChecking = true;
-            return true;
-          }
-          bool? fieldOffsetAxioms = this.ParseNamedBoolean(arg, "offsetaxioms", "offsetaxioms");
-          if (fieldOffsetAxioms.HasValue) {
-            this.options.GenerateFieldOffsetAxioms = fieldOffsetAxioms.Value;
-            return true;
-          }
           if (this.ParseName(arg, "opsasfuncs", "oaf")) {
             this.options.OpsAsFunctions = true;
-            return true;
-          }
-          if (this.ParseName(arg, "oldsyntax", "os")) {
-            this.options.NewSyntax = false;
             return true;
           }
           return false;
@@ -576,21 +473,6 @@ namespace Microsoft.Research.Vcc
           if (this.ParseName(arg, "version", "version")) {
             this.options.DisplayVersion = true;
             return true;
-          }
-
-          bool? vcOpt = this.ParseNamedBoolean(arg, "vo", "vcopt");
-          if (vcOpt != null) {
-            if (vcOpt.Value) this.options.VcOpt.Add("yes");
-            else this.options.VcOpt.Clear();
-            return true;
-          }
-          else
-          {
-            List<string> vcopts = this.ParseNamedArgumentList(arg, "vo", "vcopt");
-            if (vcopts != null) {
-              this.options.VcOpt.AddRange(vcopts);
-              return true;
-            }
           }
 
           return false;

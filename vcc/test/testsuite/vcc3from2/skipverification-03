@@ -1,4 +1,4 @@
-`/newsyntax /F:foo
+` /F:foo
 #include <vcc.h>
 
 _(assume_correct)

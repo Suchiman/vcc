@@ -1,4 +1,3 @@
-//`/newsyntax
 #include <vcc.h>
 #include "Spinlock.h"
 #include "BitMap.h"

@@ -1,4 +1,3 @@
-//`/newsyntax
 #include "SpinLock.h"
 #include "Intrinsics.h"
 

@@ -7,11 +7,6 @@ namespace Microsoft.Research.Vcc.VSPackage
     {
         private const string CmdLineCategory = "Additional Commandline Arguments";
 
-        [Category("Language Version")]
-        [DisplayName("VCC Language Version")]
-        [Description("Choose the language version of VCC.")]
-        public LanguageVersion LanguageVersion { get; set; }
-
         [Category(CmdLineCategory)]
         [DisplayName("Custom Arguments")]
         [Description("These additional commandline arguments for VCC will be used every time VCC is executed.")]

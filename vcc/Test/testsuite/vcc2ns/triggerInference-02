@@ -1,4 +1,4 @@
-`/newsyntax /dt:1 /it
+` /dt:1 /it
 #include "vcc.h"
 
 struct Node {

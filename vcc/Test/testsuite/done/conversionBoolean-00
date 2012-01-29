@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 // Casting various number to Boolean used to cause incorrect IL to be generated
 
