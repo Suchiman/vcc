@@ -1,4 +1,3 @@
-//`/newsyntax
 #include <vcc.h>
 
 
@@ -32,7 +31,7 @@ struct ConcreteStruct
   _(invariant value == abs->value)
 };
 
-int writeStruct(struct ConcreteStruct *s, int v)
+void writeStruct(struct ConcreteStruct *s, int v)
   _(maintains \wrapped(s))
   _(writes s)
   _(requires v == 2*s->value)

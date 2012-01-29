@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 _(logic bool fresh_object(\object ptr) = \object_root(ptr) && \mutable(ptr) && \fresh(ptr))

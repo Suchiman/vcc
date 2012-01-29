@@ -1,4 +1,4 @@
-`/functions:foo /a /newsyntax
+`/functions:foo /a 
 
 #include <vcc.h>
 

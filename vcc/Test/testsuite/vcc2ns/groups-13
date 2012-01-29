@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 #define UINT32 unsigned int

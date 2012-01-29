@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 void IfTest(int x, int y){ int z;

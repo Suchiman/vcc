@@ -19,6 +19,8 @@ namespace Microsoft.Research.Vcc
     type GList<'a> = System.Collections.Generic.List<'a>
     type Dict<'a, 'b> = System.Collections.Generic.Dictionary<'a, 'b>  
     type bigint = System.Numerics.BigInteger
+    type HashSet<'a> = System.Collections.Generic.HashSet<'a>
+    
     
     let glist (l:list<_>) = new GList<_> (l)
     let gdict () = new Dict<_,_>()
@@ -149,5 +151,4 @@ namespace Microsoft.Research.Vcc
       interface System.Collections.IEnumerable with
         member this.GetEnumerator() = l.GetEnumerator() :> System.Collections.IEnumerator
 
-    let ulist() = UniqueList<_>()
-    
+    let ulist() = UniqueList<_>()    

@@ -1,4 +1,3 @@
-`/newsyntax
 // Authors: Mark Hillebrand, Dirk Leinenbach (with inspiration from Ernie Cohen)
 #include "vcc.h"
 

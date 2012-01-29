@@ -1,4 +1,4 @@
-`/smoke /newsyntax
+`/smoke 
 #include <vcc.h>
 
 void foo(int c)

@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 template<typename T> void foo(void **p)

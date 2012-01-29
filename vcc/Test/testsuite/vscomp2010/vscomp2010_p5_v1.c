@@ -1,4 +1,3 @@
-//`/newsyntax
 #include <vcc.h>
 #include <stdlib.h>
 
@@ -79,11 +78,11 @@ PList Reverse(PList l)
   if (l->length == 0) {
     return l;
   } else {
-    PList e;
+    PList e, f;
     _(unwrap l)
     r = Reverse(l->tail);
     e = ListNew();
-    PList f = Cons(e, l->head);
+    f = Cons(e, l->head);
     r = Concat(r, f);
     return r;
   }
@@ -184,10 +183,11 @@ Queue *Enqueue(Queue *q, void *item)
   _(ensures QLen(\result) == \old(QLen(q) + 1))
   _(ensures QVal(\result) == \old(\lambda \integer i; i == QLen(q) ? item : QVal(q)[i]))
 {
+  Queue *r;
   _(unwrap q)
   _(assert wrapped_dom(q->front) && wrapped_dom(q->rear))
   q->rear = Cons(q->rear, item);
-  Queue *r = QueueBuild(q->front, q->rear);
+  r = QueueBuild(q->front, q->rear);
 
   return r;
 }

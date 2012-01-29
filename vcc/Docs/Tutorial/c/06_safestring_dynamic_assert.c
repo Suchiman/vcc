@@ -1,4 +1,3 @@
-//`/newsyntax
 /*{include}*/
 #include <vcc.h>
 #include <stdlib.h>

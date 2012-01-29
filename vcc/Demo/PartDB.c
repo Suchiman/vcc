@@ -1,4 +1,3 @@
-//`/newsyntax
 #include <vcc.h>
 #include "Spec.h"
 #include <stdlib.h>

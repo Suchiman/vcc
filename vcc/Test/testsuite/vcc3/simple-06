@@ -1,5 +1,4 @@
-`/newsyntax
-#include <vcc2.h>
+#include <vcc.h>
 
 struct A {
   int f;

@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 void write_parm1(int n)

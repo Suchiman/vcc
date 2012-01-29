@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 void foo0(int *p)

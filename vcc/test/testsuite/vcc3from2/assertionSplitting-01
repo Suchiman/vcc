@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 _(logic bool And(bool a, bool b) _(ensures a && b);)

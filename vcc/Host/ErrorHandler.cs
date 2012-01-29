@@ -248,7 +248,7 @@ namespace Microsoft.Research.Vcc
         }
       }
       if (commandLineOptions != null && commandLineOptions.RunTestSuite && isPrelude) {
-        reqTok.filename = "VccPrelude.bpl";
+        reqTok.filename = "Vcc3Prelude.bpl";
         reqTok.line = 0;
         reqTok.col = 0;
       }
@@ -278,11 +278,11 @@ namespace Microsoft.Research.Vcc
 
     private void ReportAllRelated(IToken tok)
     {
-      BoogieToken btok = tok as BoogieToken;
+      var btok = tok as BoogieToken.Token;
 
       while (btok != null && btok.Related != null) {
-        ReportRelated(btok.Related, btok.Related.val + ".");
-        btok = btok.Related as BoogieToken;
+        ReportRelated(btok.Related.Value, ((IToken)btok.Related.Value).val + ".");
+        btok = btok.Related.Value as BoogieToken.Token;
       }
     }
 

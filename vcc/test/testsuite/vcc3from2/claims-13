@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 _(ghost void foo(\object O) _(requires \claimable(O)) { }    )

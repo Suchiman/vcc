@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 #define BIT(y) (1UI64<<(y))

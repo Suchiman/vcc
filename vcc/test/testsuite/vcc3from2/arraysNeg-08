@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 void x(unsigned *X, unsigned z, unsigned j, unsigned k)

@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 #define array_emb_unchanged(a,n) (\forall unsigned _i; _i < (n) ==> (\unchanged(\embedding((a)+_i))))
 

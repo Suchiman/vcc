@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 void fooSF(int i) {

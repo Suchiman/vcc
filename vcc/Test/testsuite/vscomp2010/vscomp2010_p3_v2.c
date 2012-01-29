@@ -1,4 +1,3 @@
-//`/newsyntax
 #include "List.h"
 #include "limits.h"
 

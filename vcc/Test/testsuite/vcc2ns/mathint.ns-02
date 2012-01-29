@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 _(ghost _(pure) \integer mod(\integer a, \integer b) _(ensures \result == 12);)
 void foo()

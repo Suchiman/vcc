@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 _(pure) void f(int *a);
 _(pure) void g(int *a) _(reads a);

@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 // specifiers together with func ptr typedef

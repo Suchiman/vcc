@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 _(dynamic_owns) struct S { int a; _(ghost \object b; ) };
 void foo(struct S *s) _(requires \wrapped(s)) {

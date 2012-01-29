@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 typedef __w64 unsigned int   size_t;

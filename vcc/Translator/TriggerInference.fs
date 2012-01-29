@@ -215,7 +215,7 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
     let rec visit expr =
       let rec self (expr:B.Expr) = expr.Map visit
       if visited.ContainsKey expr then
-        if helper.Options.Vcc3 && not (booleanTrigger expr) then None
+        if not (booleanTrigger expr) then None
         else
           match expr with
             | B.Expr.FunctionCall (name, args) ->
@@ -400,17 +400,14 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
 
     let newBody = stripPtrCast body
     let triggers =
-      if helper.Options.InferTriggers then
-        if (List.filter isRealTrigger triggers).IsEmpty then
-          let ((_, newTrig), _) as toDump = selected (doInfer body)
-          dumpTriggers toDump
-          triggers @ List.map fixupTrigger newTrig
-        else
-          if helper.Options.DumpTriggers >= 3 then
-            // still infer and ignore the results
-            dumpTriggers (selected (doInfer body))
-          triggers
+      if (List.filter isRealTrigger triggers).IsEmpty then
+        let ((_, newTrig), _) as toDump = selected (doInfer body)
+        dumpTriggers toDump
+        triggers @ List.map fixupTrigger newTrig
       else
+        if helper.Options.DumpTriggers >= 3 then
+          // still infer and ignore the results
+          dumpTriggers (selected (doInfer body))
         triggers
     newBody, triggers
           

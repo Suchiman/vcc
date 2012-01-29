@@ -1,4 +1,3 @@
-//`/newsyntax
 #include "01_swap.c"
 
 /*{foo}*/

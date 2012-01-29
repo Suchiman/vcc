@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 _(ghost typedef _(record) struct R {

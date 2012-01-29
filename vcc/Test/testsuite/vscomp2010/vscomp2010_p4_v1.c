@@ -1,4 +1,3 @@
-//`/newsyntax
 // Run without /it!
 #include <vcc.h>
 #ifndef VERIFY

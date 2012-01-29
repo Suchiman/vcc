@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 // this is an interesting case because we actually allow an overflow here because 

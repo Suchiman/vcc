@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc2test.h>
 
 typedef _(dynamic_owns) _(claimable) struct _X {

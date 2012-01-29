@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 
 int sumup(int *p, int sz)

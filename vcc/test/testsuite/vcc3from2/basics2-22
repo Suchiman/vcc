@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 enum X { A, B, C};
 struct Y { 

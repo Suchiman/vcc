@@ -264,39 +264,6 @@ namespace Microsoft.Research.Vcc.VSPackage
       OnErrorLinesChanged(document);
     }
 
-    internal static void ModelViewer_LineColumnChanged(object sender, VccModelViewer.LineColumnChangedEventArgs e)
-    {
-      try
-      {
-        Document Doc = DTE.Documents.Cast<object>().Where(doc => e.fileName.Equals(((Document)doc).FullName, StringComparison.OrdinalIgnoreCase)).Cast<Document>().FirstOrDefault();
-
-        if (Doc != null)
-        {
-          var textDocument = Doc.Object(null) as TextDocument;
-          int tabsize = Doc.TabSize;
-          Debug.Assert(textDocument != null, "textDocument != null");
-          textDocument.Selection.MoveTo(e.lineNumber, e.columnNumber);
-          textDocument.Selection.SelectLine();
-          string Text = textDocument.Selection.Text;
-
-          int newcolumn = 0;
-          for (int idx = 0; idx < e.columnNumber; idx++)
-          {
-            if (Text[idx] == '\t')
-            {
-              newcolumn += tabsize - (newcolumn % tabsize);
-            }
-            else
-            {
-              newcolumn++;
-            }
-          }
-
-          textDocument.Selection.MoveTo(e.lineNumber, newcolumn);
-        }
-      }
-      catch { }
-    }
 
     internal static void errorTask_Navigate(object sender, EventArgs e)
     {

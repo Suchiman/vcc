@@ -1,4 +1,3 @@
-//`/newsyntax
 /*
  * This file provides a sample implementation of singly-linked lists.
  */

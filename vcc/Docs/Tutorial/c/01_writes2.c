@@ -1,4 +1,3 @@
-//`/newsyntax
 #include <vcc.h>
 
 void boundedIncr(int *p)

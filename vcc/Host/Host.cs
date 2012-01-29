@@ -18,6 +18,8 @@ namespace Microsoft.Research.Vcc
 
   public class VccCommandLineHost
   {
+    const string StandardPreludePath = "Vcc3Prelude.bpl";
+
     /// <summary>
     /// The main entry point for the application.
     /// </summary>
@@ -42,7 +44,6 @@ namespace Microsoft.Research.Vcc
           dummyHostEnvironment.Errors += cciErrorHandler.HandleErrors;
           var commandLineOptions = OptionParser.ParseCommandLineArguments(dummyHostEnvironment, args);
           commandLineOptions.RunningFromCommandLine = true;
-          standardPreludePath = commandLineOptions.PreludePath;
           cciErrorHandler.CommandLineOptions = commandLineOptions;
           verificationErrorHandler = new VerificationErrorHandler(commandLineOptions);
 
@@ -132,7 +133,7 @@ namespace Microsoft.Research.Vcc
         Plugin selectedPlugin = null;
         VCGenPlugin vcgenPlugin = null;
 
-        if (commandLineOptions.PluginOptions.Count != 0 || commandLineOptions.DisplayCommandLineHelp || commandLineOptions.Vcc3)
+        if (commandLineOptions.PluginOptions.Count != 0 || commandLineOptions.DisplayCommandLineHelp)
         {
           pluginManager = new PluginManager(commandLineOptions);
           string pluginDir = PathHelper.PluginDir;
@@ -151,13 +152,6 @@ namespace Microsoft.Research.Vcc
               return null;
             }
           }
-
-          /*
-          if (commandLineOptions.Vcc3 && pluginName == null) {
-            pluginName = "Vcc3";
-            commandLineOptions.PluginOptions[pluginName] = new List<string>();
-          }
-           */
 
           if (pluginName != null)
           {
@@ -208,7 +202,7 @@ namespace Microsoft.Research.Vcc
         try
         {
           swPlugin.Start();
-          selectedPlugin.UseVccOptions(commandLineOptions);
+          selectedPlugin.UseOptions(new VccOptionWrapper(commandLineOptions));
           if (pluginName != null)
             selectedPlugin.UseCommandLineOptions(commandLineOptions.PluginOptions[pluginName]);
         }
@@ -299,45 +293,9 @@ namespace Microsoft.Research.Vcc
       set { errorCount = value; }
     }
 
-    static bool IsNewSyntax(string filename)
-    {
-      char[] buf = new char[4096];
-      int len;
-
-      using (var sr = File.OpenText(filename))
-      {
-        len = sr.ReadBlock(buf, 0, buf.Length);
-      }
-      for (int i = 0; i < len - 2; ++i)
-      {
-        switch (buf[i])
-        {
-          case ' ':
-          case '\t':
-          case '\n':
-          case '\r':
-            if (buf[i + 1] == '_' && buf[i + 2] == '(')
-            {
-              return true;
-            }
-            break;
-        }
-      }
-      return false;
-    }
-
     static void RunPlugin(VccOptions commandLineOptions)
     {
       bool errorsInPreprocessor;
-
-      if (commandLineOptions.DetectSyntax && !commandLineOptions.NewSyntax)
-      {
-        foreach (var fn in commandLineOptions.FileNames)
-        {
-          if (IsNewSyntax(fn))
-            commandLineOptions.NewSyntax = true;
-        }
-      }
 
       var processedFiles = CCompilerHelper.Preprocess(commandLineOptions, out errorsInPreprocessor);
       if (errorsInPreprocessor) 
@@ -429,13 +387,13 @@ namespace Microsoft.Research.Vcc
       try
       {
 
-        Helper.Env helperenv;
+        TransHelper.TransEnv helperenv;
         FSharp.Collections.FSharpList<CAST.Top> res;
 
         try
         {
           swVisitor.Start();
-          helperenv = new Microsoft.Research.Vcc.Helper.Env(hostEnvironment, commandLineOptions);
+          helperenv = new TransEnv(hostEnvironment, commandLineOptions);
           var visitor = new Microsoft.Research.Vcc.Visitor(assem.Compilation.ContractProvider, helperenv);
 
           if (commandLineOptions.VerificationLocation != null)
@@ -658,11 +616,10 @@ namespace Microsoft.Research.Vcc
     }
 
     static List<String> standardPreludeLines;
-    static string standardPreludePath;
 
     private static Program GetStandardPrelude()
     {
-      string _preludePath = PathHelper.PreludePath(standardPreludePath);
+      string _preludePath = PathHelper.PreludePath(StandardPreludePath);
       if (standardPreludeLines == null)
       {
         var lines = File.ReadAllLines(_preludePath, Encoding.UTF8);
@@ -673,7 +630,7 @@ namespace Microsoft.Research.Vcc
       int _errorCount = Boogie.Parser.Parse(_preludePath, new List<string>(), out prelude);
       if (prelude == null || _errorCount > 0)
       {
-        Logger.Instance.Error("There were errors parsing VccPrelude.bpl.");
+        Logger.Instance.Error("There were errors parsing Vcc3Prelude.bpl.");
         return new Program();
       }
       else

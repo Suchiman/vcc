@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 _(dynamic_owns) struct S { int a; _(ghost \object b;) };
 // both are OK now, we assume that stuff in owns set is non-primitive

@@ -1,4 +1,3 @@
-`/newsyntax
 #include "vcc.h"
 struct S { volatile int a; };
 _(ghost _(pure) void foo(struct S *s) _(requires \wrapped(s)) { _(atomic s) { } })

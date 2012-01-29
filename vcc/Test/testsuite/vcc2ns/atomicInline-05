@@ -1,4 +1,3 @@
-`/newsyntax
 #include <vcc.h>
 
 #define RTL_MAXIMUM_EXCESSIVE_SPIN_COUNT 10000

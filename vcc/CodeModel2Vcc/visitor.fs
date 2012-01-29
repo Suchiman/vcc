@@ -207,7 +207,7 @@ namespace Microsoft.Research.Vcc
       if typ.TypeCode <> PrimitiveTypeCode.Invalid && res = C.Type.Bogus then
         die ()
       match res with
-        | C.Type.Ref ({ Name = "typeid_t"; Kind = C.MathType }) -> C.Type.TypeIdT
+        | C.Type.Ref ({ Name = "\\type"; Kind = C.MathType }) -> C.Type.TypeIdT
         | _ -> res
     
     member this.ExprCommon (expr:IExpression) = { Token = token expr; Type = this.DoType (expr.Type) } : C.ExprCommon
@@ -696,7 +696,7 @@ namespace Microsoft.Research.Vcc
                 let isMathRecord = contract <> null && Seq.length contract.ContractFields > 0 && name.StartsWith mathPref
                      
                 if name.StartsWith mathPref && datatypeDefinition = null && not isMathRecord then
-                  if name.Substring(mathPref.Length) = "label_t"
+                  if name.Substring(mathPref.Length) = "\\label"
                     then C.Type.SecLabel None
                     else
                       let typeName = name.Substring (mathPref.Length)
@@ -745,7 +745,6 @@ namespace Microsoft.Research.Vcc
                       SizeOf = int typeDef.SizeOf
                       IsNestedAnon = false
                       GenerateEquality = CAST.StructEqualityKind.NoEq
-                      GenerateFieldOffsetAxioms = false
                       Kind = 
                         // Cci does not know about unions, so a union for us is a struct with more than one member whose all offsets are equal
                         if List.length fields <= 1 || notAllEqual (List.map totalOffset fields) then
@@ -1409,7 +1408,6 @@ namespace Microsoft.Research.Vcc
                   SizeOf = C.Type.ObjectT.SizeOf
                   IsNestedAnon = false
                   GenerateEquality = CAST.StructEqualityKind.NoEq
-                  GenerateFieldOffsetAxioms = false
                   Parent = None
                   IsVolatile = false
                   IsSpec = false
@@ -1437,17 +1435,16 @@ namespace Microsoft.Research.Vcc
           | "_vcc_in_state" | "\\at"
           | "_vcc_approves" | "\\approves"
           | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq" | "\\size"
-          | "_vcc_test_classifier" | "_vcc_downgrade_to" | "_vcc_current_context" | "_vcc_label_of" | "_vcc_lblset_leq"
+          | "\\test_classifier" | "\\downgrade_to" | "\\current_context" | "\\label_of" | "\\lblset_leq"
           | "\\static_cast" | "\\labeled_expression"
-          | "_vcc_new_club" | "_vcc_add_member" | "_vcc_is_member" -> ()
+          | "\\new_club" | "\\add_member" | "\\is_member" -> ()
           | x when x.StartsWith "\\castlike_" -> ()
           | _ -> this.DoMethod (globalMethodDefinition, false, false)
 
       member this.Visit (genericTypeInstanceReference:IGenericTypeInstanceReference) : unit =
         let rec isAdmissibleMapDomainType = function
           | C.Volatile t -> isAdmissibleMapDomainType t
-          | C.Type.Ref td when helper.Options.Vcc3 -> td.IsMathValue // TODO exclude big types
-          | C.Type.Ref _ -> false
+          | C.Type.Ref td -> td.IsMathValue // TODO exclude big types
           | C.TypeVar _
           | C.Array _
           | C.Void -> false
@@ -1464,11 +1461,11 @@ namespace Microsoft.Research.Vcc
 
               let t1 = if isAdmissibleMapDomainType t1 then t1
                        else 
-                         helper.Error(token (mapTypes.Item(0)), 9702, "Illegal type '" + t1.ToString() + "' in map domain.")
+                         helper.Error(token (mapTypes.Item(0)), 9702, "Illegal type '" + t1.ToString() + "' in map domain.", None)
                          C.Type.Bogus
               let t2 = if isAdmissibleMapRangeType t2 then t2
                        else 
-                         helper.Error(token (mapTypes.Item(1)), 9721, "Illegal type '" + t2.ToString() + "' in map range.")
+                         helper.Error(token (mapTypes.Item(1)), 9721, "Illegal type '" + t2.ToString() + "' in map range.", None)
                          C.Type.Bogus
               typeRes <- C.Type.Map (t1, t2)
             | _ -> assert false
@@ -1637,7 +1634,7 @@ namespace Microsoft.Research.Vcc
         let typeToCheck = this.DoType checkIfInstance.TypeToCheck
         let ec = this.ExprCommon checkIfInstance
         match typeToCheck with
-          | C.Ptr(_) -> helper.Warning(ec.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended")
+          | C.Ptr(_) -> helper.Warning(ec.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended", None)
           | _ -> ()
         // set also the type in ExprCommon so we prevent pruning of the type
         let typeExpr = C.Expr.UserData({C.ExprCommon.Bogus with Type = typeToCheck}, typeToCheck ) 
@@ -1980,39 +1977,39 @@ namespace Microsoft.Research.Vcc
             exprRes <- C.Expr.Macro(ec, "atomic_op",  args())
           | _, "_vcc_atomic_op_result" ->
             exprRes <- C.Expr.Macro(ec, "atomic_op_result", [])
-          | _, "_vcc_test_classifier" ->
+          | _, "\\test_classifier" ->
             match args() with
               | [classif;cond] as args -> exprRes <- C.Expr.Macro ({ ec with Type = cond.Type }, methodName, args)
               | _ -> oopsNumArgs()
-          | _, "_vcc_downgrade_to" ->
+          | _, "\\downgrade_to" ->
             match args() with
               | [var;expr] as args -> exprRes <- C.Expr.Macro ({ ec with Type = CAST.Type.Void }, methodName, args)
               | _ -> oopsNumArgs()
-          | _, "_vcc_current_context" ->
+          | _, "\\current_context" ->
             match args() with
               | [] -> exprRes <- C.Expr.Macro ({ ec with Type = CAST.Type.SecLabel None }, methodName, [])
               | _ -> oopsNumArgs()
-          | _, "_vcc_label_of" ->
+          | _, "\\label_of" ->
             match args() with
               | [expr] as args -> exprRes <- C.Expr.Macro ({ec with Type = C.Type.SecLabel(Some expr) }, methodName, args)
               | _ -> oopsNumArgs()
-          | _, ("_vcc_seclabel_bot"|"_vcc_seclabel_top") ->
+          | _, ("\\seclabel_bot"|"\\seclabel_top") ->
             match args() with
               | [] -> exprRes <- C.Expr.Macro ({ec with Type = C.Type.SecLabel(None) }, methodName, [])
               | _ -> oopsNumArgs()
-          | _, "_vcc_lblset_leq" ->
+          | _, "\\lblset_leq" ->
             match args() with
               | [l1;l2] as args -> exprRes <- C.Expr.Macro ({ec with Type = C.Type.Bool }, methodName, args)
               | _ -> oopsNumArgs()
-          | _, "_vcc_new_club" ->
+          | _, "\\new_club" ->
             match args() with
               | [l] as args -> exprRes <- C.Expr.Macro({ec with Type = C.Type.Math "club_t"}, methodName, args)
               | _ -> oopsNumArgs()
-          | _, "_vcc_add_member" ->
+          | _, "\\add_member" ->
             match args() with
               | [p; c] as args -> exprRes <- C.Expr.Macro({ec with Type = C.Type.Void}, methodName, args)
               | _ -> oopsNumArgs()
-          | _, "_vcc_is_member" ->
+          | _, "\\is_member" ->
             match args() with
               | [p; c] as args -> exprRes <- C.Expr.Macro({ec with Type = C.Type.Bool}, methodName, args)
               | _ -> oopsNumArgs()
@@ -2038,7 +2035,7 @@ namespace Microsoft.Research.Vcc
               match args with
                 | [_; C.Expr.Call(_, _, _, [C.Expr.Cast(_,_,e)])] ->
                   match e.Type with
-                    | C.Ptr(C.Ptr(_)) -> helper.Warning(e.Common.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended")
+                    | C.Ptr(C.Ptr(_)) -> helper.Warning(e.Common.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended", None)
                     | _ -> ()
                 | _ -> ()
             let mtc, tArgs =
@@ -2064,7 +2061,7 @@ namespace Microsoft.Research.Vcc
           match typeNameMap.TryGetValue(name) with
             | (true, f) -> f
             | _ -> oopsLoc oldValue ("cannot find internal type " + name + ". Forgotten #include <vcc.h>?"); die()
-        let ts = findTypeOrDie (if helper.Options.NewSyntax then "\\state" else "state_t")
+        let ts = findTypeOrDie "\\state"
         let expr = this.DoIExpression oldValue.Expression
         // the type of expr and old(expr) may disagree in CCI, so we fix it up here
         exprRes <- C.Expr.Old ({ec with Type = expr.Type}, C.Expr.Macro ({ec with Type = C.Type.Ref(ts) }, "prestate", []), expr)

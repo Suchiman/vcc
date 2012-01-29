@@ -1,4 +1,3 @@
-//`/newsyntax
 #include "BitMap.h"
 
 void InitializeBitMap (BITMAP *BitMap, unsigned *BitMapBuffer, unsigned Size)
