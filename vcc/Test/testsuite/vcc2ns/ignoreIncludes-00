@@ -1,0 +1,9 @@
+`/ignoreincludes /newsyntax
+
+#include <vcc.h>
+#include "ignoreIncludes.h"
+
+void foo() { }
+`
+Verification of foo succeeded.
+`

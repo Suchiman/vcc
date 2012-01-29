@@ -1,0 +1,10 @@
+`/newsyntax
+#include "vcc.h"
+
+struct Foo {
+   unsigned N;
+   _(invariant 0 < N)
+   _(invariant \forall \true) 
+};
+`
+`

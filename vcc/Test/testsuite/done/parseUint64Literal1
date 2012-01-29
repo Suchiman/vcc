@@ -1,0 +1,9 @@
+`/newsyntax
+#include <vcc.h>
+
+void f() {
+  unsigned __int64 x = (1UI64 << 16);
+}
+`
+Verification of f succeeded.
+`

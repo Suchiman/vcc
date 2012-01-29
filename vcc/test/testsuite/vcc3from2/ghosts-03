@@ -1,0 +1,14 @@
+`/newsyntax
+#include "vcc.h"
+struct S {
+    int a;
+    _(ghost int b)
+};
+
+void foo() {
+    struct S s;
+    _(ghost _(unchecked)(s.b++))
+}
+`
+Verification of foo succeeded.
+`

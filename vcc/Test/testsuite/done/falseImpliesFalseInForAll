@@ -1,0 +1,12 @@
+`/newsyntax
+#include <vcc.h>
+
+typedef unsigned __int64 uint;
+
+void foo() {
+	_(assert \forall uint i; (i < 0) ==> 0)
+}
+
+`
+Verification of foo succeeded.
+`

@@ -1,0 +1,46 @@
+`/newsyntax
+#include "vcc.h"
+
+typedef struct itype_instr_t {
+	unsigned opc;
+	unsigned rs1;
+	unsigned rd;
+	int simm16;
+} itype_instr_t;
+
+typedef struct rtype_instr_t {
+	unsigned opc;
+	unsigned rs1;
+	unsigned rs2;
+	unsigned rd;
+} rtype_instr_t;
+
+typedef struct jtype_instr_t {
+	unsigned opc;
+	int simm26;
+} jtype_instr_t;
+
+typedef union instr_t {
+	rtype_instr_t rtype;
+	itype_instr_t itype;
+	jtype_instr_t jtype;
+	unsigned uint32;
+} instr_t;
+
+_(pure) _Bool one_or_two(instr_t i)
+	_(reads {})
+	_(ensures \result == (i.rtype.opc==1 || i.rtype.opc==2))
+{
+	return i.rtype.opc==1 || i.rtype.opc==2;
+}
+
+_Bool one_or_two_alternative(instr_t i)
+	_(ensures \result == (one_or_two(i))) 	
+{
+	return one_or_two(i);
+}
+`
+Verification of one_or_two succeeded.
+Verification of one_or_two_alternative succeeded.
+Verification of one_or_two#reads succeeded.
+`

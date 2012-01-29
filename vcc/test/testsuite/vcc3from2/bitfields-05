@@ -1,0 +1,14 @@
+`/newsyntax
+#include <vcc.h>
+
+struct S {
+  int i;
+  bool b:1;
+};
+
+void foo(struct S *s) 
+{
+}
+`
+testcase(5,3) : error VC9739: bit field of unsupported type '_Bool'
+`

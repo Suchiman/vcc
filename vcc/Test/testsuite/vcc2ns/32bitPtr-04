@@ -1,0 +1,20 @@
+`/ps:32 /newsyntax
+
+
+#include <vcc.h>
+
+struct S {
+  char p[3];
+  // one padding byte here
+  int *q;
+};
+
+void foo(struct S *x) { 
+  // check alignment
+  _(assert sizeof(struct S) == 8)
+  _(assert sizeof(x->q) == 4)
+  _(assert (char*)&x->q - (char*)x == 4)
+}
+`
+Verification of foo succeeded.
+`

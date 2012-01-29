@@ -1,0 +1,12 @@
+#!/bin/sh
+
+R=$1
+shift
+
+for rs in 1 2 3 ; do
+z3 -rs:$rs$R -st "$@" > runlog-$rs 2>&1 &
+done
+
+wait %1 %2 %3
+
+cat runlog-*
