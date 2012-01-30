@@ -315,7 +315,7 @@ void heapSort(int *arr, unsigned len // R
   _(unwrap &h)
 }
 
-#define ASSERT(E) { bool tmp = E; _(assert tmp) } // A
+#define ASSERT(E) { int tmp = E; _(assert tmp) } // A
 void heapSortTestHarness() // R
 {
   int arr[] = { 42, 13, 42 }; // R
