@@ -7,13 +7,14 @@ typedef union foo_t {
 		unsigned two:2;
 		unsigned twentynine:29;
 	} f;
+        _(backing_member)
 	UINT32 u32;
 } foo_t;
 
 int a[4];
 
 void g1(foo_t f)
-	_(writes \array_range(a, sizeof(a)))
+	_(writes \array_range(a, sizeof(a) / sizeof(*a)))
 {
 	a[f.f.two] = 42; 
 	return;

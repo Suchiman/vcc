@@ -7,7 +7,7 @@ typedef union pte_t {
 		unsigned p:1;	
 		unsigned reserved_9_0:10;	
 	} f;			
-	unsigned uint32;	
+	_(backing_member) unsigned uint32;	
 } pte_t;
 
 unsigned *mm_4; 

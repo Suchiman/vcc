@@ -3,7 +3,7 @@
 typedef struct _S {
   unsigned __int64 a;
   union {
-    int *p;
+    _(backing_member) int *p;
     int *q;
   };
 } S;
