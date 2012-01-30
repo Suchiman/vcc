@@ -52,7 +52,7 @@ void ListInitialize(PLIST_ENTRY Entry _(out PLIST_MANAGER Manager))
   _(ensures Manager->pointer == \lambda \integer i; i == 0 ? Entry : (PLIST_ENTRY)0)
   _(ensures Manager->size == 1);
 
-bool ListIsEmpty(PLIST_ENTRY Entry _(ghost PLIST_MANAGER Manager))
+int ListIsEmpty(PLIST_ENTRY Entry _(ghost PLIST_MANAGER Manager))
   _(requires wrapped_dom(Manager))
   _(requires Manager->mem[Entry])
   _(returns Manager->size == 1);

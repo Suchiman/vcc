@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NULL ((void*)0)
 
 typedef struct Node {
-  bool red;
+  int red;
   int key, value;
   struct Node *left, *right, *parent;
 
