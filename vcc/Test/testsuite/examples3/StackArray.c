@@ -10,7 +10,7 @@ struct Stack {
 };
 
 _(frameaxiom)
-bool IsEmpty(struct Stack *S)
+int IsEmpty(struct Stack *S)
     _(reads S)
     _(requires \wrapped(S))
     _(returns S->topOfStack == 0)
@@ -19,7 +19,7 @@ bool IsEmpty(struct Stack *S)
 }
 
 _(pure)
-bool IsFull(struct Stack *S)
+int IsFull(struct Stack *S)
     _(reads S)
     _(requires \wrapped(S))
     _(returns S->topOfStack == CAPACITY)

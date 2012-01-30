@@ -11,7 +11,7 @@ struct F {
 	_(invariant \mine((struct F::g*)\this))
 };
 
-int test(struct F *f)
+void test(struct F *f)
 	_(requires \wrapped(f::g))
 	_(writes f::g)
 {
