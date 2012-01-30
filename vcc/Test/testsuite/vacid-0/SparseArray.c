@@ -32,7 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAXLEN 1000 // R
 
-#define ASSERT(E) { bool tmp = E; _(assert tmp) } // A
+#define ASSERT(E) { int tmp = E; _(assert tmp) } // A
 
 _(ghost typedef bool uset_t[unsigned])
 

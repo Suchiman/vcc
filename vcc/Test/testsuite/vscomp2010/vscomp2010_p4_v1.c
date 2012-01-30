@@ -26,7 +26,7 @@ _(ghost _(pure) bool match_map(IntIntMap board) _(returns \true))
 #define safeBefore(board, k) \
   (\forall int _j; 0 <= _j && _j < (k) ==> safeAt(board, _j))
 
-bool IsConsistent(int *board, int pos, int length)
+int IsConsistent(int *board, int pos, int length)
   _(requires 0 <= pos)
   _(requires \thread_local_array(board,(unsigned)pos+1))
   _(requires boundedBefore(board,pos+1,length))
@@ -40,7 +40,7 @@ bool IsConsistent(int *board, int pos, int length)
   return 1;
 }
 
-bool Search(int *board, int pos, int length)
+int Search(int *board, int pos, int length)
   _(requires 0 < length)
   _(requires 0 <= pos && pos < length)
   _(requires safeBefore(board,pos))
@@ -83,7 +83,7 @@ void printBoard(int *a, int length) {
 
 int main(int argc, char **argv) {
   int a[4]; // good enough for both tests
-  bool r;
+  int r;
 
   r = Search(a,0,2);
   printf("Search(a,0,2) = %d\n", r);
