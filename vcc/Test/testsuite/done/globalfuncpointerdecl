@@ -8,5 +8,5 @@ int main (){
 }
 `
 Verification of main failed.
-testcase(6,17) : error VC8512: Assertion 'foo is thread local' did not verify.
+testcase(6,17) : error VC8512: Assertion 'foo is thread local (accessing field data)' did not verify.
 `

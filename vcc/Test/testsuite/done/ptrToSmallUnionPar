@@ -1,7 +1,7 @@
 #include <vcc.h>
 
 union U {
-  unsigned __int64 AsUINT64;
+  _(backing_member) unsigned __int64 AsUINT64;
   unsigned __int64 b;
 };
 

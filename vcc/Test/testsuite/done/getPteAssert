@@ -8,6 +8,7 @@ typedef void *PVOID;
 static PAGE PhysicalPages[512];
 
 typedef union _PTE {
+  _(backing_member)
   UINT64 AsUINT64;
   struct {
     UINT64 Present:1;
@@ -18,6 +19,7 @@ typedef union _PTE {
 } PTE, *PPTE;
 
 typedef union _VA {
+  _(backing_member)
   UINT64 AsUINT64;
   struct {
     UINT64 PageOffset:12;

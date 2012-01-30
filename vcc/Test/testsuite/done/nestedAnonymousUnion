@@ -9,7 +9,7 @@ union S {
     UINT64 c:32;
     UINT64 d:32;
   };
-  UINT64 raw[2];
+  _(backing_member) UINT64 raw[2];
 };
 
 UINT64 foo(struct S s)

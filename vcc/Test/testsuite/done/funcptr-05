@@ -12,7 +12,8 @@ int test(int i)
 }
 
 int bar(foo fum)
-  _(reads fum)  _(requires \thread_local(fum))
+  _(reads fum)
+  _(requires fum->\valid)
 {
   return fum(1);
 }

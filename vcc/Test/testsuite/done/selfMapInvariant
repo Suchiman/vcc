@@ -7,7 +7,7 @@ typedef void *PVOID;
 static PAGE PhysicalPages[512];
 
 typedef union _PTE {
-  UINT64 AsUINT64;
+  _(backing_member) UINT64 AsUINT64;
   struct {
     UINT64 Present:1;
     UINT64 ReadWrite:1;
