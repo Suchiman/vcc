@@ -122,7 +122,7 @@ void InitializeListHead( PLIST_ENTRY ListHead )
  * Return Value:
  *   IsListEmpty returns TRUE if there are currently no entries in the list and FALSE otherwise.
  */
-bool IsListEmpty( PLIST_ENTRY ListHead )
+int IsListEmpty( PLIST_ENTRY ListHead )
     _(requires \wrapped(ListHead->Manager))
     _(requires ListHead \in (ListHead->Manager)->\owns)
     _(returns ListHead->Manager->size == 1);
@@ -140,7 +140,7 @@ bool IsListEmpty( PLIST_ENTRY ListHead )
  * Return Value:
  *   RemoveEntryList returns TRUE if the list is empty and FALSE otherwise.
  */
-bool RemoveEntryList( PLIST_ENTRY Entry )
+int RemoveEntryList( PLIST_ENTRY Entry )
     _(requires Entry \in (Entry->Manager)->\owns)
     _(requires Entry != Entry->Manager->ListHead)
     _(maintains \wrapped(Entry->Manager))

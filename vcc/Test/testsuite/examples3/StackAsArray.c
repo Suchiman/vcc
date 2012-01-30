@@ -43,7 +43,7 @@ bool AbstractionRelation(struct Stack *stack)
 
 
 _(frameaxiom)
-bool IsEmpty(struct Stack *S)
+int IsEmpty(struct Stack *S)
     _(reads S)
     _(requires \wrapped(S))
     _(returns S->abs->high_mark == 0)
@@ -52,7 +52,7 @@ bool IsEmpty(struct Stack *S)
 }
 
 _(pure)
-bool IsFull(struct Stack *S)
+int IsFull(struct Stack *S)
     _(reads S)
     _(requires \wrapped(S))
     _(returns S->abs->high_mark == S->abs->capacity)
@@ -174,7 +174,7 @@ void Push(struct Stack *S, size_t X)
 }
 
 _(pure)
-bool IsIn(struct Stack *S, size_t value)
+int IsIn(struct Stack *S, size_t value)
     _(requires \wrapped(S))
     _(reads \universe())
     _(returns \exists size_t v; v < S->abs->high_mark && S->abs->entries[v] == value)

@@ -1,4 +1,5 @@
-#include <vcc2test.h>
+#include <vcc.h>
+#include <stdlib.h>
 
 _(atomic_inline) unsigned int InterlockedIncrement(volatile unsigned int *p) {
   *p = *p + 1;
@@ -112,7 +113,7 @@ typedef _(claimable) struct _Resource {
 
 typedef struct _RundownContainer {
   Resource *rsc;
-  bool enabled;
+  int enabled;
    _(ghost \claim rd_claim;)
 
   _(invariant \mine(rd_claim, &rsc->rd, &rsc->rd.enabled_protector))
