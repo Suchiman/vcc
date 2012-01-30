@@ -15,7 +15,7 @@ struct rect {
 };
 
 _(ghost _(pure) bool inv_rect(struct rect * r)
-  _(reads r, &r->ll, &r->ur)
+  _(reads r)
   _(returns r->ll.x <= r->ur.x && r->ll.y <= r->ur.y);)
 
 _(ghost _(pure) bool within_bounds(struct rect *r, int dx, int dy)
