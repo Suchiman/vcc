@@ -119,7 +119,7 @@ namespace Microsoft.Research.Vcc.Cpp
         var impl = decl as Implementation;
         if (impl != null)
         {
-          var vcGen = new VCGen(verifierInput, null, false;
+          var vcGen = new VCGen(verifierInput, null, false);
           errorReporter.StartFunction(impl.Name);
           vcGen.VerifyImplementation(impl, program, errorReporter);
           errorReporter.EndFunction();
