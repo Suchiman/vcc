@@ -2,6 +2,7 @@
 
 
 typedef union bla {
+  _(backing_member)
   unsigned int val;
   struct blubb {
     unsigned int a:1; // x[0]

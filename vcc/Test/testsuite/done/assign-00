@@ -1,6 +1,7 @@
 #include <vcc.h>
 
 union A {
+_(backing_member)
 int a;
 short q;
 };
