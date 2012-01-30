@@ -109,6 +109,7 @@ namespace Microsoft.Research.Vcc.Cpp
       if (verifierInput.Resolve(this.env) > 0) return false;
       if (verifierInput.Typecheck(this.env) > 0) return false;
       AbstractInterpretation.RunAbstractInterpretation(verifierInput);
+      LambdaHelper.ExpandLambdas(verifierInput);
 
       // verify all implementation functions
       var errorReporter = new VerificationErrorReporter();
@@ -118,7 +119,7 @@ namespace Microsoft.Research.Vcc.Cpp
         var impl = decl as Implementation;
         if (impl != null)
         {
-          var vcGen = new VCGen(program, Path.GetTempFileName(), false);
+          var vcGen = new VCGen(verifierInput, null, false;
           errorReporter.StartFunction(impl.Name);
           vcGen.VerifyImplementation(impl, program, errorReporter);
           errorReporter.EndFunction();
