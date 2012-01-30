@@ -500,7 +500,6 @@ namespace Microsoft.Research.Vcc
         case 'y':
           if (this.ParseName(arg, "yarra", "yarra")) {
             this.options.YarraMode = true;
-            this.ParseCompilerOption("/3");
             return true;
           }
           return false;
