@@ -21,6 +21,7 @@ typedef union _X64_PTE
         UINT64 NoExecute:1;
     };
 
+    _(backing_member)
     UINT64 AsUINT64;
 
 } X64_PTE, *PX64_PTE;

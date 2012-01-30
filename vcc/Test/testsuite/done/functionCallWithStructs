@@ -1,29 +1,29 @@
 #include "vcc.h"
 
 typedef struct itype_instr_t {
-	unsigned opc;
-	unsigned rs1;
-	unsigned rd;
-	int simm16;
+	unsigned opc : 6;
+	unsigned rs1 : 5;
+	unsigned rd : 5;
+	int simm16 : 16;
 } itype_instr_t;
 
 typedef struct rtype_instr_t {
-	unsigned opc;
-	unsigned rs1;
-	unsigned rs2;
-	unsigned rd;
+	unsigned opc : 6;
+	unsigned rs1 : 5;
+	unsigned rs2 : 5;
+	unsigned rd : 5;
 } rtype_instr_t;
 
 typedef struct jtype_instr_t {
-	unsigned opc;
-	int simm26;
+	unsigned opc : 6;
+	int simm26 : 26;
 } jtype_instr_t;
 
 typedef union instr_t {
 	rtype_instr_t rtype;
 	itype_instr_t itype;
 	jtype_instr_t jtype;
-	unsigned uint32;
+	_(backing_member) unsigned uint32;
 } instr_t;
 
 _(pure) _Bool one_or_two(instr_t i)

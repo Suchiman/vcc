@@ -10,6 +10,7 @@ typedef union pte_t {
         unsigned v:1;    /* bit [11] */
         unsigned ppx:20;    /* bits [31:12] */
     } f;            /* PTE fields */
+    _(backing_member)
     UINT32 uint32;    /* complete word */
 } pte_t;
 /* }}} */

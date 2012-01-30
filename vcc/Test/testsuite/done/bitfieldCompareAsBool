@@ -4,6 +4,7 @@ typedef unsigned __int64 UINT64;
 typedef unsigned __int8 PAGE[4096];
 
 typedef union _PTE {
+  _(backing_member)
   UINT64 AsUINT64;
   struct {
     UINT64 Present:1;
