@@ -18,8 +18,9 @@ namespace Microsoft.Research.Vcc
   
   // ============================================================================================================    
 
-
   let init (helper:TransHelper.TransEnv) =
+
+    // ============================================================================================================    
 
     let rewriteExtraMacros self = 
 
@@ -39,11 +40,33 @@ namespace Microsoft.Research.Vcc
         | Macro(_, "--()", [e]) -> Some(handlePrePostIncrDecr e "-" false)
 
         | _ -> None
+  
+    // ============================================================================================================    
     
+    let insertBoolConversion self = 
+
+      // insert conversion to bool where this is expected later
+
+      let toBool (expr:Expr) = 
+        match expr.Type with
+          | Type.Bool -> self expr
+          | _ -> Cast({expr.Common with Type = Type.Bool}, CheckedStatus.Unchecked, self expr)
+
+      function
+        | Macro(ec, "for", [contr; inits; cond; inc; body]) ->
+          Some(Macro(ec, "for", [self contr; self inits; toBool cond; self inc; self body]))
+
+        | If(ec, tc, cond, th, el) -> 
+          Some(If(ec, tc, toBool cond, self th, self el))
+
+        | _ -> None
+          
+
+    // ============================================================================================================    
+
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
+    helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)
 
     helper.AddTransformer ("cpp-end", TransHelper.DoNothing)
-
-
