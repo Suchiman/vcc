@@ -20,13 +20,13 @@ _(ghost {
     })
 }
 
-bool IsListEmpty( PLIST_ENTRY ListHead )
+int IsListEmpty( PLIST_ENTRY ListHead )
 {
     _(assert ListHead->Flink \in (ListHead->Manager)->\owns)
     return ListHead->Flink == ListHead;
 }
 
-bool RemoveEntryList( PLIST_ENTRY Entry )
+int RemoveEntryList( PLIST_ENTRY Entry )
 {
     PLIST_ENTRY Blink, Flink;
     _(ghost PLIST_MANAGER ListManager = Entry->Manager)
