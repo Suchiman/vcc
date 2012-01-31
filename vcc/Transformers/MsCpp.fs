@@ -42,6 +42,14 @@ namespace Microsoft.Research.Vcc
         | _ -> None
   
     // ============================================================================================================    
+
+    let retypeOperators self = function
+      | Prim(ec, (Op(("<"|"<="|">"|">="|"=="|"!="), _) as op), args) ->
+        Some(Prim({ec with Type = Type.Bool}, op, List.map self args))
+      | _ -> None
+      
+    
+    // ============================================================================================================    
     
     let insertBoolConversion self = 
 
@@ -67,6 +75,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
+    helper.AddTransformer ("cpp-retype-ops", TransHelper.Expr retypeOperators)
     helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)
 
     helper.AddTransformer ("cpp-end", TransHelper.DoNothing)
