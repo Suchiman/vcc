@@ -1,9 +1,14 @@
-﻿using System.IO;
-using Microsoft.Boogie;
-using Microsoft.FSharp.Collections;
+﻿//-----------------------------------------------------------------------------
+//
+// Copyright (C) Microsoft Corporation.  All Rights Reserved.
+//
+//-----------------------------------------------------------------------------
+
 using System.Collections.Generic;
-using VC;
+using Microsoft.Boogie;
 using Microsoft.Boogie.AbstractInterpretation;
+using Microsoft.FSharp.Collections;
+using VC;
 
 namespace Microsoft.Research.Vcc.Cpp
 {
@@ -30,11 +35,17 @@ namespace Microsoft.Research.Vcc.Cpp
 
     private Program PreparePrelude()
     {
-      string _preludePath = PathHelper.PreludePath("Vcc3Prelude.bpl");
+      string preludePath = PathHelper.PreludePath("Vcc3Prelude.bpl");
+
+      if (preludePath == null)
+      {
+        env.Oops(Token.NoToken, "Could not locate Vcc3Prelude.bpl.");
+        return new Program();
+      }
 
       Program prelude;
-      int _errorCount = Parser.Parse(_preludePath, new List<string>(), out prelude);
-      if (prelude == null || _errorCount > 0)
+      int errorCount = Parser.Parse(preludePath, new List<string>(), out prelude);
+      if (prelude == null || errorCount > 0)
       {
         env.Oops(Token.NoToken, "There were errors parsing Vcc3Prelude.bpl.");
         return new Program();
