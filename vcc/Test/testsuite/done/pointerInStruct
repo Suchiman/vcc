@@ -10,7 +10,7 @@ void foo(S s)
 
 typedef union _U {
   int *a;
-  unsigned __int64 *b;
+  _(backing_member) unsigned __int64 *b;
 } U;
 
 void bar(U u) 

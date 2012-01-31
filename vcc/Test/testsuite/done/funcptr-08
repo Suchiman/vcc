@@ -6,7 +6,7 @@ void test()
 }
 
 int bar(foo fum)
-  _(reads fum)  _(requires \thread_local(fum))
+  _(reads fum)  _(requires fum->\valid)
 {
   fum(); return 0;
 }
