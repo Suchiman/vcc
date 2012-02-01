@@ -18,6 +18,15 @@ namespace Microsoft.Research.Vcc
   
   // ============================================================================================================    
 
+  let specialFunctionNames = Set.ofList [
+                                          "VCC::Assert"
+                                          "VCC::Assume"
+                                        ]
+
+  let isSpecialFunction (fn : Function) = Set.contains fn.Name specialFunctionNames
+
+  // ============================================================================================================    
+
   let init (helper:TransHelper.TransEnv) =
 
     // ============================================================================================================    
@@ -69,13 +78,38 @@ namespace Microsoft.Research.Vcc
 
         | _ -> None
           
+    // ============================================================================================================    
+
+    let rewriteSpecialFunctions self = 
+
+      let selfs = List.map self
+
+      function
+        | Call(ec, {Name = "VCC::Assert"}, [], [arg]) -> Some(Assert(ec, self arg, []))
+        | Call(ec, {Name = "VCC::Assume"}, [], [arg]) -> Some(Assume(ec, self arg))
+        | Call(ec, fn, _, _) when isSpecialFunction fn ->
+          helper.Oops(ec.Token, "Unhandled special function call to '" + fn.Name + "'")
+          None
+        | _ -> None
+
+    // ============================================================================================================    
+
+    let removeSpecialFunctions decls =
+
+      let filterSpecialFunctions = function
+        | Top.FunctionDecl(fn) when isSpecialFunction fn -> false
+        | _ -> true
+
+      List.filter filterSpecialFunctions decls
 
     // ============================================================================================================    
 
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
+    helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
+    helper.AddTransformer ("cpp-remove-functions", TransHelper.Decl removeSpecialFunctions)
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
-    helper.AddTransformer ("cpp-retype-ops", TransHelper.Expr retypeOperators)
-    helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)
+    //helper.AddTransformer ("cpp-retype-ops", TransHelper.Expr retypeOperators)
+    //helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)
 
     helper.AddTransformer ("cpp-end", TransHelper.DoNothing)
