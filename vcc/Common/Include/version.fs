@@ -12,7 +12,7 @@ namespace Microsoft.Research.Vcc
 
 open System.Reflection
 
-module _CbTools_VersionInfo_ =
+module private _CbTools_VersionInfo_ =
   [<assembly: AssemblyVersion("0.0.0.2")>]
   [<assembly: AssemblyFileVersion("0.0.0.2")>]
   [<assembly: AssemblyCompany("Microsoft Corporation")>]
