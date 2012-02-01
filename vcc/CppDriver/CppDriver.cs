@@ -134,6 +134,7 @@ namespace Microsoft.Research.Vcc.Cpp
           errorReporter.StartFunction(impl.Name);
           vcGen.VerifyImplementation(impl, program, errorReporter);
           errorReporter.EndFunction();
+          vcGen.Close();
         }
       }
 
