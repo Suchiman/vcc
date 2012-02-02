@@ -60,6 +60,7 @@ namespace Microsoft.Research.Vcc
         let (prev, e1) = selfe [] e
         ret (Macro(cmn, "inlined_atomic", [e1]) :: prev)
       
+      | Skip _
       | Expr.Ref _
       | Prim _
       | IntLiteral _
@@ -346,7 +347,7 @@ namespace Microsoft.Research.Vcc
                 VarWrite (c, [v], upd)
               | _ ->
                 helper.Error (c.Token, 9686, "invalid record field in-place update")
-                Expr.MkBlock []
+                Expr.Skip({c with Type = Type.Void})
           Some (self res)
         | VarWrite(c, [v], Macro(_, "vs_zero", [])) when isRecType v.Type -> Some(VarWrite(c, [v], Macro({c with Type = v.Type}, "rec_zero", [])))
         | _ -> None
@@ -605,7 +606,6 @@ namespace Microsoft.Research.Vcc
           let tmpRef = Expr.Ref (c, tmp)
           addStmtsOpt [VarDecl (c', tmp, []); VarWrite (c', [tmp], call')] tmpRef
     
-        | Expr.Macro (_, "noop", _) -> Some (Expr.MkBlock [])
         | _ -> None
 
     // ============================================================================================================

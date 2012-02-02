@@ -446,20 +446,20 @@ namespace Microsoft.Research.Vcc
                 | Ptr Void
                 | ObjectT ->
                   helper.Error (expr.Token, 9647, "void* and obj_t are not supported in reads clauses", None)
-                  Expr.MkBlock []
+                  Skip({expr.Common with Type = Type.Void})
                 | Ptr _ ->
                   Expr.MkAssume (Macro (boolBogusEC(), "reads_same", [subst expr]))
                 | t when t.IsPtrSet ->
                   match expr with
-                    | Macro(_, "_vcc_set_empty", _) -> Expr.MkBlock []
+                    | Macro(_, "_vcc_set_empty", _) -> Skip({expr.Common with Type = Type.Void})
                     | Macro(_, "_vcc_array_range", args) ->
                       let setIn = Expr.Macro(boolBogusEC(), "reads_same_arr", args)
                       Expr.MkAssume setIn
                     | _ -> helper.Error (expr.Token, 9648, "unsupported pointer set in reads clauses", None)
-                           Expr.MkBlock []
+                           Skip({expr.Common with Type = Type.Void})
                 | _ ->
                   helper.Error (expr.Token, 9648, "non-pointers are not supported in reads clauses", None)
-                  Expr.MkBlock []
+                  Skip({expr.Common with Type = Type.Void})
             Some (Expr.MkBlock ([Macro (ec, "_vcc_reads_havoc", [])] @ List.map isSame f.Reads @ preconds))
           | _ -> None
         let can_frame f =

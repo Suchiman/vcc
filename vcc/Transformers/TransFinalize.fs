@@ -101,6 +101,7 @@ namespace Microsoft.Research.Vcc
       and fs = List.map f
       
       and doExpr self = function
+        | Skip _
         | Expr.Ref _
         | Prim _
         | Expr.Call _

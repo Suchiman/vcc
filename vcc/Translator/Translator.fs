@@ -389,6 +389,7 @@ namespace Microsoft.Research.Vcc
         try
           let res =
             match expr with
+              | C.Expr.Skip _ -> die()
               | C.Expr.Cast ({ Type = C.Type.Integer k }, _, e') ->
                 match e'.Type with
                   | C.Type.Bool ->
@@ -1404,6 +1405,7 @@ namespace Microsoft.Research.Vcc
 
         try         
           match stmt with
+            | C.Expr.Skip _ -> [B.Stmt.Comment("skip")]
             | C.Expr.Block (_, stmts, None) -> 
               List.concat (List.map self stmts)
             | C.Expr.Comment (_, s) -> 
@@ -1598,7 +1600,7 @@ namespace Microsoft.Research.Vcc
                 else [],[],env
               let s2 =
                 match s2 with                   
-                  | C.Expr.Comment(c, "empty") -> CAST.possiblyUnreachable
+                  | C.Expr.Skip(_) -> CAST.possiblyUnreachable
                   | _ -> s2
               captureState "" ec.Token ::
               B.Stmt.Comment ("if (" + c.ToString() + ") ...") ::
@@ -1741,6 +1743,7 @@ namespace Microsoft.Research.Vcc
             
             | C.Expr.Macro (_, "ignore_me", []) -> []
             | C.Expr.Macro (_, "inlined_atomic", [C.Expr.Macro (_, "ignore_me", [])]) -> []
+            | C.Expr.Macro (_, "inlined_atomic", [C.Expr.Skip(_)]) -> []
 
             | e when not (hasSideEffect e) -> []
             
