@@ -138,7 +138,7 @@ namespace Microsoft.Research.Vcc.Cpp
         }
       }
 
-      return errorReporter.AnyErrorReported;
+      return !errorReporter.AnyErrorReported;
     }
   }
 }

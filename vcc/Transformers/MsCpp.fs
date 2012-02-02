@@ -41,13 +41,18 @@ namespace Microsoft.Research.Vcc
         let assign = Macro(e.Common, "=", [e; calc])
         if isPost then Expr.MkBlock(init @ [assign]) else Expr.MkBlock(init @ [assign; tmp])
 
+      let incrOpTable = Map.ofList [
+                                      "()++", ("+", true)
+                                      "()--", ("-", true)
+                                      "++()", ("+", false)
+                                      "--()", ("-", false)
+                                   ]
+
       function
         | Macro(ec, "init", [lhs; rhs]) -> Some(Macro(ec, "=", [self lhs; self rhs]))
-        | Macro(_, "()++", [e]) -> Some(handlePrePostIncrDecr e "+" true)
-        | Macro(_, "()--", [e]) -> Some(handlePrePostIncrDecr e "-" true)
-        | Macro(_, "++()", [e]) -> Some(handlePrePostIncrDecr e "+" false)
-        | Macro(_, "--()", [e]) -> Some(handlePrePostIncrDecr e "-" false)
-
+        | Macro(_, incrOp, [e; IntLiteral(_, _one)]) when _one.IsOne && incrOpTable.ContainsKey incrOp -> 
+          let (op, isPost) = Map.find incrOp incrOpTable
+          Some(handlePrePostIncrDecr e op isPost)
         | _ -> None
   
     // ============================================================================================================    
