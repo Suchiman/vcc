@@ -336,7 +336,7 @@ namespace Microsoft.Research.Vcc
                 | x :: xs -> repl (x :: acc) xs
                 | [] -> Block (c, [], cs)
               repl [] lst
-            | Comment (c, "empty") -> Return (c, None)
+            | Skip(c) -> Return (c, None)
             | x -> x
           f.Body <- Some (addIt b)
           Top.FunctionDecl f        
@@ -595,13 +595,13 @@ namespace Microsoft.Research.Vcc
                 | true, v' -> Some (map.[v])
                 | false, _ -> None
             | VarDecl (_, v, _) when map.ContainsKey v ->
-              Some (Expr.MkBlock [])
+              Some(Skip({c with Type = Type.Void}))
             | Return (c, Some e) ->              
               Some (Macro (c, "=", [Ref (c, resVar); self e]))
               // TODO check if it the return doesn't disturn control flow
               // TODO look for gotos and such
             | Return (c, None) ->
-              Some (Expr.MkBlock [])
+              Some(Skip({c with Type = Type.Void}))
             | _ -> None            
           let body = 
             match f.Body with
@@ -1256,7 +1256,19 @@ namespace Microsoft.Research.Vcc
                 
     // ============================================================================================================
 
+    let removeSkips self = function
+      | Block(ec, stmts, bc) ->
+        let rec allButSkips acc = function
+          | [] -> List.rev acc
+          | Skip _ :: stmts -> allButSkips acc stmts
+          | stmt :: stmts -> allButSkips ((self stmt) :: acc) stmts
+        Some(Block(ec, allButSkips [] stmts, bc))
+      | _ -> None
+          
+    // ============================================================================================================
+
     helper.AddTransformer ("norm-begin", TransHelper.DoNothing)
+    //helper.AddTransformer ("norm-skip", TransHelper.Expr removeSkips)
     helper.AddTransformer ("norm-unfold-constants", TransHelper.Decl unfoldConstants)
     helper.AddTransformer ("norm-varargs", TransHelper.Expr normalizeVarArgs)
     helper.AddTransformer ("norm-multi-assignments", TransHelper.Expr normalizeMultiAssignments)

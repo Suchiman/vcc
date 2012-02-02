@@ -851,6 +851,7 @@ module Microsoft.Research.Vcc.CAST
   and TestClassifier = Expr
   
   and Expr =
+    | Skip of ExprCommon
     | Ref of ExprCommon * Variable    
     | Prim of ExprCommon * Op * list<Expr>
     | Call of ExprCommon * Function * list<Type> * list<Expr>
@@ -954,6 +955,7 @@ module Microsoft.Research.Vcc.CAST
   
     member x.Common =
       match x with
+        | Skip(e)
         | Ref (e, _)
         | Prim (e, _, _)
         | Expr.Call (e, _, _, _)
@@ -989,6 +991,7 @@ module Microsoft.Research.Vcc.CAST
 
     member x.WithCommon ec =
       match x with
+        | Skip(_) -> Skip(ec)
         | Ref (_, r) -> Ref (ec, r)
         | Prim (_, a, b) -> Prim (ec, a, b)
         | Expr.Call (_, a, b, c) -> Expr.Call (ec, a, b, c)
@@ -1025,6 +1028,7 @@ module Microsoft.Research.Vcc.CAST
       let rec visit ctx e =
         if f ctx e then
           match e with
+            | Skip _
             | Return (_, None)
             | Goto _
             | Label _
@@ -1138,6 +1142,7 @@ module Microsoft.Research.Vcc.CAST
           | Some e as se -> se
           | None ->
             match e with
+              | Skip _
               | Return (_, None)
               | Goto _
               | Label _
@@ -1233,6 +1238,7 @@ module Microsoft.Research.Vcc.CAST
       let repl self = 
         let selfs = List.map self
         function
+          | Skip _
           | Return (_, None) 
           | Goto _
           | Label _
@@ -1300,6 +1306,7 @@ module Microsoft.Research.Vcc.CAST
     member this.ApplyToChildren f =
       let fs = List.map f
       match this with
+        | Skip _
         | Return (_, None)
         | Goto _
         | Label _
@@ -1367,6 +1374,7 @@ module Microsoft.Research.Vcc.CAST
         doInd ind
         if showType then wr "("
         match e with
+          | Skip _ -> wr "skip;\r\n"
           | Ref (_, v) -> wr (v.Name)
           | Prim (_, op, args) -> doArgs (op.ToString()) args
           | Expr.Call (_, fn, tArgs, args) -> doArgsAndTArgsb b  fe (fun (t:Type) -> t.WriteTo b) fn.Name args tArgs
@@ -1536,7 +1544,7 @@ module Microsoft.Research.Vcc.CAST
         | [] -> die()
       match exprs with
         | [e] -> e
-        | [] -> Block (voidBogusEC(), [], None)
+        | [] -> Skip(bogusEC)
         | stmts -> 
           let lstmt = last stmts 
           Block ({ bogusEC with Type = lstmt.Type; Token = lstmt.Token }, stmts, None)

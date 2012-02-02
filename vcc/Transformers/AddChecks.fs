@@ -305,7 +305,7 @@ namespace Microsoft.Research.Vcc
         if expr.Type.IsComposite then helper.Oops (expr.Token, "non primitive type in memory write")
         let istyped = propAssert 8506 "{0} is typed" "_vcc_typed2" p
         let wrassert = 
-          if isYarraIgnore p then Expr.MkBlock [] 
+          if isYarraIgnore p then Skip({c with Type = Type.Void})
           else propAssert 8507 "{0} is writable" "prim_writes_check" p
         Some (Expr.MkBlock [wrassert; MemoryWrite (c, self p, self expr)])
       
