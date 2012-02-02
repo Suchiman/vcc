@@ -1256,19 +1256,7 @@ namespace Microsoft.Research.Vcc
                 
     // ============================================================================================================
 
-    let removeSkips self = function
-      | Block(ec, stmts, bc) ->
-        let rec allButSkips acc = function
-          | [] -> List.rev acc
-          | Skip _ :: stmts -> allButSkips acc stmts
-          | stmt :: stmts -> allButSkips ((self stmt) :: acc) stmts
-        Some(Block(ec, allButSkips [] stmts, bc))
-      | _ -> None
-          
-    // ============================================================================================================
-
     helper.AddTransformer ("norm-begin", TransHelper.DoNothing)
-    //helper.AddTransformer ("norm-skip", TransHelper.Expr removeSkips)
     helper.AddTransformer ("norm-unfold-constants", TransHelper.Decl unfoldConstants)
     helper.AddTransformer ("norm-varargs", TransHelper.Expr normalizeVarArgs)
     helper.AddTransformer ("norm-multi-assignments", TransHelper.Expr normalizeMultiAssignments)
