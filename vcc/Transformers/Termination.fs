@@ -252,6 +252,7 @@ module Termination =
           valueShouldFollow ctx (aux ctx bindings)
 
         // ignored statements
+        | Skip _
         | Label _
         | Assert _
         | Assume _ 
@@ -570,7 +571,7 @@ module Termination =
             let e = repl e
             let pref0 = checks e
             let pref1 = checks (repl qd.Body)
-            decls @ pref0 @ [Expr.If (bogusEC, None, e, Expr.MkBlock pref1, Expr.MkBlock [])]
+            decls @ pref0 @ [Expr.If (bogusEC, None, e, Expr.MkBlock pref1, Skip(bogusEC))]
           | None ->
             let pref1 = checks (repl qd.Body)
             decls @ pref1 
@@ -601,7 +602,7 @@ module Termination =
         acc |> Seq.toList
       
     let termWrapper checks =
-      Expr.If (voidBogusEC(), None, Expr.Macro (boolBogusEC(), "check_termination", [mkInt (helper.UniqueId())]), Expr.MkBlock(checks @ [Expr.MkAssume (Expr.False)]), Expr.MkBlock [])
+      Expr.If (voidBogusEC(), None, Expr.Macro (boolBogusEC(), "check_termination", [mkInt (helper.UniqueId())]), Expr.MkBlock(checks @ [Expr.MkAssume (Expr.False)]), Skip(bogusEC))
      
     let rec addChecks = function
       | Quant _ as q ->

@@ -515,7 +515,7 @@ namespace Microsoft.Research.Vcc
      let savedLocalVars = localVars
      localVars <- []
      let stmts = [for s in block.Statements -> this.DoStatement (s)]
-     let block' = C.Expr.MkBlock (localVars @ stmts)
+     let block' = C.Expr.Block(this.StmtCommon block, (localVars @ stmts), None)
      localVars <- savedLocalVars
      let contract = contractProvider.GetMethodContractFor(block)
      let result = 
@@ -1722,7 +1722,7 @@ namespace Microsoft.Research.Vcc
                                   this.DoIExpression doUntilStatement.Condition])
 
       member this.Visit (emptyStatement:IEmptyStatement) : unit =
-        stmtRes <- C.Expr.Comment (this.StmtCommon emptyStatement, "empty")
+        stmtRes <- C.Expr.Skip(this.StmtCommon emptyStatement)
 
       member this.Visit (equality:IEquality) : unit =
         this.DoIBinary ("==", equality)
@@ -1930,7 +1930,7 @@ namespace Microsoft.Research.Vcc
           | BigIntTypeName, BigIntOp -> trBigIntOp methodName
           | (SystemDouble | SystemFloat), FloatOp -> trFloatOp methodName
           | SystemDiagnosticsContractsCodeContractObjset, ObjsetOp -> trSetOp methodName
-          | "Microsoft.Research.Vcc.Runtime", "__noop" -> exprRes <- C.Expr.Macro (ec, "noop", [])
+          | "Microsoft.Research.Vcc.Runtime", "__noop" -> exprRes <- C.Expr.Skip ({ec with Type = C.Type.Void})
           | MapTypeString, "get_Item" ->
             let th = this.DoIExpression methodCall.ThisArgument
             match args() with

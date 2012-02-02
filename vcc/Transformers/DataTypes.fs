@@ -87,7 +87,7 @@ let handleMatchStatement (helper:TransHelper.TransEnv) desugarSwitch labels expr
         let rec findPattern acc = function
           | Call (ec, fn, _, args) :: rest when fn.IsDatatypeOption ->
             Some (ec, fn, args, List.rev acc, rest)
-          | (Expr.VarDecl _ | Expr.Comment _ as x) :: rest ->
+          | (Expr.Skip _ | Expr.VarDecl _ | Expr.Comment _ as x) :: rest ->
             findPattern (x :: acc) rest
           | _ -> 
             None

@@ -14,10 +14,6 @@
 
 #define _(...) /* nothing */
 
-#define vcc_attr(k, v)
-#define vcc_nospeccast(_TYPE_, _EXPR_) ((_TYPE_)_EXPR_)
-#define vcc_generic_instance(_F_, ...) _F_ __VA_ARGS__
-
 #else
 
 #include <vccp.h>

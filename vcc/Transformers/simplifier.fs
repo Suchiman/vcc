@@ -664,13 +664,13 @@ namespace Microsoft.Research.Vcc
       let handle = function
         | Top.Global ({ Kind = VarKind.Global|VarKind.ConstGlobal; Type = Array (t, sz) } as v, init) ->
           let v' = { v.UniqueCopy() with Type = PhysPtr t; Kind = VarKind.ConstGlobal }
-          globalSubst.[v] <- (v', Expr.MkBlock [])
+          globalSubst.[v] <- (v', Skip(bogusEC))
           let is_global = Expr.Macro (boolBogusEC (), "_vcc_is_global_array", 
                                       [mkRef v'; mkInt sz])
           [Top.Global (v', init); Top.GeneratedAxiom(is_global, Top.Global(v', None))]
         | Top.Global ({ Kind = VarKind.Global|VarKind.ConstGlobal|VarKind.SpecGlobal } as v, init) ->
           let v' = { v.UniqueCopy() with Type = Type.MkPtr(v.Type, v.Kind = VarKind.SpecGlobal); Kind = VarKind.ConstGlobal }
-          globalSubst.[v] <- (v', Expr.MkBlock [])
+          globalSubst.[v] <- (v', Skip(bogusEC))
           let is_global = Expr.Macro (boolBogusEC (), "_vcc_is_global", 
                                       [mkRef v'])
           [Top.Global (v', init); Top.GeneratedAxiom(is_global, Top.Global(v',None))]
@@ -761,7 +761,7 @@ namespace Microsoft.Research.Vcc
               false
             | _ -> not !usedBreak // keep looking
           let body = inBody body
-          let branch = If (wtok, None, cond, Goto (wtok, break_lbl), Expr.MkBlock [])
+          let branch = If (wtok, None, cond, Goto (wtok, break_lbl), Expr.Skip({wtok with Type = Void}))
           //let branch = branch.SelfCtxMap(false, doRemoveLazyOps false false)
           let res () = mkLoop [ body; Label (wtok, continue_lbl); branch ]
           match cond with
