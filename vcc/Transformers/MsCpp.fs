@@ -25,6 +25,26 @@ namespace Microsoft.Research.Vcc
 
   let isSpecialFunction (fn : Function) = Set.contains fn.Name specialFunctionNames
 
+  let incrOpTable = Map.ofList [
+                                  "()++", ("+", true)
+                                  "()--", ("-", true)
+                                  "++()", ("+", false)
+                                  "--()", ("-", false)
+                                ]
+
+  let assignOpTable = Map.ofList [
+                                    "+=", ("+", true)
+                                    "-=", ("-", true)
+                                    "*=", ("*", true)
+                                    "/=", ("/", true)
+                                    "%=", ("%", true)
+                                    "&=", ("&", false)
+                                    "|=", ("|", false)
+                                    "^=", ("^", false)
+                                    "<<=", ("<<", false)
+                                    ">>=", (">>", false)
+                                  ]
+
   // ============================================================================================================    
 
   let init (helper:TransHelper.TransEnv) =
@@ -41,18 +61,18 @@ namespace Microsoft.Research.Vcc
         let assign = Macro(e.Common, "=", [e; calc])
         if isPost then Expr.MkBlock(init @ [assign]) else Expr.MkBlock(init @ [assign; tmp])
 
-      let incrOpTable = Map.ofList [
-                                      "()++", ("+", true)
-                                      "()--", ("-", true)
-                                      "++()", ("+", false)
-                                      "--()", ("-", false)
-                                   ]
+      let handleAssignOp ec op (e0:Expr) e1 =
+        let calc = Expr.Prim(e0.Common, op, [e0; e1])
+        Macro({ec with Type = Type.Void}, "=", [e0; calc])        
 
       function
         | Macro(ec, "init", [lhs; rhs]) -> Some(Macro(ec, "=", [self lhs; self rhs]))
         | Macro(_, incrOp, [e; IntLiteral(_, _one)]) when _one.IsOne && incrOpTable.ContainsKey incrOp -> 
           let (op, isPost) = Map.find incrOp incrOpTable
-          Some(handlePrePostIncrDecr e op isPost)
+          Some(handlePrePostIncrDecr (self e) op isPost)
+        | Macro(ec, assignOp, [e0; e1]) when assignOpTable.ContainsKey assignOp ->
+          let (op, isChecked) = Map.find assignOp assignOpTable
+          Some(handleAssignOp ec (Op(op, if isChecked then Checked else Unchecked)) (self e0) (self e1))
         | _ -> None
   
     // ============================================================================================================    
@@ -61,8 +81,7 @@ namespace Microsoft.Research.Vcc
       | Prim(ec, (Op(("<"|"<="|">"|">="|"=="|"!="), _) as op), args) ->
         Some(Prim({ec with Type = Type.Bool}, op, List.map self args))
       | _ -> None
-      
-    
+          
     // ============================================================================================================    
     
     let insertBoolConversion self = 
