@@ -464,16 +464,19 @@ namespace Microsoft.Research.Vcc
           | _ -> None
         let can_frame f =
           Expr.MkAssume (Expr.Macro (boolBogusEC(), "can_use_frame_axiom_of", [Expr.Call (bogusEC, f, [], [])]))
+        let ptrReads = f.Reads |> List.filter (fun e -> match e.Type with Ptr (Type.Ref { Kind = (Struct|Union) }) -> true | _ -> false)
         let inDomain (expr:Expr) =
-          match expr.Type with
-            | Ptr (Type.Ref { Kind = (Struct|Union) }) ->
-              let inDom e = 
-                Expr.MkAssume (Macro (boolBogusEC(), "_vcc_in_domain", [e; subst expr]))
-              List.map inDom (subst expr :: owns expr)                
-            | _ -> []
+          let ownsPtrs = ptrReads |> List.filter (fun e -> e <> expr) |> List.map owns |> List.concat
+          let inDom e = 
+            let eq (x:Expr) =
+              if expr.Type = x.Type then mkEq expr x
+              else Expr.False
+            let final = Macro (boolBogusEC(), "_vcc_in_domain", [e; subst expr])
+            ownsPtrs |> List.map eq |> List.fold mkOr final |> Expr.MkAssume
+          (subst expr :: owns expr) |> List.map inDom
         match rd_f.Body with
           | Some b -> 
-            let can_frame = List.map can_frame (List.filter (fun fn -> fn.RetType <> Type.Void) transCalls.[f]) @ (List.map inDomain f.Reads |> List.concat)
+            let can_frame = List.map can_frame (List.filter (fun fn -> fn.RetType <> Type.Void) transCalls.[f]) @ (List.map inDomain ptrReads |> List.concat)
             rd_f.Body <- Some (Expr.MkBlock (preconds @ can_frame @ b.SelfMap fixupHavocOthers :: []))
           | None -> helper.Error (rd_f.Token, 9646, "the reads check is required to have a body", None)
           
