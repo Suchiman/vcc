@@ -13,6 +13,8 @@ namespace VCC
     bool Implies;
     void BeginGhost();
     void EndGhost();
+    bool Forall(bool);
+    bool Exists(bool);
 }
 
 #ifndef VERIFY
