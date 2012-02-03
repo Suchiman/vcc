@@ -18,4 +18,5 @@ namespace VCC
 {
     void Assert(bool);
     void Assume(bool);
+    bool Implies;
 }
