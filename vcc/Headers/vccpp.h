@@ -6,6 +6,14 @@
 
 #pragma once
 
+#ifndef VERIFY
+
+// hide annotations from C compiler
+
+#define _(...) /* nothing */
+
+#endif 
+
 namespace VCC
 {
     void Assert(bool);
