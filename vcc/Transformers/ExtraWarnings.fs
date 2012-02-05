@@ -151,8 +151,10 @@ namespace Microsoft.Research.Vcc
 
       | VarWrite(ec, vs, expr) ->
         let se = checkSequence expr
-        let varWrites = List.fold (fun m v -> Map.add v ec.Token m) se.VarWrites vs
-        { se with VarWrites = varWrites }
+        let varWrites  = List.fold (fun m v -> Map.add v ec.Token m) Map.empty vs
+        let combinedWrites = List.fold (fun m v -> Map.add v ec.Token m) se.VarWrites vs
+        seWarnForConflicts helper { seNone with VarWrites = varWrites } { se with VarReads = Map.empty } |> ignore
+        { se with VarWrites = combinedWrites }
 
       | MemoryWrite(ec, e0, e1) ->
         let se = checkSequences true [e0; e1]
