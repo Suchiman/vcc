@@ -25,6 +25,10 @@ namespace Microsoft.Research.Vcc
 
   let isSpecialFunction (fn : Function) = Set.contains fn.Name specialFunctionNames
 
+  let specialGlobalNames = Set.ofList [
+                                        "VCC::Implies"
+                                      ]
+
   let incrOpTable = Map.ofList [
                                   "()++", ("+", true)
                                   "()--", ("-", true)
@@ -77,6 +81,28 @@ namespace Microsoft.Research.Vcc
   
     // ============================================================================================================    
 
+    let rewriteExtraOps self = function
+      | Prim(ec, Op("||", cs), _) as disjunction -> 
+        // an implication "a ==> b" is rewritten to "a || VCC::Implies || b", which we need to undo here
+
+        let rec collectDisjuncts = function
+          | Prim(ec, Op("||", _), [e0; e1]) -> collectDisjuncts e0 @ collectDisjuncts e1
+          | expr -> [self expr]
+        let rec splitAtImplies lhs = function
+          | [] -> (List.rev lhs, [])
+          | (Ref(_, {Name = "VCC::Implies"})) :: rhs -> (List.rev lhs, rhs)
+          | e :: rhs -> splitAtImplies (e::lhs) rhs
+        let rec disjunctListToImplication disjuncts =
+          match splitAtImplies []  disjuncts with
+              | (lhs, []) -> TransUtil.multiOr lhs
+              | (lhs, rhs) -> boolOp "==>" (TransUtil.multiOr lhs) (disjunctListToImplication rhs)
+
+        Some((disjunction |> collectDisjuncts |> disjunctListToImplication).WithCommon(ec))
+
+      | _ -> None
+
+    // ============================================================================================================    
+
     let retypeOperators self = function
       | Prim(ec, (Op(("<"|"<="|">"|">="|"=="|"!="), _) as op), args) ->
         Some(Prim({ec with Type = Type.Bool}, op, List.map self args))
@@ -118,21 +144,23 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
-    let removeSpecialFunctions decls =
+    let removeSpecialDecls decls =
 
-      let filterSpecialFunctions = function
+      let filterSpecialDecls = function
         | Top.FunctionDecl(fn) when isSpecialFunction fn -> false
+        | Top.Global({Name = name}, _) when Set.contains name specialGlobalNames -> false
         | _ -> true
 
-      List.filter filterSpecialFunctions decls
+      List.filter filterSpecialDecls decls
 
     // ============================================================================================================    
 
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
     helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
-    helper.AddTransformer ("cpp-remove-functions", TransHelper.Decl removeSpecialFunctions)
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
+    helper.AddTransformer ("cpp-rewrite-ops", TransHelper.Expr rewriteExtraOps)
+    helper.AddTransformer ("cpp-remove-decls", TransHelper.Decl removeSpecialDecls)
     //helper.AddTransformer ("cpp-retype-ops", TransHelper.Expr retypeOperators)
     //helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)
 
