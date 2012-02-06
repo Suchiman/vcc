@@ -26,6 +26,18 @@ namespace Microsoft.Research.Vcc
           }
           dir = dir.Parent;
         }
+
+        // Check environment Includes
+        string envIncludes = Environment.GetEnvironmentVariable("INCLUDE");
+        if (!string.IsNullOrEmpty(envIncludes))
+        {
+            foreach (var subdir in envIncludes.Split(';'))
+            {
+                if (Directory.GetFiles(subdir, "vcc.h").Length > 0)
+                    return new DirectoryInfo(subdir);
+            }
+        }
+
         return null;
       }
       );
