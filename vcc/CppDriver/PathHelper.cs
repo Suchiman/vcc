@@ -31,7 +31,7 @@ namespace Microsoft.Research.Vcc
         string envIncludes = Environment.GetEnvironmentVariable("INCLUDE");
         if (!string.IsNullOrEmpty(envIncludes))
         {
-            foreach (var subdir in envIncludes.Split(';'))
+            foreach (var subdir in envIncludes.Split(new char[]{';'}, StringSplitOptions.RemoveEmptyEntries))
             {
                 if (Directory.GetFiles(subdir, "vcc.h").Length > 0)
                     return new DirectoryInfo(subdir);
