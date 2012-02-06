@@ -20,7 +20,7 @@ void sstr_append_char(struct SafeString *s, char c)
   _(unwrapping s) {
     _(unwrapping (char[s->capacity])(s->content)) {
       s->content[s->len] = c;
-	  s->len++;
+      s->len++;
       s->content[s->len] = '\0';
     }
   }
