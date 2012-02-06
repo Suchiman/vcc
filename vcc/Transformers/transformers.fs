@@ -177,4 +177,6 @@ namespace Microsoft.Research.Vcc
       TransHelper.Decl (TransSideChecks.handleAdmissibilityChecks helper), "post-assignments")
     helper.AddTransformerAfter ("add-reads-checks", 
       TransHelper.Decl (TransSideChecks.addReadsChecks helper), "final-before-cleanup")    
+    helper.AddTransformerAfter ("warn-sequence",
+     TransHelper.Decl (ExtraWarnings.warnForSequenceProblems helper), "core-assignments")
       

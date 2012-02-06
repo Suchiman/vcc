@@ -568,7 +568,7 @@ module Microsoft.Research.Vcc.CAST
         | Some t' -> t'
         | None -> this
         
-  and [<CustomEquality; NoComparison>]
+  and [<CustomEquality; CustomComparison>]
     Variable = 
       { 
         Name:Id; 
@@ -577,6 +577,13 @@ module Microsoft.Research.Vcc.CAST
         UniqueId:Unique;
       }
     
+      interface System.IComparable with
+        member this.CompareTo(other : obj) = 
+          match other with
+            | :? Variable as var1 -> this.UniqueId.CompareTo(var1.UniqueId)
+            | _ -> -1
+          
+
       override this.GetHashCode () = int this.UniqueId
       override this.Equals (that:obj) = LanguagePrimitives.PhysicalEquality that (this :> obj)
     
