@@ -75,6 +75,7 @@
   <ItemGroup>
     <ClInclude Include="vcc.h" />
     <ClInclude Include="vccp.h" />
+    <ClInclude Include="vccpp.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Vcc3Prelude.bpl">
