@@ -13,8 +13,8 @@ namespace VCC
     bool Implies;
     void BeginGhost();
     void EndGhost();
-    bool Forall(bool);
-    bool Exists(bool);
+    template<class T> bool Forall(T);
+    template<class T> bool Exists(T);
 }
 
 #ifndef VERIFY
