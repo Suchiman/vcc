@@ -32,7 +32,7 @@ namespace Microsoft.Research.Vcc {
     public override IEnumerable<ParameterDefinition> Parameters {
       get {
         //^ assume this.GlobalMethodDeclaration is FunctionDefinition; //the constructor assures this
-        FunctionDefinition functionDefinition = (FunctionDefinition)this.GlobalMethodDeclaration;
+        var functionDefinition = (FunctionDefinition)this.GlobalMethodDeclaration;
         if (functionDefinition.HasSingleVoidParameter) return Enumerable<ParameterDefinition>.Empty;
         return base.Parameters;
       }
@@ -42,14 +42,30 @@ namespace Microsoft.Research.Vcc {
     {
       get
       {
-        FunctionDefinition functionDefinition = (FunctionDefinition)this.GlobalMethodDeclaration;
+        var functionDefinition = (FunctionDefinition) this.GlobalMethodDeclaration;
         // copy global member list because it may change
-        List<ITypeDeclarationMember> members = new List<ITypeDeclarationMember>(functionDefinition.CompilationPart.GlobalDeclarationContainer.GlobalMembers);
-        foreach (ITypeDeclarationMember member in members) {
-          FunctionDeclaration decl = member as FunctionDeclaration;
-          if (decl != null)
+        var members = new List<ITypeDeclarationMember>(functionDefinition.CompilationPart.GlobalDeclarationContainer.GlobalMembers);
+        foreach (ITypeDeclarationMember member in members)
+        {
+          var decl = member as FunctionDeclaration;
+          if (decl != null && decl.Name.Name == this.Name && decl.AcceptsExtraArguments == this.AcceptsExtraArguments)
           {
-            if (decl.Name.Name == this.Name) yield return decl;
+            var thisParEnum = this.Parameters.GetEnumerator();
+            var declParEnum = decl.Parameters.GetEnumerator();
+
+            while (thisParEnum.MoveNext()) {
+              if (!declParEnum.MoveNext()) goto FoundTypeMismatch;
+              if (!TypeHelper.TypesAreEquivalent(thisParEnum.Current.Type.ResolvedType, declParEnum.Current.Type.ResolvedType))
+                goto FoundTypeMismatch;
+            }
+            
+            if (declParEnum.MoveNext()) goto FoundTypeMismatch;
+
+            yield return decl;
+
+          FoundTypeMismatch:
+            ;
+
           }
         }
       }
