@@ -71,12 +71,24 @@ namespace Microsoft.Research.Vcc
 
       function
         | Macro(ec, "init", [lhs; rhs]) -> Some(Macro(ec, "=", [self lhs; self rhs]))
+        
         | Macro(_, incrOp, [e; IntLiteral(_, _one)]) when _one.IsOne && incrOpTable.ContainsKey incrOp -> 
           let (op, isPost) = Map.find incrOp incrOpTable
           Some(handlePrePostIncrDecr (self e) op isPost)
+        
         | Macro(ec, assignOp, [e0; e1]) when assignOpTable.ContainsKey assignOp ->
           let (op, isChecked) = Map.find assignOp assignOpTable
           Some(handleAssignOp ec (Op(op, if isChecked then Checked else Unchecked)) (self e0) (self e1))
+
+        | Macro(ec, "dot", [e0; UserData(_, field)]) ->
+          match field with
+            | :? Field as f -> 
+              Some(Expr.Deref(ec, Dot({ec with Type = Type.MkPtr(ec.Type, false)}, 
+                                      Macro({e0.Common with Type = Type.MkPtrToStruct(f.Parent)}, "&", [self e0]),
+                                      f)))
+            | _ -> helper.Oops(ec.Token, "unexpected UserData type in 'dot'"); None
+
+
         | _ -> None
   
     // ============================================================================================================    
