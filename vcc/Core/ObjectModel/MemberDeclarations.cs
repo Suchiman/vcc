@@ -677,9 +677,11 @@ namespace Microsoft.Research.Vcc {
       //and thus cannot depend on it being initialized. Instead, it searches the members of each compilation part separately.
 
       //Check if the compilation part containing this declaration has a matching definition
-      foreach (ITypeDeclarationMember tdmem in this.CompilationPart.GlobalDeclarationContainer.GetTypeDeclarationMembersNamed(this.Name.UniqueKey)) { //TODO: handle overloads!!!
+      foreach (ITypeDeclarationMember tdmem in this.CompilationPart.GlobalDeclarationContainer.GetTypeDeclarationMembersNamed(this.Name.UniqueKey)) {
+
         FunctionDefinition/*?*/ fdef = tdmem as FunctionDefinition;
-        if (fdef != null) {
+        if (fdef != null && VccGlobalMethodDefinition.ParameterListsMatch(fdef.Parameters.GetEnumerator(), this.Parameters.GetEnumerator())) 
+        {
           this.TransferContract(fdef.GlobalMethodDefinition);
           return fdef.GlobalMethodDefinition;
         }

@@ -432,6 +432,13 @@
             and parent type reference in case of nested type.
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.MetadataReader.ObjectModelImplementation.IMetadataReaderNamedTypeReference.TryResolveAsExportedType">
+            <summary>
+            Type references resolve to type definitions. The resolution process traverses zero or more entries in exported type tables, also known as type aliases.
+            If a reference is indirected via a type alias, ITypeReference.IsAlias is true and ITypeReference.AliasForType exposes the information in the relevant row of the exported type table.
+            This method returns an object with that information, if available. If not available, it returns null.
+            </summary>
+        </member>
         <member name="T:Microsoft.Cci.MetadataReader.ObjectModelImplementation.CoreTypeReference">
             <summary>
             Represents the core types such as int, float, object etc from the core assembly.
@@ -441,6 +448,20 @@
         <member name="T:Microsoft.Cci.MetadataReader.ObjectModelImplementation.TypeRefReference">
             <summary>
             Represents type reference to types in TypeRef table. This could either be Namespace type reference or nested type reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MetadataReader.ObjectModelImplementation.TypeRefReference.TryResolveAsExportedType">
+            <summary>
+            Type references resolve to type definitions. The resolution process traverses zero or more entries in exported type tables, also known as type aliases.
+            If a reference is indirected via a type alias, ITypeReference.IsAlias is true and ITypeReference.AliasForType exposes the information in the relevant row of the exported type table.
+            This method returns an object with that information, if available. If not available, it returns null.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MetadataReader.ObjectModelImplementation.NamespaceTypeRefReference.TryResolveAsExportedType">
+            <summary>
+            Type references resolve to type definitions. The resolution process traverses zero or more entries in exported type tables, also known as type aliases.
+            If a reference is indirected via a type alias, ITypeReference.IsAlias is true and ITypeReference.AliasForType exposes the information in the relevant row of the exported type table.
+            This method returns an object with that information, if available. If not available, it returns null.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MetadataReader.ObjectModelImplementation.TypeCache.LeastUpperBound(Microsoft.Cci.TypeMemberVisibility,Microsoft.Cci.TypeMemberVisibility)">
@@ -470,6 +491,12 @@
         <member name="F:Microsoft.Cci.MetadataReader.PEFileToObjectModel.AssemblyReferenceArray">
             <summary>
             Cache for assembly references. This indexes from row id to assembly reference.
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.MetadataReader.PEFileToObjectModel.AssemblyReferences">
+            <summary>
+            The value to return for IModule.AssemblyReferences. May have been modified by the host, so
+            this is not the same as AssemblyReferenceArray.
             </summary>
         </member>
         <member name="F:Microsoft.Cci.MetadataReader.PEFileToObjectModel.ModuleReferenceArray">
@@ -518,9 +545,6 @@
             <summary>
             Given a namespace full name and type's mangled name this method resolves it to a TypeBase.
             </summary>
-            <param name="namespaceName"></param>
-            <param name="mangledTypeName"></param>
-            <returns></returns>
         </member>
         <member name="M:Microsoft.Cci.MetadataReader.PEFileToObjectModel.ResolveNestedTypeDefinition(Microsoft.Cci.INamedTypeDefinition,Microsoft.Cci.IName)">
             <summary>
@@ -530,14 +554,10 @@
             <param name="typeName"></param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.Cci.MetadataReader.PEFileToObjectModel.ResolveExportedNamespaceType(Microsoft.Cci.IName,Microsoft.Cci.IName)">
+        <member name="M:Microsoft.Cci.MetadataReader.PEFileToObjectModel.TryToResolveAsNamespaceTypeAlias(Microsoft.Cci.IName,Microsoft.Cci.IName)">
             <summary>
-            Given a namespace full name and type's mangled name this method resolves it to an aliased type.
-            Aliased type can further be walked to find the exact type it resolved to.
+            Given a namespace full name and type's mangled name this method resolves it to a type alias, if such an alias exists in this module.
             </summary>
-            <param name="namespaceName"></param>
-            <param name="mangledTypeName"></param>
-            <returns></returns>
         </member>
         <member name="M:Microsoft.Cci.MetadataReader.PEFileToObjectModel.ResolveExportedNestedType(Microsoft.Cci.MetadataReader.ObjectModelImplementation.ExportedTypeAliasBase,Microsoft.Cci.IName)">
             <summary>
@@ -561,20 +581,16 @@
             <param name="namedTypeReference"></param>
             <returns></returns>
         </member>
-        <member name="M:Microsoft.Cci.MetadataReader.PEFileToObjectModel.ResolveNamespaceTypeRefReferenceAsExportedType(Microsoft.Cci.MetadataReader.ObjectModelImplementation.NamespaceTypeRefReference)">
+        <member name="M:Microsoft.Cci.MetadataReader.PEFileToObjectModel.TryToResolveNamespaceTypeReferenceAsExportedType(Microsoft.Cci.MetadataReader.ObjectModelImplementation.NamespaceTypeRefReference)">
             <summary>
-            This method resolved the TypeRef as an exported type. i.e. the said type reference refers to the type
-            in exported type table.
+            This method tries to resolves the give namespace type reference as an exported type.
             </summary>
-            <param name="moduleTypeRefReference"></param>
-            <returns></returns>
+            <param name="namespaceTypeReference"></param>
         </member>
-        <member name="M:Microsoft.Cci.MetadataReader.PEFileToObjectModel.FindExportedType(Microsoft.Cci.MetadataReader.ObjectModelImplementation.ExportedTypeAliasBase)">
+        <member name="M:Microsoft.Cci.MetadataReader.PEFileToObjectModel.GetReferenceToAliasedType(Microsoft.Cci.MetadataReader.ObjectModelImplementation.ExportedTypeAliasBase)">
             <summary>
-            Finds the given aliased type in the exported type table.
+            Returns a reference to the type that the given alias stands for. For example, if alias is a type forwarder, return a reference to the forwarded type (in another assembly).
             </summary>
-            <param name="aliasAliasBase"></param>
-            <returns></returns>
         </member>
         <member name="T:Microsoft.Cci.MetadataReader.DefaultWindowsRuntimeHost">
             <summary>
@@ -639,12 +655,21 @@
             Usually the value in methodDefinition, but occassionally something else.
             </returns>
         </member>
-        <member name="M:Microsoft.Cci.MetadataReader.WindowsRuntimeMetadataReaderHost.Redirect(Microsoft.Cci.IUnit,Microsoft.Cci.ITypeReference)">
+        <member name="M:Microsoft.Cci.MetadataReader.WindowsRuntimeMetadataReaderHost.Redirect(Microsoft.Cci.IUnit,System.Collections.Generic.IEnumerable{Microsoft.Cci.IAssemblyReference})">
+            <summary>
+            Provides the host with an opportunity to add, remove or substitute assembly references in the given list.
+            This avoids the cost of rewriting the entire unit in order to make such changes.
+            </summary>
+            <param name="referringUnit">A reference to the unit that has these references.</param>
+            <param name="assemblyReferences">The assembly references to substitute.</param>
+            <returns>Usually assemblyReferences, but occasionally a modified enumeration.</returns>
+        </member>
+        <member name="M:Microsoft.Cci.MetadataReader.WindowsRuntimeMetadataReaderHost.Redirect(Microsoft.Cci.IUnit,Microsoft.Cci.INamedTypeReference)">
             <summary>
             Provides the host with an opportunity to substitute one type reference for another during metadata reading.
             This avoids the cost of rewriting the entire unit in order to make such changes.
             </summary>
-            <param name="referringUnit">The unit that is referencing the type.</param>
+            <param name="definingUnit">A reference to the unit that is defining the type.</param>
             <param name="typeReference">A type reference encountered during metadata reading.</param>
             <returns>
             Usually the value in typeReference, but occassionally something else.
@@ -660,6 +685,11 @@
             <returns>
             Usually the value in customAttribute, but occassionally another custom attribute.
             </returns>
+        </member>
+        <member name="M:Microsoft.Cci.MetadataReader.WindowsRuntimeMetadataReaderHost.UnifyAssembly(Microsoft.Cci.AssemblyIdentity)">
+            <summary>
+            Default implementation of UnifyAssembly. Override this method to change the behavior.
+            </summary>
         </member>
         <member name="M:Microsoft.Cci.MetadataReader.DefaultWindowsRuntimeHost.#ctor(System.Boolean)">
             <summary>
@@ -701,9 +731,24 @@
             Returns an identity that is the same as CoreAssemblyIdentity, except that the name is "System".
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.GetSystemObjectModelSymbolicIdentity">
+            <summary>
+            Returns an identity that is the same as CoreAssemblyIdentity, except that the name is "System".
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.GetSystemRuntimeInteropServicesWindowsRuntimeSymbolicIdentity">
+            <summary>
+            Returns an identity that is the same as CoreAssemblyIdentity, except that the name is "System.Runtime.InteropServices.WindowsRuntime" and the version is at least 4.0.
+            </summary>
+        </member>
         <member name="M:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.GetSystemRuntimeWindowsRuntimeSymbolicIdentity">
             <summary>
             Returns an identity that is the same as CoreAssemblyIdentity, except that the name is "System.Runtime.WindowsRuntime" and the version is at least 4.0.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.GetSystemRuntimeWindowsRuntimeUIXamlSymbolicIdentity">
+            <summary>
+            Returns an identity that is the same as CoreAssemblyIdentity, except that the name is "System.Runtime.WindowsRuntime.UI.Xaml" and the version is at least 4.0.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.System">
@@ -711,9 +756,24 @@
             A reference to the CLR System assembly
             </summary>
         </member>
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.SystemObjectModel">
+            <summary>
+            A reference to the CLR System.ObjectModel contract assembly
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.SystemRuntimeInteropServicesWindowsRuntime">
+            <summary>
+            A reference to the assembly that contains CLR types to substitute for Windows Runtime interop types, i.e. System.Runtime.InteropServices.WindowsRuntime.
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.SystemRuntimeWindowsRuntime">
             <summary>
             A reference to the assembly that contains CLR types to substitute for Windows Runtime types.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.SystemRuntimeWindowsRuntimeUIXaml">
+            <summary>
+            A reference to the assembly that contains Xaml types to substitute for Windows Runtime types.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.SystemAttributeTargets">
@@ -781,6 +841,11 @@
             System.EventHandler`1
             </summary>
         </member>
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.SystemIDisposable">
+            <summary>
+            System.IDisposable
+            </summary>
+        </member>
         <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.SystemNullable1">
             <summary>
             System.Nullable`1
@@ -801,9 +866,14 @@
             System.Uri
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsFoundationColor">
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.SystemWindowsInputICommand">
             <summary>
-            Windows.Foundation.Color
+            System.Windows.Input.ICommand
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIColor">
+            <summary>
+            Windows.UI.Color
             </summary>
         </member>
         <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsFoundationPoint">
@@ -821,64 +891,64 @@
             Windows.Foundation.Size
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIDirectUICornerRadius">
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIXamlCornerRadius">
             <summary>
-            Windows.UI.DirectUI.CornerRadius
+            Windows.UI.Xaml.CornerRadius
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIDirectUIDuration">
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIXamlDuration">
             <summary>
-            Windows.UI.DirectUI.Duration
+            Windows.UI.Xaml.Duration
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIDirectUIDurationType">
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIXamlDurationType">
             <summary>
-            Windows.UI.DirectUI.DurationType
+            Windows.UI.Xaml.DurationType
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIDirectUIGridLength">
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIXamlGridLength">
             <summary>
-            Windows.UI.DirectUI.GridLength
+            Windows.UI.Xaml.GridLength
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIDirectUIGridUnitType">
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIXamlGridUnitType">
             <summary>
-            Windows.UI.DirectUI.GridUnitType
+            Windows.UI.Xaml.GridUnitType
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIDirectUIThickness">
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIXamlThickness">
             <summary>
-            Windows.UI.DirectUI.Thickness
+            Windows.UI.Xaml.Thickness
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIDirectUIControlsPrimitivesGeneratorPosition">
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIXamlControlsPrimitivesGeneratorPosition">
             <summary>
-            Windows.UI.DirectUI.Controls.Primitives.GeneratorPosition
+            Windows.UI.Xaml.Controls.Primitives.GeneratorPosition
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIDirectUIMediaMatrix">
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIXamlMediaMatrix">
             <summary>
-            Windows.UI.DirectUI.Media.Matrix
+            Windows.UI.Xaml.Media.Matrix
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIDirectUIMediaAnimationKeyTime">
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIXamlMediaAnimationKeyTime">
             <summary>
-            Windows.UI.DirectUI.Media.Animation.KeyTime
+            Windows.UI.Xaml.Media.Animation.KeyTime
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIDirectUIMediaAnimationRepeatBehavior">
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIXamlMediaAnimationRepeatBehavior">
             <summary>
-            Windows.UI.DirectUI.Media.Animation.RepeatBehavior
+            Windows.UI.Xaml.Media.Animation.RepeatBehavior
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIDirectUIMediaAnimationRepeatBehaviorType">
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIXamlMediaAnimationRepeatBehaviorType">
             <summary>
-            Windows.UI.DirectUI.Media.Animation.RepeatBehaviorType
+            Windows.UI.Xaml.Media.Animation.RepeatBehaviorType
             </summary>
         </member>
-        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIDirectUIMediaMedia3DMatrix3D">
+        <member name="P:Microsoft.Cci.MetadataReader.WindowsRuntimePlatform.WindowsUIXamlMediaMedia3DMatrix3D">
             <summary>
-            Windows.UI.DirectUI.Media.Media3D.Matrix3D
+            Windows.UI.Xaml.Media.Media3D.Matrix3D
             </summary>
         </member>
     </members>

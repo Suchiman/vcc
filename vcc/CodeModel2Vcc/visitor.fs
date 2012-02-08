@@ -673,6 +673,7 @@ namespace Microsoft.Research.Vcc
             | PrimitiveTypeCode.Int64  -> C.Type.Integer (C.IntKind.Int64)
             | PrimitiveTypeCode.Boolean -> C.Type.Bool
             | PrimitiveTypeCode.Void -> C.Type.Void
+            | PrimitiveTypeCode.Invalid -> C.Type.Bogus
             | PrimitiveTypeCode.Float32 -> C.Type.Primitive C.PrimKind.Float32
             | PrimitiveTypeCode.Float64 -> C.Type.Primitive C.PrimKind.Float64
             | PrimitiveTypeCode.UIntPtr
