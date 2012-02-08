@@ -1219,6 +1219,11 @@
             Performs some computation with the given Win32 resource.
             </summary>
         </member>
+        <member name="T:Microsoft.Cci.INamespaceAliasForType">
+            <summary>
+            Represents an alias type in a namespace
+            </summary>
+        </member>
         <member name="T:Microsoft.Cci.IAliasForType">
             <summary>
             Alias types represent exported and forwarded types, and correspond to entries in the Exported Type table in the ECMA-335 metadata format.
@@ -1234,6 +1239,21 @@
         <member name="P:Microsoft.Cci.IAliasForType.Members">
             <summary>
             The collection of member objects comprising the type.
+            </summary>
+        </member>
+        <member name="T:Microsoft.Cci.INamespaceMember">
+            <summary>
+            A definition that is a member of a namespace. Typically a nested namespace or a namespace type definition.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.INamespaceMember.ContainingNamespace">
+            <summary>
+            The namespace that contains this member.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.INamespaceAliasForType.IsPublic">
+            <summary>
+            True if the type can be accessed from other assemblies.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.IAssembly">
@@ -1386,6 +1406,11 @@
         <member name="P:Microsoft.Cci.IModule.DebugInformationLocation">
             <summary>
             A path to the debug information corresponding to this module. Can be absolute or relative to the file path of the module. Empty if not specified.
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.IModule.DebugInformationVersion">
+            <summary>
+            A hexadecimal string that is used to store and retrieve the debugging symbols from a symbol store.
             </summary>
         </member>
         <member name="P:Microsoft.Cci.IModule.DllCharacteristics">
@@ -2435,16 +2460,6 @@
             A type definition that is a member of a namespace definition.
             </summary>
         </member>
-        <member name="T:Microsoft.Cci.INamespaceMember">
-            <summary>
-            A definition that is a member of a namespace. Typically a nested namespace or a namespace type definition.
-            </summary>
-        </member>
-        <member name="P:Microsoft.Cci.INamespaceMember.ContainingNamespace">
-            <summary>
-            The namespace that contains this member.
-            </summary>
-        </member>
         <member name="T:Microsoft.Cci.INamespaceTypeReference">
             <summary>
             A reference to a type definition that is a member of a namespace definition.
@@ -2507,7 +2522,7 @@
         </member>
         <member name="T:Microsoft.Cci.INameTable">
             <summary>
-            A collection of IName instances that represent names that are commonly used during compilation.
+            An extensible collection of IName instances that represent names that are commonly used during compilation.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.INameTable.GetNameFor(System.String)">
@@ -4410,7 +4425,7 @@
             </summary>
             <typeparam name="T"></typeparam>
         </member>
-        <member name="F:Microsoft.Cci.Enumerable`1.Empty">
+        <member name="P:Microsoft.Cci.Enumerable`1.Empty">
             <summary>
             An empty enumerable of element type T.
             </summary>
@@ -6016,16 +6031,6 @@
         <member name="P:Microsoft.Cci.INestedUnitSetNamespace.ContainingUnitSetNamespace">
             <summary>
             The unit set namespace that contains this member.
-            </summary>
-        </member>
-        <member name="T:Microsoft.Cci.INamespaceAliasForType">
-            <summary>
-            Represents an alias type in a namespace
-            </summary>
-        </member>
-        <member name="P:Microsoft.Cci.INamespaceAliasForType.IsPublic">
-            <summary>
-            True if the type can be accessed from other assemblies.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.INestedAliasForType">

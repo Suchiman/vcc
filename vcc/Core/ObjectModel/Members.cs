@@ -38,6 +38,34 @@ namespace Microsoft.Research.Vcc {
       }
     }
 
+    public static bool ParameterListsMatch(IEnumerator<ParameterDefinition> left, IEnumerator<ParameterDeclaration> right)
+    {
+      while (left.MoveNext()) {
+        if (!right.MoveNext())
+          return false;
+        if (!TypeHelper.TypesAreEquivalent(left.Current.Type.ResolvedType, right.Current.Type.ResolvedType))
+          return false;
+      }
+
+      if (right.MoveNext()) return false;
+
+      return true;
+    }
+
+    public static bool ParameterListsMatch(IEnumerator<ParameterDeclaration> left, IEnumerator<ParameterDeclaration> right)
+    {
+      while (left.MoveNext()) {
+        if (!right.MoveNext())
+          return false;
+        if (!TypeHelper.TypesAreEquivalent(left.Current.Type.ResolvedType, right.Current.Type.ResolvedType))
+          return false;
+      }
+
+      if (right.MoveNext()) return false;
+
+      return true;
+    }
+
     public IEnumerable<FunctionDeclaration> Declarations
     {
       get
@@ -50,22 +78,8 @@ namespace Microsoft.Research.Vcc {
           var decl = member as FunctionDeclaration;
           if (decl != null && decl.Name.Name == this.Name && decl.AcceptsExtraArguments == this.AcceptsExtraArguments)
           {
-            var thisParEnum = this.Parameters.GetEnumerator();
-            var declParEnum = decl.Parameters.GetEnumerator();
-
-            while (thisParEnum.MoveNext()) {
-              if (!declParEnum.MoveNext()) goto FoundTypeMismatch;
-              if (!TypeHelper.TypesAreEquivalent(thisParEnum.Current.Type.ResolvedType, declParEnum.Current.Type.ResolvedType))
-                goto FoundTypeMismatch;
-            }
-            
-            if (declParEnum.MoveNext()) goto FoundTypeMismatch;
-
-            yield return decl;
-
-          FoundTypeMismatch:
-            ;
-
+            if (ParameterListsMatch(this.Parameters.GetEnumerator(), decl.Parameters.GetEnumerator()))
+              yield return decl;
           }
         }
       }
