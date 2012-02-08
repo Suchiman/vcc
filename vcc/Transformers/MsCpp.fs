@@ -88,6 +88,13 @@ namespace Microsoft.Research.Vcc
                                       f)))
             | _ -> helper.Oops(ec.Token, "unexpected UserData type in 'dot'"); None
 
+        | Macro(_, "implicit_cast", [Cast(ec, cs, expr) as cast]) -> 
+          match cs with
+            | Checked -> 
+              if not (Type.ConversionIsLossless(expr.Type, ec.Type)) then
+                helper.Error(ec.Token, 37, "Cannot implicitly convert type '" + expr.Type.ToString() + "' to '" + ec.Type.ToString() + "'")
+              Some(self cast)
+            | _ -> Some(self cast)
 
         | _ -> None
   
