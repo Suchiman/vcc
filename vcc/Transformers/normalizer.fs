@@ -1256,8 +1256,50 @@ namespace Microsoft.Research.Vcc
                 
     // ============================================================================================================
 
+    let renameOverloads decls =
+      
+      let findOverloads (seen, clashes) = function
+        | Top.FunctionDecl({Name = "_vcc_when_claimed"}) -> (seen, clashes) // we introduce our own name clash during NewSyntax
+        | Top.FunctionDecl({Name = name}) ->
+          if Set.contains name seen then (seen, Set.add name clashes) else (Set.add name seen, clashes)
+        | _ -> (seen, clashes)
+
+      let (_, overloadedNames) = List.fold findOverloads (Set.empty, Set.empty) decls
+
+      let overloads = new Dict<_,_>()
+
+      for d in decls do
+        match d with 
+          | Top.FunctionDecl({Name = name} as fn) when Set.contains name overloadedNames -> 
+
+            let sanitizedTypeName (t : Type) = t.ToString().Replace(' ', '_').Replace('*', '.')
+
+            let parKindStr =  function
+              | VarKind.Parameter -> ""
+              | VarKind.SpecParameter -> "spec_"
+              | VarKind.OutParameter -> "out_"
+              | _ -> die()
+
+            let parTypes = [| for p in fn.Parameters -> parKindStr p.Kind + sanitizedTypeName p.Type |]
+            let parTypeString = if parTypes.Length = 0 then "" else "#" + System.String.Join("#", parTypes)
+            let overloadName = fn.Name + "#overload#" + (sanitizedTypeName fn.RetType) + parTypeString
+
+            match overloads.TryGetValue(overloadName) with
+              | true, clashingDecl ->
+                helper.Error(fn.Token, 9717, "function '" + fn.Name + "' already has a body", Some clashingDecl.Token)
+              | _ -> overloads.Add(overloadName, fn)
+
+            fn.Name <- overloadName
+
+          | _ -> ()
+
+      decls
+
+    // ============================================================================================================
+
     helper.AddTransformer ("norm-begin", TransHelper.DoNothing)
     helper.AddTransformer ("norm-unfold-constants", TransHelper.Decl unfoldConstants)
+    helper.AddTransformer ("norm-overloads", TransHelper.Decl renameOverloads)
     helper.AddTransformer ("norm-varargs", TransHelper.Expr normalizeVarArgs)
     helper.AddTransformer ("norm-multi-assignments", TransHelper.Expr normalizeMultiAssignments)
     helper.AddTransformer ("norm-inline-boogie", TransHelper.Decl handleBoogieInlineDeclarations)
