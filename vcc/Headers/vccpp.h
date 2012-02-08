@@ -21,15 +21,15 @@ namespace VCC
     void Assume(bool);
     void Requires(bool);
     void Ensures(bool);
-    void BeginGhost();
-    void EndGhost();
 
     template<class T> void Wrap(T);
     template<class T> void Unwrap(T);
+    template<class T> void Writes(T);
     
     // special variables
     bool IMPLIES;
     bool TRUE;
+    bool FALSE;
     bool RESULT;
 
     // templates for quantifiers
