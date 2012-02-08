@@ -246,27 +246,6 @@ namespace Microsoft.Research.Vcc
             decl
           | _ when methodsMap.ContainsKey meth -> methodsMap.[meth]
           | _ ->
-            let sanitizedTypeName (t : C.Type) = t.ToString().Replace(' ', '_').Replace('*', '.')
-            let parKind (p:IParameterTypeInformation) =
-              match p with
-                | :? Microsoft.Research.Vcc.VccParameterDefinition as vcp -> 
-                  if vcp.IsOut then "out_" elif vcp.IsSpec then "spec_" else ""
-                | _ -> ""
-            let parKind' (p:C.Variable) = 
-              match p.Kind with
-                | C.VarKind.Parameter -> ""
-                | C.VarKind.SpecParameter -> "spec_"
-                | C.VarKind.OutParameter -> "out_"
-                | _ -> die()
-            let nameWhenOverloadsArePresent methName (meth : ISignature) =
-              let typeName t = sanitizedTypeName (this.DoType(t))
-              let parTypes = [| for p in meth.Parameters -> parKind p + typeName p.Type |]
-              let parTypeString = if parTypes.Length = 0 then "" else "#" + System.String.Join("#", parTypes)
-              methName + "#overload#" + (typeName meth.Type)  + parTypeString
-            let updatedNameWhenOverloadsArePresent (fn : C.Function) =
-              let parTypes = [| for p in fn.Parameters -> (parKind' p) + (sanitizedTypeName p.Type) |]
-              let parTypeString = if parTypes.Length = 0 then "" else "#" + System.String.Join("#", parTypes)
-              fn.Name + "#overload#" + (sanitizedTypeName fn.RetType) + parTypeString
             let isSpec =
               if name.StartsWith("_vcc") || name.StartsWith("\\") then true 
               else match meth with
@@ -288,17 +267,7 @@ namespace Microsoft.Research.Vcc
             if decl.Name = "" then
               printf "null name\n"
             else
-              match methodNameMap.TryGetValue(decl.Name) with
-                | true, clashingDecl ->
-                  let declName = nameWhenOverloadsArePresent decl.Name meth
-                  let clashingName = updatedNameWhenOverloadsArePresent clashingDecl
-                  if declName = clashingName then
-                    helper.Error(decl.Token, 9717, "function '" + decl.Name + "' already has a body", Some clashingDecl.Token)
-                  else
-                    decl.Name <- declName
-                    clashingDecl.Name <- clashingName
-                | _ ->
-                  methodNameMap.Add(decl.Name, decl)
+              methodNameMap.[decl.Name] <- decl
             methodsMap.Add(meth, decl)
             decl
     
@@ -673,6 +642,7 @@ namespace Microsoft.Research.Vcc
             | PrimitiveTypeCode.Int64  -> C.Type.Integer (C.IntKind.Int64)
             | PrimitiveTypeCode.Boolean -> C.Type.Bool
             | PrimitiveTypeCode.Void -> C.Type.Void
+            | PrimitiveTypeCode.Invalid -> C.Type.Bogus
             | PrimitiveTypeCode.Float32 -> C.Type.Primitive C.PrimKind.Float32
             | PrimitiveTypeCode.Float64 -> C.Type.Primitive C.PrimKind.Float64
             | PrimitiveTypeCode.UIntPtr

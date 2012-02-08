@@ -6,7 +6,7 @@
     <members>
         <member name="T:Microsoft.Cci.AttributeHelper">
             <summary>
-            Class conraining helper routines for Attributes
+            Class containing helper routines for Attributes
             </summary>
         </member>
         <member name="M:Microsoft.Cci.AttributeHelper.IsAttributeType(Microsoft.Cci.ITypeDefinition)">
@@ -298,6 +298,7 @@
         <member name="M:Microsoft.Cci.MetadataHostEnvironment.LoadUnitFrom(System.String)">
             <summary>
             Returns the unit that is stored at the given location, or a dummy unit if no unit exists at that location or if the unit at that location is not accessible.
+            Implementations should do enough caching to avoid repeating work: this method gets called very often for already loaded units as part of the probing logic.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MetadataHostEnvironment.GetPlatformType">
@@ -510,13 +511,22 @@
             <param name="childDocumentName">The name of the child document.</param>
             <returns>The unmanaged memory block corresponding to the child document.</returns>
         </member>
-        <member name="M:Microsoft.Cci.IMetadataReaderHost.Redirect(Microsoft.Cci.IUnit,Microsoft.Cci.ITypeReference)">
+        <member name="M:Microsoft.Cci.IMetadataReaderHost.Redirect(Microsoft.Cci.IUnit,System.Collections.Generic.IEnumerable{Microsoft.Cci.IAssemblyReference})">
+            <summary>
+            Provides the host with an opportunity to add, remove or substitute assembly references in the given list.
+            This avoids the cost of rewriting the entire unit in order to make such changes.
+            </summary>
+            <param name="referringUnit">A reference to the unit that has these references.</param>
+            <param name="assemblyReferences">The assembly references to substitute.</param>
+            <returns>Usually assemblyReferences, but occasionally a modified enumeration.</returns>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHost.Redirect(Microsoft.Cci.IUnit,Microsoft.Cci.INamedTypeReference)">
             <summary>
             Provides the host with an opportunity to substitute one type reference for another during metadata reading.
             This avoids the cost of rewriting the entire unit in order to make such changes.
             </summary>
-            <param name="referringUnit">The unit that is referencing the type.</param>
-            <param name="typeReference">A type reference encountered during metadata reading.</param>
+            <param name="definingUnit">A reference to the unit that is defining the type.</param>
+            <param name="typeReference">A named type reference encountered during metadata reading.</param>
             <returns>Usually the value in typeReference, but occassionally something else.</returns>
         </member>
         <member name="M:Microsoft.Cci.IMetadataReaderHost.Rewrite(Microsoft.Cci.IUnit,Microsoft.Cci.ICustomAttribute)">
@@ -575,6 +585,113 @@
             </summary>
             <param name="reference">A type reference that cannot be resolved.</param>
             <returns>1, 2, 4 or 8.</returns>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHostContract.OpenBinaryDocument(Microsoft.Cci.IBinaryDocument)">
+            <summary>
+            Open the binary document as a memory block in host dependent fashion.
+            </summary>
+            <param name="sourceDocument">The binary document that is to be opened.</param>
+            <returns>
+            The unmanaged memory block corresponding to the source document.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHostContract.OpenBinaryDocument(Microsoft.Cci.IBinaryDocument,System.String)">
+            <summary>
+            Open the child binary document within the context of parent source document.as a memory block in host dependent fashion
+            For example: in multimodule assemblies the main module will be parentSourceDocument, where as other modules will be child
+            docuements.
+            </summary>
+            <param name="parentSourceDocument">The source document indicating the child document location.</param>
+            <param name="childDocumentName">The name of the child document.</param>
+            <returns>
+            The unmanaged memory block corresponding to the child document.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHostContract.Redirect(Microsoft.Cci.IUnit,System.Collections.Generic.IEnumerable{Microsoft.Cci.IAssemblyReference})">
+            <summary>
+            Provides the host with an opportunity to add, remove or substitute assembly references in the given list.
+            This avoids the cost of rewriting the entire unit in order to make such changes.
+            </summary>
+            <param name="referringUnit">A reference to the unit that has these references.</param>
+            <param name="assemblyReferences">The assembly references to substitute.</param>
+            <returns>
+            Usually assemblyReferences, but occasionally a modified enumeration.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHostContract.Redirect(Microsoft.Cci.IUnit,Microsoft.Cci.INamedTypeReference)">
+            <summary>
+            Provides the host with an opportunity to substitute one type reference for another during metadata reading.
+            This avoids the cost of rewriting the entire unit in order to make such changes.
+            </summary>
+            <param name="definingUnit">A reference to the unit that is defining the type.</param>
+            <param name="typeReference">A named type reference encountered during metadata reading.</param>
+            <returns>
+            Usually the value in typeReference, but occassionally something else.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHostContract.Rewrite(Microsoft.Cci.IUnit,Microsoft.Cci.ICustomAttribute)">
+            <summary>
+            Provides the host with an opportunity to substitute a custom attribute with another during metadata reading.
+            This avoids the cost of rewriting the entire unit in order to make such changes.
+            </summary>
+            <param name="containingUnit">The unit that contains the custom attribute.</param>
+            <param name="customAttribute">The custom attribute to rewrite (fix up).</param>
+            <returns>
+            Usually the value in customAttribute, but occassionally another custom attribute.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHostContract.Rewrite(Microsoft.Cci.IUnit,Microsoft.Cci.IMethodDefinition)">
+            <summary>
+            Provides the host with an opportunity to substitute one method definition for another during metadata reading.
+            This avoids the cost of rewriting the entire unit in order to make such changes.
+            </summary>
+            <param name="containingUnit">The unit that is defines the method.</param>
+            <param name="methodDefinition">A method definition encountered during metadata reading.</param>
+            <returns>
+            Usually the value in methodDefinition, but occassionally something else.
+            </returns>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHostContract.ResolvingAssemblyReference(Microsoft.Cci.IUnit,Microsoft.Cci.AssemblyIdentity)">
+            <summary>
+            This method is called when the assembly reference is being resolved and its not already loaded by the host.
+            </summary>
+            <param name="referringUnit">The unit that is referencing the assembly.</param>
+            <param name="referencedAssembly">Assembly identifier for the assembly being referenced.</param>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHostContract.ResolvingModuleReference(Microsoft.Cci.IUnit,Microsoft.Cci.ModuleIdentity)">
+            <summary>
+            This method is called when the module reference is being resolved and its not already loaded by the host.
+            </summary>
+            <param name="referringUnit">The unit that is referencing the module.</param>
+            <param name="referencedModule">Module identifier for the assembly being referenced.</param>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHostContract.StartGuessingGame">
+            <summary>
+            Called by the metadata reader when it is about to start parsing a custom attribute blob.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHostContract.TryNextPermutation">
+            <summary>
+            Called by the metadata reader when it has unsucessfully tried to parse a custom attribute blob and it now needs to try a new permutation.
+            Returns false if no more perumations are possible.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHostContract.WinGuessingGame">
+            <summary>
+            Called by the metadata reader when it has successfully parsed a custom attribute blob.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.IMetadataReaderHostContract.GuessUnderlyingTypeSizeOfUnresolvableReferenceToEnum(Microsoft.Cci.ITypeReference)">
+            <summary>
+            Returns a guess of the size of the underlying type of the given type reference to an enum type, which is assumed to be unresolvable
+            because it is defined an assembly that is not loaded into this host. Successive calls to the method will cycle through these values
+            with a periodicity determined by the number of types in the game and the successful guesses made in earlier games.
+            </summary>
+            <param name="reference">A type reference that cannot be resolved.</param>
+            <returns>
+            1, 2, 4 or 8.
+            </returns>
         </member>
         <member name="T:Microsoft.Cci.MetadataReaderHost">
             <summary>
@@ -657,13 +774,22 @@
             <returns>The unmanaged memory block corresponding to the child document.</returns>
             <remarks>When overridding this method, be sure to add any disposable objects to this.disposableObjectAllocatedByThisHost.</remarks>
         </member>
-        <member name="M:Microsoft.Cci.MetadataReaderHost.Redirect(Microsoft.Cci.IUnit,Microsoft.Cci.ITypeReference)">
+        <member name="M:Microsoft.Cci.MetadataReaderHost.Redirect(Microsoft.Cci.IUnit,System.Collections.Generic.IEnumerable{Microsoft.Cci.IAssemblyReference})">
             <summary>
-            Provides the host with an opportunity to substitute one type reference for another during metadata reading.
+            Provides the host with an opportunity to add, remove or substitute assembly references in the given list.
             This avoids the cost of rewriting the entire unit in order to make such changes.
             </summary>
-            <param name="referringUnit">The unit that is referencing the type.</param>
-            <param name="typeReference">A type reference encountered during metadata reading.</param>
+            <param name="referringUnit">A reference to the unit that has these references.</param>
+            <param name="assemblyReferences">The assembly references to substitute.</param>
+            <returns>Usually assemblyReferences, but occasionally a modified enumeration.</returns>
+        </member>
+        <member name="M:Microsoft.Cci.MetadataReaderHost.Redirect(Microsoft.Cci.IUnit,Microsoft.Cci.INamedTypeReference)">
+            <summary>
+            Provides the host with an opportunity to substitute one named type reference for another during metadata reading.
+            This avoids the cost of rewriting the entire unit in order to make such changes.
+            </summary>
+            <param name="definingUnit">A reference to the unit that is defining the type.</param>
+            <param name="typeReference">A named type reference encountered during metadata reading.</param>
             <returns>
             Usually the value in typeReference, but occassionally something else.
             </returns>
@@ -844,13 +970,13 @@
         <member name="M:Microsoft.Cci.MemberHelper.GetImplicitlyOverriddenBaseClassMethod(Microsoft.Cci.IMethodDefinition)">
             <summary>
             Returns the method from the closest base class that is overridden by the given method.
-            If no such method exists, Dummy.Method is returned.
+            If no such method exists, Dummy.MethodDefinition is returned.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MemberHelper.GetImplicitlyOverridingDerivedClassMethod(Microsoft.Cci.IMethodDefinition,Microsoft.Cci.ITypeDefinition)">
             <summary>
             Returns the method from the derived class that overrides the given method.
-            If no such method exists, Dummy.Method is returned.
+            If no such method exists, Dummy.MethodDefinition is returned.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MemberHelper.GetMemberSignature(Microsoft.Cci.ITypeMemberReference,Microsoft.Cci.NameFormattingOptions)">
@@ -919,10 +1045,36 @@
             A static instance of type ParameterInformationComparer that will resolve types during the comparison.
             </summary>
         </member>
-        <member name="M:Microsoft.Cci.MemberHelper.Unspecialize(Microsoft.Cci.IMethodDefinition)">
+        <member name="M:Microsoft.Cci.MemberHelper.Unspecialize(Microsoft.Cci.IEventDefinition)">
+            <summary>
+            If the given event definition has been specialized, return its unspecialized version. Otherwise just return the given definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MemberHelper.Unspecialize(Microsoft.Cci.IFieldReference)">
+            <summary>
+            If the given field reference has been specialized, return its unspecialized version. Otherwise just return the given reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MemberHelper.Unspecialize(Microsoft.Cci.IFieldDefinition)">
+            <summary>
+            If the given field definition has been specialized, return its unspecialized version. Otherwise just return the given definition.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MemberHelper.UninstantiateAndUnspecialize(Microsoft.Cci.IMethodReference)">
+            <summary>
+            If the given method reference has been specialized, return the unspecialized method reference. For the purposes of this method, a generic method instance
+            reference counts as a specialized method reference and its unspecialized version is the generic method itself. The returned value is fully unspecialized.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MemberHelper.UninstantiateAndUnspecialize(Microsoft.Cci.IMethodDefinition)">
             <summary>
             If the given method definition has been specialized, either by being a generic method instance or by being a member of a generic type instance, return
             the original unspecialized method definition as stored in the module.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.MemberHelper.Unspecialize(Microsoft.Cci.IPropertyDefinition)">
+            <summary>
+            If the given property definition has been specialized, return its unspecialized version. Otherwise just return the given definition.
             </summary>
         </member>
         <member name="T:Microsoft.Cci.MethodReference">
@@ -973,7 +1125,7 @@
         <member name="M:Microsoft.Cci.MethodReference.Resolve(Microsoft.Cci.ITypeDefinition)">
             <summary>
             Searches the given type, as well as its base classes or base interfaces (if it is an interface), for a method
-            that matches this method reference and returns the method. Returns Dummy.Method is no matching method can be found.
+            that matches this method reference and returns the method. Returns Dummy.MethodDefinition is no matching method can be found.
             </summary>
         </member>
         <member name="M:Microsoft.Cci.MethodReference.ToString">
@@ -5379,7 +5531,7 @@
         </member>
         <member name="M:Microsoft.Cci.Immutable.SpecializedNestedTypeReference.#ctor(Microsoft.Cci.INestedTypeReference,Microsoft.Cci.ITypeReference,Microsoft.Cci.IInternFactory)">
             <summary>
-            A reference to a field of a generic type instance. It is specialized because any occurrences of the type parameters have been replaced with the
+            A reference to a nested type of a generic type instance. It is specialized because any occurrences of the type parameters have been replaced with the
             corresponding type arguments from the instance.
             </summary>
             <param name="unspecializedVersion"></param>
@@ -8409,15 +8561,15 @@
         <member name="M:Microsoft.Cci.TypeHelper.GetEvent(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IName)">
             <summary>
             Returns an event of the given declaring type that has the given name.
-            If no such event can be found, Dummy.Event is returned.
+            If no such event can be found, Dummy.EventDefinition is returned.
             </summary>
-            <param name="declaringType">The type thats declares the field.</param>
+            <param name="declaringType">The type thats declares the event.</param>
             <param name="eventName">The name of the event.</param>
         </member>
         <member name="M:Microsoft.Cci.TypeHelper.GetField(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IName)">
             <summary>
             Returns a field of the given declaring type that has the given name.
-            If no such field can be found, Dummy.Field is returned.
+            If no such field can be found, Dummy.FieldDefinition is returned.
             </summary>
             <param name="declaringType">The type thats declares the field.</param>
             <param name="fieldName">The name of the field.</param>
@@ -8425,7 +8577,7 @@
         <member name="M:Microsoft.Cci.TypeHelper.GetField(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IFieldReference,System.Boolean)">
             <summary>
             Returns a field of the given declaring type that has the same name and signature as the given field reference.
-            If no such field can be found, Dummy.Field is returned.
+            If no such field can be found, Dummy.FieldDefinition is returned.
             </summary>
             <param name="declaringType">The type thats declares the field.</param>
             <param name="fieldReference">A reference to the field.</param>
@@ -8434,7 +8586,7 @@
         <member name="M:Microsoft.Cci.TypeHelper.GetMethod(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IName,Microsoft.Cci.ITypeReference[])">
             <summary>
             Returns a method of the given declaring type that has the given name and that matches the given parameter types.
-            If no such method can be found, Dummy.Method is returned.
+            If no such method can be found, Dummy.MethodDefinition is returned.
             </summary>
             <param name="declaringType">The type that declares the method to be returned.</param>
             <param name="methodName">The name of the method.</param>
@@ -8443,7 +8595,7 @@
         <member name="M:Microsoft.Cci.TypeHelper.GetMethod(System.Collections.Generic.IEnumerable{Microsoft.Cci.ITypeDefinitionMember},Microsoft.Cci.IName,Microsoft.Cci.ITypeReference[])">
             <summary>
             Returns the first method, if any, of the given list of type members that has the given name and that matches the given parameter types.
-            If no such method can be found, Dummy.Method is returned.
+            If no such method can be found, Dummy.MethodDefinition is returned.
             </summary>
             <param name="members">A list of type members.</param>
             <param name="methodName">The name of the method.</param>
@@ -8452,7 +8604,7 @@
         <member name="M:Microsoft.Cci.TypeHelper.GetMethod(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IMethodReference,System.Boolean)">
             <summary>
             Returns a method of the given declaring type that matches the given method reference.
-            If no such method can be found, Dummy.Method is returned.
+            If no such method can be found, Dummy.MethodDefinition is returned.
             </summary>
             <param name="declaringType">The type that declares the method to be returned.</param>
             <param name="methodReference">A method reference whose name and signature matches that of the desired result.</param>
@@ -8460,7 +8612,7 @@
         </member>
         <member name="M:Microsoft.Cci.TypeHelper.GetInvokeMethod(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IMetadataHost)">
             <summary>
-            Gets the Invoke method from the delegate. Returns Dummy.Method if the delegate type is malformed.
+            Gets the Invoke method from the delegate. Returns Dummy.MethodDefinition if the delegate type is malformed.
             </summary>
             <param name="delegateType">A delegate type.</param>
             <param name="host">The host application that provided the nametable used by delegateType.</param>
@@ -8468,7 +8620,7 @@
         <member name="M:Microsoft.Cci.TypeHelper.GetMethod(System.Collections.Generic.IEnumerable{Microsoft.Cci.ITypeDefinitionMember},Microsoft.Cci.IMethodReference,System.Boolean)">
             <summary>
             Returns the first method, if any, of the given list of type members that matches the signature of the given method.
-            If no such method can be found, Dummy.Method is returned.
+            If no such method can be found, Dummy.MethodDefinition is returned.
             </summary>
             <param name="members">A list of type members.</param>
             <param name="methodSignature">A method whose signature matches that of the desired result.</param>
@@ -8487,12 +8639,20 @@
         <member name="M:Microsoft.Cci.TypeHelper.GetNestedType(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IName,System.Int32)">
             <summary>
             Returns the nested type, if any, of the given declaring type with the given name and given generic parameter count.
-            If no such type is found, Dummy.NestedType is returned.
+            If no such type is found, Dummy.NestedTypeDefinition is returned.
             </summary>
             <param name="declaringType">The type to search for a nested type with the given name and number of generic parameters.</param>
             <param name="typeName">The name of the nested type to return.</param>
             <param name="genericParameterCount">The number of generic parameters. Zero if the type is not generic, larger than zero otherwise.</param>
             <returns></returns>
+        </member>
+        <member name="M:Microsoft.Cci.TypeHelper.GetProperty(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.IName)">
+            <summary>
+            Returns a property of the given declaring type that has the given name.
+            If no such property can be found, Dummy.PropertyDefinition is returned.
+            </summary>
+            <param name="declaringType">The type thats declares the property.</param>
+            <param name="propertyName">The name of the property.</param>
         </member>
         <member name="M:Microsoft.Cci.TypeHelper.TryGetFullyInstantiatedSpecializedTypeReference(Microsoft.Cci.ITypeDefinition,Microsoft.Cci.ITypeReference@)">
             <summary>
@@ -9451,6 +9611,11 @@
             Constructor for Hashtable
             </summary>
         </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable`2.Clear">
+            <summary>
+            
+            </summary>
+        </member>
         <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable`2.Add(`0,`1)">
             <summary>
             Add element to the Hashtable
@@ -9479,6 +9644,12 @@
             <param name="value"></param>
             <returns></returns>
         </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable`2.GetEnumerator">
+            <summary>
+            Get the enumerator
+            </summary>
+            <returns></returns>
+        </member>
         <member name="P:Microsoft.Cci.UtilityDataStructures.Hashtable`2.Count">
             <summary>
             Number of elements
@@ -9490,6 +9661,47 @@
             </summary>
             <param name="key"></param>
             <returns></returns>
+        </member>
+        <member name="T:Microsoft.Cci.UtilityDataStructures.Hashtable`2.KeyValuePair">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.UtilityDataStructures.Hashtable`2.KeyValuePair.key">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="F:Microsoft.Cci.UtilityDataStructures.Hashtable`2.KeyValuePair.value">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable`2.KeyValuePair.ToString">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Microsoft.Cci.UtilityDataStructures.Hashtable`2.ValuesEnumerator">
+            <summary>
+            Enumerator for elements
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable`2.ValuesEnumerator.MoveNext">
+            <summary>
+            Move to next element
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.Hashtable`2.ValuesEnumerator.Reset">
+            <summary>
+            Reset the enumerator
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.Hashtable`2.ValuesEnumerator.Current">
+            <summary>
+            Current element
+            </summary>
         </member>
         <member name="T:Microsoft.Cci.UtilityDataStructures.HashtableForUintValues`1">
             <summary>
@@ -9544,6 +9756,16 @@
             </summary>
             <param name="key"></param>
             <returns></returns>
+        </member>
+        <member name="T:Microsoft.Cci.UtilityDataStructures.HashtableForUintValues`1.KeyValuePair">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.HashtableForUintValues`1.KeyValuePair.ToString">
+            <summary>
+            Returns a string containing the key and value.
+            </summary>
         </member>
         <member name="T:Microsoft.Cci.UtilityDataStructures.Hashtable`1">
             <summary>
@@ -9854,6 +10076,86 @@
             </summary>
         </member>
         <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfObjects.ValuesEnumerable.GetEnumerator">
+            <summary>
+            Get the enumerator
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Microsoft.Cci.UtilityDataStructures.SetOfUints">
+            <summary>
+            A hash table used to keep track of a set of non zero uint values, providing methods to add values to the set and to determine if an value is a member of the set.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfUints.#ctor">
+            <summary>
+            Constructor for SetOfUints
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfUints.#ctor(System.UInt32)">
+            <summary>
+            Constructor for SetOfObjects
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfUints.Clear">
+            <summary>
+            Removes all elements from the set.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfUints.Add(System.UInt32)">
+            <summary>
+            Returns false if the element is already in the set. Otherwise returns true and adds the element.
+            </summary>
+            <param name="element"></param>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfUints.Contains(System.UInt32)">
+            <summary>
+            
+            </summary>
+            <param name="element"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfUints.Remove(System.UInt32)">
+            <summary>
+            
+            </summary>
+            <param name="element"></param>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.SetOfUints.Count">
+            <summary>
+            Number of elements
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.SetOfUints.Values">
+            <summary>
+            Enumerable of all the values
+            </summary>
+        </member>
+        <member name="T:Microsoft.Cci.UtilityDataStructures.SetOfUints.ValuesEnumerator">
+            <summary>
+            Enumerator for elements
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfUints.ValuesEnumerator.MoveNext">
+            <summary>
+            Move to next element
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfUints.ValuesEnumerator.Reset">
+            <summary>
+            Reset the enumerator
+            </summary>
+        </member>
+        <member name="P:Microsoft.Cci.UtilityDataStructures.SetOfUints.ValuesEnumerator.Current">
+            <summary>
+            Current element
+            </summary>
+        </member>
+        <member name="T:Microsoft.Cci.UtilityDataStructures.SetOfUints.ValuesEnumerable">
+            <summary>
+            Enumerable for elements
+            </summary>
+        </member>
+        <member name="M:Microsoft.Cci.UtilityDataStructures.SetOfUints.ValuesEnumerable.GetEnumerator">
             <summary>
             Get the enumerator
             </summary>

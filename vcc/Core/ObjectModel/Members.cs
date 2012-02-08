@@ -32,24 +32,54 @@ namespace Microsoft.Research.Vcc {
     public override IEnumerable<ParameterDefinition> Parameters {
       get {
         //^ assume this.GlobalMethodDeclaration is FunctionDefinition; //the constructor assures this
-        FunctionDefinition functionDefinition = (FunctionDefinition)this.GlobalMethodDeclaration;
+        var functionDefinition = (FunctionDefinition)this.GlobalMethodDeclaration;
         if (functionDefinition.HasSingleVoidParameter) return Enumerable<ParameterDefinition>.Empty;
         return base.Parameters;
       }
+    }
+
+    public static bool ParameterListsMatch(IEnumerator<ParameterDefinition> left, IEnumerator<ParameterDeclaration> right)
+    {
+      while (left.MoveNext()) {
+        if (!right.MoveNext())
+          return false;
+        if (!TypeHelper.TypesAreEquivalent(left.Current.Type.ResolvedType, right.Current.Type.ResolvedType))
+          return false;
+      }
+
+      if (right.MoveNext()) return false;
+
+      return true;
+    }
+
+    public static bool ParameterListsMatch(IEnumerator<ParameterDeclaration> left, IEnumerator<ParameterDeclaration> right)
+    {
+      while (left.MoveNext()) {
+        if (!right.MoveNext())
+          return false;
+        if (!TypeHelper.TypesAreEquivalent(left.Current.Type.ResolvedType, right.Current.Type.ResolvedType))
+          return false;
+      }
+
+      if (right.MoveNext()) return false;
+
+      return true;
     }
 
     public IEnumerable<FunctionDeclaration> Declarations
     {
       get
       {
-        FunctionDefinition functionDefinition = (FunctionDefinition)this.GlobalMethodDeclaration;
+        var functionDefinition = (FunctionDefinition) this.GlobalMethodDeclaration;
         // copy global member list because it may change
-        List<ITypeDeclarationMember> members = new List<ITypeDeclarationMember>(functionDefinition.CompilationPart.GlobalDeclarationContainer.GlobalMembers);
-        foreach (ITypeDeclarationMember member in members) {
-          FunctionDeclaration decl = member as FunctionDeclaration;
-          if (decl != null)
+        var members = new List<ITypeDeclarationMember>(functionDefinition.CompilationPart.GlobalDeclarationContainer.GlobalMembers);
+        foreach (ITypeDeclarationMember member in members)
+        {
+          var decl = member as FunctionDeclaration;
+          if (decl != null && decl.Name.Name == this.Name && decl.AcceptsExtraArguments == this.AcceptsExtraArguments)
           {
-            if (decl.Name.Name == this.Name) yield return decl;
+            if (ParameterListsMatch(this.Parameters.GetEnumerator(), decl.Parameters.GetEnumerator()))
+              yield return decl;
           }
         }
       }
