@@ -158,6 +158,11 @@ module Microsoft.Research.Vcc.CAST
     | Float32
     | Float64
 
+    override this.ToString () =
+        match this with
+        | PrimKind.Float32 -> "float32_t"
+        | PrimKind.Float64 -> "float64_t"
+
   type StructEqualityKind =
     | NoEq
     | ShallowEq
