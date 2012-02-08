@@ -12,17 +12,24 @@
 
 #define _(...) /* nothing */
 
-#else
+#endif 
 
 namespace VCC
 {
+    // function prototypes
     void Assert(bool);
     void Assume(bool);
-    bool Implies;
+    void Requires(bool);
+    void Ensures(bool);
     void BeginGhost();
     void EndGhost();
+    
+    // special variables
+    bool IMPLIES;
+    bool TRUE;
+    bool RESULT;
+
+    // templates for quantifiers
     template<class T> bool Forall(T);
     template<class T> bool Exists(T);
 }
-
-#endif 
