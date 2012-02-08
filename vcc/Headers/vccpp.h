@@ -23,6 +23,9 @@ namespace VCC
     void Ensures(bool);
     void BeginGhost();
     void EndGhost();
+
+    template<class T> void Wrap(T);
+    template<class T> void Unwrap(T);
     
     // special variables
     bool IMPLIES;
