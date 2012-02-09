@@ -23,6 +23,7 @@ namespace VCC
     void Assume(bool);
     void Requires(bool);
     void Ensures(bool);
+    void Pure();
 
     template<class T> void Wrap(T);
     template<class T> void Unwrap(T);
