@@ -28,8 +28,6 @@ namespace VCC
     
     // special variables
     bool IMPLIES;
-    bool TRUE;
-    bool FALSE;
     bool RESULT;
 
     // templates for quantifiers
