@@ -390,6 +390,11 @@ module Microsoft.Research.Vcc.CAST
     member this.IsNumber =
       this._IsInteger || this._IsMathInteger
 
+    member this.IsFloat = 
+      match this with 
+      | Primitive _ -> true
+      | _ -> false
+
     member this.Deref =
       match this with
       | SpecPtr t 
