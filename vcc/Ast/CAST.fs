@@ -860,6 +860,16 @@ module Microsoft.Research.Vcc.CAST
       IsPureBlock : bool
     }
 
+    static member Empty = { Requires = []; Ensures = []; Reads = []; Writes = []; Decreases = []; IsPureBlock = false }
+
+    member this.IsEmpty = 
+      this.Requires.IsEmpty 
+      && this.Ensures.IsEmpty 
+      && this.Reads.IsEmpty 
+      && this.Writes.IsEmpty 
+      && this.Decreases.IsEmpty 
+      && not (this.IsPureBlock)
+
   and TestClassifier = Expr
   
   and Expr =

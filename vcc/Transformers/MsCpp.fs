@@ -25,6 +25,16 @@ namespace Microsoft.Research.Vcc
 
   let isSpecialFunction (fn : Function) = Set.contains fn.Name specialFunctionNames
 
+  let contractFunctionNames = Set.ofList [
+                                            "VCC::Requires"
+                                            "VCC::Ensures"
+                                            "VCC::Reads"
+                                            "VCC::Writes"
+                                            "VCC::Decreases"
+                                         ]
+
+  let isContractFunction (fn : Function) = Set.contains fn.Name contractFunctionNames
+
   let specialGlobalNames = Set.ofList [
                                         "VCC::IMPLIES"
                                       ]
@@ -155,6 +165,62 @@ namespace Microsoft.Research.Vcc
           
     // ============================================================================================================    
 
+    let collectContracts decls =
+
+      let findContracts stmts =
+        let findContracts' (bc:BlockContract) = function
+          | Call(ec, fn , [], [arg]) when isContractFunction fn ->
+            match fn.Name with
+              | "VCC::Requires" ->  { bc with Requires = arg :: bc.Requires }
+              | "VCC::Ensures" ->   { bc with Ensures = arg :: bc.Ensures }
+              | "VCC::Reads" ->     { bc with Reads = arg :: bc.Reads }
+              | "VCC::Writes" ->    { bc with Writes = arg :: bc.Writes }
+              | "VCC::Decreases" -> { bc with Decreases = arg :: bc.Decreases }
+              | _ -> die()
+          | Call(ec, fn, _, _) when isContractFunction fn ->
+            helper.Oops(ec.Token, "unhandled occurrence of contract function")
+            bc
+          | _ -> bc
+
+        let found = List.fold findContracts' BlockContract.Empty stmts
+        { Requires = List.rev found.Requires
+          Ensures = List.rev found.Ensures
+          Reads = List.rev found.Reads
+          Writes = List.rev found.Writes
+          Decreases = List.rev found.Decreases
+          IsPureBlock = found.IsPureBlock }
+
+      let removeContracts = 
+        let isNoContract = function
+          | Call(ec, fn , [], [arg]) when isContractFunction fn -> false
+          | _ -> true
+        List.filter isNoContract
+
+      let pullOutContracts self = function
+        | Block(ec, stmts, None) ->
+          let bc = findContracts stmts
+          if bc.IsEmpty then None else Some(Block(ec, stmts |> removeContracts |> List.map self, Some bc))
+        | _ -> None
+
+      for d in decls do
+        match d with
+          | Top.FunctionDecl({Body = Some body} as fn) ->
+            let body' = body.SelfMap pullOutContracts
+            match body' with
+              | Block(ec, stmts, Some bc) ->
+                fn.Requires <- bc.Requires
+                fn.Ensures <- bc.Ensures
+                fn.Reads <- bc.Reads
+                fn.Writes <- bc.Writes
+                fn.Variants <- bc.Decreases
+                fn.Body <- Some(Block(ec, stmts, None))
+              | _ -> ()
+          | _ -> ()
+
+      decls
+
+    // ============================================================================================================    
+
     let rewriteSpecialFunctions self = 
 
       let selfs = List.map self
@@ -172,7 +238,7 @@ namespace Microsoft.Research.Vcc
     let removeSpecialDecls decls =
 
       let filterSpecialDecls = function
-        | Top.FunctionDecl(fn) when isSpecialFunction fn -> false
+        | Top.FunctionDecl(fn) when isSpecialFunction fn || isContractFunction fn -> false
         | Top.Global({Name = name}, _) when Set.contains name specialGlobalNames -> false
         | _ -> true
 
@@ -187,6 +253,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
     helper.AddTransformer ("cpp-rewrite-ops", TransHelper.Expr rewriteExtraOps)
     helper.AddTransformer ("cpp-remove-decls", TransHelper.Decl removeSpecialDecls)
+    helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
     //helper.AddTransformer ("cpp-retype-ops", TransHelper.Expr retypeOperators)
     //helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)
 
