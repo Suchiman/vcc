@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <vccpp-m.h>
+
 #ifndef VERIFY
 
 // hide annotations from C compiler
@@ -25,6 +27,7 @@ namespace VCC
     template<class T> void Wrap(T);
     template<class T> void Unwrap(T);
     template<class T> void Writes(T);
+    template<class T> bool WRAPPED(T);
     
     // special variables
     bool IMPLIES;
