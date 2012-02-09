@@ -55,6 +55,12 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let rewriteLiterals self = function
+      | IntLiteral(ec, i)  when ec.Type = Type.Bool -> Some(BoolLiteral(ec, i.IsOne))
+      | _ -> None
+
+    // ============================================================================================================    
+
     let rewriteExtraMacros self = 
 
       // TODO: handle situations where the location incremented involves a func call, which should not be duplicated
@@ -176,6 +182,7 @@ namespace Microsoft.Research.Vcc
 
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
+    helper.AddTransformer ("cpp-rewrite-literals", TransHelper.Expr rewriteLiterals)
     helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
     helper.AddTransformer ("cpp-rewrite-ops", TransHelper.Expr rewriteExtraOps)
