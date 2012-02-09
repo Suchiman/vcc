@@ -29,11 +29,11 @@ namespace VCC
     template<class T> void Writes(T);
     template<class T> bool Wrapped(T);
     template<class T> bool Mutable(T);
-    template<class T> bool ThreadLocal(T);
+    template<class T> bool Threadlocal(T);
+    template<class T> T Result();
     
     // special variables
     bool Implies;
-    bool Result;
 
     // templates for quantifiers
     template<class T> bool Forall(T);
