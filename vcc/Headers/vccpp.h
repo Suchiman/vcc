@@ -31,6 +31,7 @@ namespace VCC
     template<class T> bool Wrapped(T);
     template<class T> bool Mutable(T);
     template<class T> bool Threadlocal(T);
+    template<class T> bool Maintains(T);
     template<class T> T Result();
     
     // special variables
