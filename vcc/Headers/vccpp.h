@@ -27,7 +27,9 @@ namespace VCC
     template<class T> void Wrap(T);
     template<class T> void Unwrap(T);
     template<class T> void Writes(T);
-    template<class T> bool WRAPPED(T);
+    template<class T> bool Wrapped(T);
+    template<class T> bool Mutable(T);
+    template<class T> bool ThreadLocal(T);
     
     // special variables
     bool IMPLIES;
