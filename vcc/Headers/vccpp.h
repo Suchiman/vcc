@@ -32,8 +32,8 @@ namespace VCC
     template<class T> bool ThreadLocal(T);
     
     // special variables
-    bool IMPLIES;
-    bool RESULT;
+    bool Implies;
+    bool Result;
 
     // templates for quantifiers
     template<class T> bool Forall(T);
