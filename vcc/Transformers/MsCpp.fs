@@ -137,13 +137,6 @@ namespace Microsoft.Research.Vcc
       | _ -> None
 
     // ============================================================================================================    
-
-    let retypeOperators self = function
-      | Prim(ec, (Op(("<"|"<="|">"|">="|"=="|"!="), _) as op), args) ->
-        Some(Prim({ec with Type = Type.Bool}, op, List.map self args))
-      | _ -> None
-          
-    // ============================================================================================================    
     
     let insertBoolConversion self = 
 
@@ -154,18 +147,16 @@ namespace Microsoft.Research.Vcc
           | Type.Bool -> self expr
           | _ -> Cast({expr.Common with Type = Type.Bool}, CheckedStatus.Unchecked, self expr)
 
-      function
-        | Macro(ec, "for", [contr; inits; cond; inc; body]) ->
-          Some(Macro(ec, "for", [self contr; self inits; toBool cond; self inc; self body]))
-
-        | If(ec, tc, cond, th, el) -> 
-          Some(If(ec, tc, toBool cond, self th, self el))
-
+      function 
+        | Prim(ec, (Op(("!"|"||"|"&&"), _) as op), args) ->
+          Some(Prim(ec, op, args |> List.map self |> List.map toBool))
         | _ -> None
           
     // ============================================================================================================    
 
     let collectContracts decls =
+
+      // move contracts from list of statements to the surrounding block or function
 
       let findContracts stmts =
         let findContracts' (bc:BlockContract) = function
@@ -251,10 +242,9 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-rewrite-literals", TransHelper.Expr rewriteLiterals)
     helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
+    helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)
     helper.AddTransformer ("cpp-rewrite-ops", TransHelper.Expr rewriteExtraOps)
     helper.AddTransformer ("cpp-remove-decls", TransHelper.Decl removeSpecialDecls)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
-    //helper.AddTransformer ("cpp-retype-ops", TransHelper.Expr retypeOperators)
-    //helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)
 
     helper.AddTransformer ("cpp-end", TransHelper.DoNothing)
