@@ -12,15 +12,17 @@
 
 #else
 
-#ifdef __cplusplus
-
-#include <vccpp.h>
-
-#else 
+#ifndef __cplusplus
 
 #include <vccp.h>
 
 #endif
+
+#endif
+
+#ifdef __cplusplus
+
+#include <vccpp.h>
 
 #endif
 
