@@ -154,6 +154,17 @@ namespace Microsoft.Research.Vcc
           
     // ============================================================================================================    
 
+    let reportErrors self = 
+      
+      let rejectFloats (expr : Expr) =
+        if expr.Type.IsFloat then 
+          helper.Error(expr.Token, 9801, "floating point types are currently not supported")
+        None
+
+      rejectFloats
+
+    // ============================================================================================================    
+
     let collectContracts decls =
 
       // move contracts from list of statements to the surrounding block or function
@@ -239,6 +250,7 @@ namespace Microsoft.Research.Vcc
 
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
+    helper.AddTransformer ("cpp-errors", TransHelper.Expr reportErrors)
     helper.AddTransformer ("cpp-rewrite-literals", TransHelper.Expr rewriteLiterals)
     helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
