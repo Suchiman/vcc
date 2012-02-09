@@ -14,6 +14,8 @@
 
 #ifndef __cplusplus
 
+#include <crtdefs.h>
+
 #include <vccp.h>
 
 #endif
