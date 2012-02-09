@@ -171,15 +171,15 @@ namespace Microsoft.Research.Vcc
 
       let findContracts stmts =
         let findContracts' (bc:BlockContract) = function
-          | Call(ec, fn , [], [arg]) when isContractFunction fn ->
-            match fn.Name with
+          | CallMacro(ec, name, [], [arg]) when Set.contains name contractFunctionNames ->
+            match name with
               | "VCC::Requires" ->  { bc with Requires = arg :: bc.Requires }
               | "VCC::Ensures" ->   { bc with Ensures = arg :: bc.Ensures }
               | "VCC::Reads" ->     { bc with Reads = arg :: bc.Reads }
               | "VCC::Writes" ->    { bc with Writes = arg :: bc.Writes }
               | "VCC::Decreases" -> { bc with Decreases = arg :: bc.Decreases }
               | _ -> die()
-          | Call(ec, fn, _, _) when isContractFunction fn ->
+          | CallMacro(ec, name, _, _) when Set.contains name contractFunctionNames ->
             helper.Oops(ec.Token, "unhandled occurrence of contract function")
             bc
           | _ -> bc
@@ -194,7 +194,7 @@ namespace Microsoft.Research.Vcc
 
       let removeContracts = 
         let isNoContract = function
-          | Call(ec, fn , [], [arg]) when isContractFunction fn -> false
+          | CallMacro(ec, name , [], [arg]) when Set.contains name contractFunctionNames -> false
           | _ -> true
         List.filter isNoContract
 
