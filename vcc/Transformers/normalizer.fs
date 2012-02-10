@@ -1306,7 +1306,6 @@ namespace Microsoft.Research.Vcc
               IsSpec = true
               Name = "_vcc_stack_alloc"
               RetType = Type.ObjectT
-              OrigRetType = Type.ObjectT
               Parameters = [ Variable.CreateUnique "stack_frame" (Type.MathInteger(MathIntKind.Signed)) VarKind.Parameter
                              Variable.CreateUnique "is_spec" Type.Bool VarKind.Parameter ]
               TypeParameters = [ { Name = "T" } ]
