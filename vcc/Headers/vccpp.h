@@ -37,6 +37,7 @@ namespace VCC
 
     // data contracts
     void DynamicOwns();
+    void VolatileOwns();
     
     // object state
     template<class T> bool Activeclaim(T);
