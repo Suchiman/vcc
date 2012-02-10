@@ -36,7 +36,7 @@ namespace Microsoft.Research.Vcc
   let isContractFunction (fn : Function) = Set.contains fn.Name contractFunctionNames
 
   let specialGlobalNames = Set.ofList [
-                                        "VCC::IMPLIES"
+                                        "VCC::Implies"
                                       ]
 
   let incrOpTable = Map.ofList [
@@ -125,7 +125,7 @@ namespace Microsoft.Research.Vcc
           | expr -> [self expr]
         let rec splitAtImplies lhs = function
           | [] -> (List.rev lhs, [])
-          | (Ref(_, {Name = "VCC::IMPLIES"})) :: rhs -> (List.rev lhs, rhs)
+          | (Ref(_, {Name = "VCC::Implies"})) :: rhs -> (List.rev lhs, rhs)
           | e :: rhs -> splitAtImplies (e::lhs) rhs
         let rec disjunctListToImplication disjuncts =
           match splitAtImplies []  disjuncts with
