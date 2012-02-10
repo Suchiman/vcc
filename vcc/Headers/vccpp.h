@@ -36,6 +36,7 @@ namespace VCC
 
     // object state
     template<class T> bool Activeclaim(T);
+    template<class T> void Atomic(T);
     template<class T> bool Claims(T, bool);
     template<class T> bool Mutable(T);
     template<class T> bool Threadlocal(T);
