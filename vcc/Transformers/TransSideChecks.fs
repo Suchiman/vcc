@@ -416,11 +416,11 @@ namespace Microsoft.Research.Vcc
                                "_vcc_reads_check_post", [])
         rd_f.Ensures <- [good]
         let mkTok name = afmtt rd_f.Token 8007 "the value of '{0}' changed (in reads check of '{1}')" [name; f.Name]
-        let theOrigRetType = f.OrigRetType
         let ftok = { bogusEC with Type = f.RetType }
         let fcall = Call (ftok, f, [], List.map mkRef rd_f.Parameters)
         let rec cmp name tp (expr:Expr) =
           match tp with
+            | Type.Ref ({ Name = "struct"; Parent = Some td})
             | Type.Ref ({ Kind = Struct | Union } as td) ->
               for fld in td.Fields do
                 let dot = Dot(ftok, expr, fld)
@@ -430,7 +430,7 @@ namespace Microsoft.Research.Vcc
                 cmp (name + "." + fld.Name) fld.Type deref
             | _ -> 
               rd_f.Ensures <- Prim (mkTok name, Op ("==",Processed), [mkOld ftok "prestate" expr; expr]) :: rd_f.Ensures
-        cmp "result" f.OrigRetType fcall
+        cmp "result" f.RetType fcall
         
         let subst self = function
           | Expr.Ref (c, v) when subst.ContainsKey v ->

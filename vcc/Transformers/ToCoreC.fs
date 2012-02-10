@@ -385,9 +385,10 @@ namespace Microsoft.Research.Vcc
         | Top.FunctionDecl h as d ->
           h.Parameters <- List.map doVar h.Parameters
           h.RetType <- 
-            if isRefToStruct h.RetType then
-              Type.MathStruct 
-            else h.RetType
+            match h.RetType with
+              | Type.Ref({ Kind = (Struct|Union) } as td) -> Type.MathStructFor td 
+              // record the old type because we may need in for the reads check
+              | _ -> h.RetType
           d
         | d -> d
       
@@ -873,7 +874,6 @@ namespace Microsoft.Research.Vcc
                 let fn = { Function.Empty() with 
                              Token = if stmts.IsEmpty then ec.Token else stmts.Head.Token // see issue 6456
                              RetType = Type.Bool
-                             OrigRetType = Type.Bool
                              Parameters = List.map inMap localsThatGoIn @ List.map outMap localsThatGoOut
                              Name = (!currentFunction).Name + "#block#" + blockPrefix + blockId
                              Requires = stripInitialPure cs'.Requires
