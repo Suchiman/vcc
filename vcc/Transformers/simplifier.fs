@@ -140,7 +140,6 @@ namespace Microsoft.Research.Vcc
                 Token           = c.Token
                 IsSpec          = true
                 RetType         = c.Type
-                OrigRetType     = c.Type
                 Name            = "lambda#" + (helper.UniqueId()).ToString()
                 Parameters      = [for (_, var) in !parms -> { var with Kind = Parameter }]
                 Reads           = computeReads body
