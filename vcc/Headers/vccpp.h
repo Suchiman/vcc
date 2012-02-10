@@ -28,6 +28,7 @@ namespace VCC
     void Requires(bool);
     template<class T> void Reads(T);
     template<class T> T Result();
+    template<class T> void Returns(T);
     template<class T> void Writes(T);
 
     // object state
