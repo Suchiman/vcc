@@ -18,12 +18,18 @@ namespace Microsoft.Research.Vcc
   
   // ============================================================================================================    
 
+  let specialFunctionMap = Map.ofList [
+                                        "VCC::Threadlocal",   "_vcc_thread_local2"
+                                        "VCC::Mutable",       "_vcc_mutable"
+                                        "VCC::Wrapped",       "_vcc_wrapped"
+                                      ]
+
   let specialFunctionNames = Set.ofList [
                                           "VCC::Assert"
                                           "VCC::Assume"
                                         ]
 
-  let isSpecialFunction (fn : Function) = Set.contains fn.Name specialFunctionNames
+  let isSpecialFunctionName name = Set.contains name specialFunctionNames || Map.containsKey name specialFunctionMap
 
   let contractFunctionNames = Set.ofList [
                                             "VCC::Requires"
@@ -228,11 +234,16 @@ namespace Microsoft.Research.Vcc
       let selfs = List.map self
 
       function
-        | Call(ec, {Name = "VCC::Assert"}, [], [arg]) -> Some(Assert(ec, self arg, []))
-        | Call(ec, {Name = "VCC::Assume"}, [], [arg]) -> Some(Assume(ec, self arg))
-        | Call(ec, fn, _, _) when isSpecialFunction fn ->
-          helper.Oops(ec.Token, "Unhandled special function call to '" + fn.Name + "'")
+        | CallMacro(ec, "VCC::Assert", [], [arg]) -> 
+          Some(Assert(ec, self arg, []))
+        | CallMacro(ec, "VCC::Assume", [], [arg]) -> 
+          Some(Assume(ec, self arg))
+        | CallMacro(ec, name, [], args) when Map.containsKey name specialFunctionMap ->
+          Some(Macro(ec, Map.find name specialFunctionMap, List.map self args))
+        | CallMacro(ec, name, _, _) when isSpecialFunctionName name ->
+          helper.Oops(ec.Token, "Unhandled special function call or macro '" + name + "'")
           None
+
         | _ -> None
 
     // ============================================================================================================    
@@ -240,7 +251,7 @@ namespace Microsoft.Research.Vcc
     let removeSpecialDecls decls =
 
       let filterSpecialDecls = function
-        | Top.FunctionDecl(fn) when isSpecialFunction fn || isContractFunction fn -> false
+        | Top.FunctionDecl(fn) when isSpecialFunctionName fn.Name || isContractFunction fn -> false
         | Top.Global({Name = name}, _) when Set.contains name specialGlobalNames -> false
         | _ -> true
 

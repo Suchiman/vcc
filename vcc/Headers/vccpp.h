@@ -18,22 +18,34 @@
 
 namespace VCC
 {
-    // function prototypes
+    // assert/assume
     void Assert(bool);
     void Assume(bool);
+
+    // method contracts
     void Requires(bool);
     void Ensures(bool);
     void Pure();
-
-    template<class T> void Wrap(T);
-    template<class T> void Unwrap(T);
     template<class T> void Writes(T);
+    template<class T> bool Maintains(T);
+    template<class T> T Result();
+
+    // object state
     template<class T> bool Wrapped(T);
     template<class T> bool Mutable(T);
     template<class T> bool Threadlocal(T);
-    template<class T> bool Maintains(T);
-    template<class T> T Result();
-    
+
+    // statements
+    template<class T> void Wrap(T o)
+    {
+      VCC::Writes(o); // TODO: also writes o->\owns
+    }
+
+    template<class T> void Unwrap(T o)
+    {
+      VCC::Writes(o);
+    }
+
     // special variables
     bool Implies;
 
