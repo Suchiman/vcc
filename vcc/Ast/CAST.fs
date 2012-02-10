@@ -158,6 +158,11 @@ module Microsoft.Research.Vcc.CAST
     | Float32
     | Float64
 
+    override this.ToString () =
+        match this with
+        | PrimKind.Float32 -> "float32_t"
+        | PrimKind.Float64 -> "float64_t"
+
   type StructEqualityKind =
     | NoEq
     | ShallowEq
@@ -384,6 +389,11 @@ module Microsoft.Research.Vcc.CAST
     
     member this.IsNumber =
       this._IsInteger || this._IsMathInteger
+
+    member this.IsFloat = 
+      match this with 
+      | Primitive _ -> true
+      | _ -> false
 
     member this.Deref =
       match this with
@@ -854,6 +864,16 @@ module Microsoft.Research.Vcc.CAST
       Decreases : list<Expr>;
       IsPureBlock : bool
     }
+
+    static member Empty = { Requires = []; Ensures = []; Reads = []; Writes = []; Decreases = []; IsPureBlock = false }
+
+    member this.IsEmpty = 
+      this.Requires.IsEmpty 
+      && this.Ensures.IsEmpty 
+      && this.Reads.IsEmpty 
+      && this.Writes.IsEmpty 
+      && this.Decreases.IsEmpty 
+      && not (this.IsPureBlock)
 
   and TestClassifier = Expr
   

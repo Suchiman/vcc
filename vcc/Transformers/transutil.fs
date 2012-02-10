@@ -117,6 +117,11 @@ namespace Microsoft.Research.Vcc
     | [x] -> x
     | x :: xs -> List.fold (boolOp "&&") x xs
       
+  let multiOr = function
+    | [] -> Expr.False
+    | [x] -> x
+    | x ::xs -> List.fold (boolOp "||") x xs
+
   let mapInvariants f decls =
     let fLab = function
       | Macro (c, "labeled_invariant", [lab; i]) -> 
