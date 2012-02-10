@@ -1259,7 +1259,7 @@ namespace Microsoft.Research.Vcc
     let renameOverloads decls =
       
       let findOverloads (seen, clashes) = function
-        | Top.FunctionDecl({Name = "_vcc_when_claimed"}) -> (seen, clashes) // we introduce our own name clash during NewSyntax
+        | Top.FunctionDecl({Name = ("_vcc_when_claimed"|"_vcc_by_claim")}) -> (seen, clashes) // we introduce our own name clash during NewSyntax
         | Top.FunctionDecl({Name = name}) ->
           if Set.contains name seen then (seen, Set.add name clashes) else (Set.add name seen, clashes)
         | _ -> (seen, clashes)
