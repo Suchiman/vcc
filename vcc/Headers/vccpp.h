@@ -24,7 +24,6 @@ namespace VCC
 
     // method contracts
     void Ensures(bool);
-    void Maintains(bool);
     void Pure();
     void Requires(bool);
     template<class T> void Reads(T);

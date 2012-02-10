@@ -7,3 +7,5 @@
 #pragma once
 
 #define updates(o) requires \wrapped(o) | ensures \wrapped(o) | writes o
+
+#define maintains(o) requires o | ensures o
