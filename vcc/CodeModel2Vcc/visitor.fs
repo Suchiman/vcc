@@ -260,7 +260,6 @@ namespace Microsoft.Research.Vcc
                   Token           = tok
                   IsSpec          = isSpec
                   RetType         = this.DoType(meth.Type)
-                  OrigRetType     = this.DoType(meth.Type)
                   Name            = name
                   AcceptsExtraArguments = acceptsExtraArguments
                   }
