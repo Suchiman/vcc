@@ -27,6 +27,7 @@ namespace Microsoft.Research.Vcc
   let specialFunctionNames = Set.ofList [
                                           "VCC::Assert"
                                           "VCC::Assume"
+                                          "VCC::Result"
                                         ]
 
   let isSpecialFunctionName name = Set.contains name specialFunctionNames || Map.containsKey name specialFunctionMap
@@ -238,6 +239,8 @@ namespace Microsoft.Research.Vcc
           Some(Assert(ec, self arg, []))
         | CallMacro(ec, "VCC::Assume", [], [arg]) -> 
           Some(Assume(ec, self arg))
+        | CallMacro(ec, "VCC::Result", [], []) ->
+          Some(Result(ec))
         | CallMacro(ec, name, [], args) when Map.containsKey name specialFunctionMap ->
           Some(Macro(ec, Map.find name specialFunctionMap, List.map self args))
         | CallMacro(ec, name, _, _) when isSpecialFunctionName name ->
