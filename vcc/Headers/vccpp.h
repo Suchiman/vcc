@@ -23,17 +23,18 @@ namespace VCC
     void Assume(bool);
 
     // method contracts
-    void Requires(bool);
     void Ensures(bool);
+    void Maintains(bool);
     void Pure();
-    template<class T> void Writes(T);
-    template<class T> bool Maintains(T);
+    void Requires(bool);
+    template<class T> void Reads(T);
     template<class T> T Result();
+    template<class T> void Writes(T);
 
     // object state
-    template<class T> bool Wrapped(T);
     template<class T> bool Mutable(T);
     template<class T> bool Threadlocal(T);
+    template<class T> bool Wrapped(T);
 
     // statements
     template<class T> void Wrap(T o)
