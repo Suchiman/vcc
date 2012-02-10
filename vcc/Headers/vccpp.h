@@ -23,6 +23,7 @@ namespace VCC
     void Assume(bool);
 
     // method contracts
+    void Admissibility();
     void Ensures(bool);
     void Pure();
     void Requires(bool);
