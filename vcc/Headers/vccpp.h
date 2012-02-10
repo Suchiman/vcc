@@ -24,6 +24,7 @@ namespace VCC
 
     // method contracts
     void Admissibility();
+    void AtomicInline();
     void Ensures(bool);
     void Pure();
     void Requires(bool);
