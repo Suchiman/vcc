@@ -445,7 +445,27 @@ module Microsoft.Research.Vcc.CAST
     static member MathState = Type.Math "\\state"
     static member FieldT = Type.Math "field_t"
     static member Byte = Type.Integer IntKind.UInt8
-    
+    static member MathStructFor td = 
+      Type.Ref(
+        { 
+          Token = bogusToken
+          Name = "struct"
+          Kind = MathType
+          Fields = []
+          SizeOf = 1
+          Invariants = []
+          CustomAttr = []
+          DataTypeOptions = []
+          IsNestedAnon = false
+          GenerateEquality = NoEq
+          Parent = Some(td)
+          IsVolatile = false
+          IsSpec = true
+          UniqueId = unique()
+        }
+      )
+
+
     static member private sizeSign t = t.SizeSign
     static member private primSize = function
       | PrimKind.Float32 -> 4
@@ -650,7 +670,6 @@ module Microsoft.Research.Vcc.CAST
       Token:Token;
       IsSpec:bool;
       AcceptsExtraArguments:bool;
-      mutable OrigRetType:Type;
       mutable RetType:Type;
       mutable Name:Id;
       mutable Parameters:list<Variable>;
@@ -671,7 +690,6 @@ module Microsoft.Research.Vcc.CAST
     static member Empty() =
       { Token = bogusToken
         IsSpec = false
-        OrigRetType = Type.Void
         RetType = Type.Void
         Parameters = []
         TypeParameters = []
@@ -738,8 +756,7 @@ module Microsoft.Research.Vcc.CAST
         let pars = List.map sv this.Parameters // do this first to populate varSubst
         let se (e : Expr) = e.SubstType(typeMap, varSubst)
         let ses = List.map se
-        { this with OrigRetType = this.OrigRetType.ApplySubst(typeMap);
-                    RetType = this.RetType.ApplySubst(typeMap);
+        { this with RetType = this.RetType.ApplySubst(typeMap);
                     Parameters = pars;
                     Requires = ses this.Requires;
                     Ensures = ses this.Ensures;
