@@ -31,6 +31,8 @@ namespace VCC
     template<class T> void Writes(T);
 
     // object state
+    template<class T> bool Activeclaim(T);
+    template<class T> bool Claims(T, bool);
     template<class T> bool Mutable(T);
     template<class T> bool Threadlocal(T);
     template<class T> bool Wrapped(T);
