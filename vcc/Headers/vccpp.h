@@ -35,6 +35,9 @@ namespace VCC
     template<class T> void Returns(T);
     template<class T> void Writes(T);
 
+    // data contracts
+    void DynamicOwns();
+    
     // object state
     template<class T> bool Activeclaim(T);
     template<class T> void Atomic(T);
