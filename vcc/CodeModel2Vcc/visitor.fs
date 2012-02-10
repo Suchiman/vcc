@@ -1406,7 +1406,7 @@ namespace Microsoft.Research.Vcc
           | "_vcc_approves" | "\\approves"
           | "_vcc_deep_struct_eq" | "_vcc_shallow_struct_eq" | "_vcc_known" | "\\deep_eq" | "\\shallow_eq" | "\\size"
           | "\\test_classifier" | "\\downgrade_to" | "\\current_context" | "\\label_of" | "\\lblset_leq"
-          | "\\static_cast" | "\\labeled_expression"
+          | "\\labeled_expression"
           | "\\new_club" | "\\add_member" | "\\is_member" -> ()
           | x when x.StartsWith "\\castlike_" -> ()
           | _ -> this.DoMethod (globalMethodDefinition, false, false)
@@ -1983,17 +1983,17 @@ namespace Microsoft.Research.Vcc
             match args() with
               | [p; c] as args -> exprRes <- C.Expr.Macro({ec with Type = C.Type.Bool}, methodName, args)
               | _ -> oopsNumArgs()
-          | _, "\\static_cast" ->
-            let tgtType = 
-              match methodToCall with
-                | :? IGenericMethodInstance as gmi -> 
-                  match [ for t in gmi.GenericArguments -> this.DoType t ] with
-                    | [ t0; _ ] -> t0
-                    | _ -> oopsLoc methodToCall "\\static_cast has wrong number of type arguments"; C.Type.Bogus
-                | _ -> oopsLoc methodToCall "\\static_cast must be generic"; C.Type.Bogus
-            match args() with
-              | [o] -> exprRes <- o.WithCommon { o.Common with Type = tgtType }
-              | _ -> oopsNumArgs()
+//          | _, "\\static_cast" ->
+//            let tgtType = 
+//              match methodToCall with
+//                | :? IGenericMethodInstance as gmi -> 
+//                  match [ for t in gmi.GenericArguments -> this.DoType t ] with
+//                    | [ t0; _ ] -> t0
+//                    | _ -> oopsLoc methodToCall "\\static_cast has wrong number of type arguments"; C.Type.Bogus
+//                | _ -> oopsLoc methodToCall "\\static_cast must be generic"; C.Type.Bogus
+//            match args() with
+//              | [o] -> exprRes <- o.WithCommon { o.Common with Type = tgtType }
+//              | _ -> oopsNumArgs()
           | _ ->
             let args = args()
             let nonVoidParCount = [for p in methodToCall.Parameters do if p.Type.ResolvedType.TypeCode <> PrimitiveTypeCode.Void then yield p].Length;
