@@ -55,6 +55,6 @@ namespace VCC
     bool Implies;
 
     // templates for quantifiers
-    template<class T> bool Forall(T);
+    template<class T> bool ForAll(T);
     template<class T> bool Exists(T);
 }
