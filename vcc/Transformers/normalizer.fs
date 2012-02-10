@@ -1297,7 +1297,37 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let addInternalFunctions decls =
+
+      // template<typename T> \object \stack_alloc(\integer, bool);
+      let stackAlloc = 
+        Top.FunctionDecl ( 
+          { Function.Empty() with 
+              IsSpec = true
+              Name = "_vcc_stack_alloc"
+              RetType = Type.ObjectT
+              OrigRetType = Type.ObjectT
+              Parameters = [ Variable.CreateUnique "stack_frame" (Type.MathInteger(MathIntKind.Signed)) VarKind.Parameter
+                             Variable.CreateUnique "is_spec" Type.Bool VarKind.Parameter ]
+              TypeParameters = [ { Name = "T" } ]
+        })
+
+      // void \stack_free(\integer, \object);
+      let stackFree = 
+        Top.FunctionDecl ( 
+          { Function.Empty() with 
+              IsSpec = true
+              Name = "_vcc_stack_free"
+              Parameters = [ Variable.CreateUnique "stack_frame" (Type.MathInteger(MathIntKind.Signed)) VarKind.Parameter
+                             Variable.CreateUnique "obj" Type.ObjectT VarKind.Parameter ]
+        })
+
+      [stackAlloc; stackFree] @ decls
+
+    // ============================================================================================================
+
     helper.AddTransformer ("norm-begin", TransHelper.DoNothing)
+    helper.AddTransformer ("norm-internals", TransHelper.Decl addInternalFunctions)
     helper.AddTransformer ("norm-unfold-constants", TransHelper.Decl unfoldConstants)
     helper.AddTransformer ("norm-overloads", TransHelper.Decl renameOverloads)
     helper.AddTransformer ("norm-varargs", TransHelper.Expr normalizeVarArgs)

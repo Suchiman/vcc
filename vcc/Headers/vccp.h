@@ -264,8 +264,6 @@ _(logic template<typename T> bool \unchanged(T expr) = \old(expr) == expr)
 // Internal functions - not meant to be called directly, unless you know what you are doing
 
 _(void \free(\object p) _(writes p, \extent(p));)
-_(template<typename T> \object \stack_alloc(\integer, bool);)
-_(void \stack_free(\integer, \object);)
 _(bool \set_in(\object, \objset);)
 _(bool \set_in0(\object, \objset);)
 _(\objset \set_union(\objset, \objset);)
