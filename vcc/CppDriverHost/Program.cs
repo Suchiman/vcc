@@ -17,7 +17,7 @@ namespace Microsoft.Research.Vcc.Cpp
 
       var fn =
         CAST.Top.NewFunctionDecl(
-          new CAST.Function(CAST.bogusToken, false, false, CAST.Type.Void, "foo", evl, etvl, eel, eel,
+          new CAST.Function(CAST.bogusToken, CAST.Flags.None, CAST.Type.Void, "foo", evl, etvl, eel, eel,
                             eel, eel, eel, eal, body, false, 0, 0, 0));
       var decls = FSharpList<CAST.Top>.Cons(fn, FSharpList<CAST.Top>.Empty);
 

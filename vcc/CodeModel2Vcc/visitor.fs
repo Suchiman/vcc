@@ -247,22 +247,21 @@ namespace Microsoft.Research.Vcc
           | _ when methodsMap.ContainsKey meth -> methodsMap.[meth]
           | _ ->
             let isSpec =
-              if name.StartsWith("_vcc") || name.StartsWith("\\") then true 
+              if name.StartsWith("_vcc") || name.StartsWith("\\") then C.Flags.Spec
               else match meth with
-                    | :? Microsoft.Research.Vcc.VccGlobalMethodDefinition as def -> def.IsSpec 
-                    | _ -> false 
+                    | :? Microsoft.Research.Vcc.VccGlobalMethodDefinition as def -> if def.IsSpec then C.Flags.Spec else C.Flags.None
+                    | _ -> C.Flags.None
             let acceptsExtraArguments =
               match meth with
-                | :? IMethodDefinition as methodDef -> methodDef.AcceptsExtraArguments
-                | _ -> false
+                | :? IMethodDefinition as methodDef -> if methodDef.AcceptsExtraArguments then C.Flags.AcceptsExtraArguments else C.Flags.None
+                | _ -> C.Flags.None
             let decl =
               { C.Function.Empty() with
                   Token           = tok
-                  IsSpec          = isSpec
+                  Flags           = isSpec ||| acceptsExtraArguments
                   RetType         = this.DoType(meth.Type)
                   Name            = name
-                  AcceptsExtraArguments = acceptsExtraArguments
-                  }
+              }
             if decl.Name = "" then
               printf "null name\n"
             else
