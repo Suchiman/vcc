@@ -47,6 +47,7 @@ namespace VCC
     template<class T> bool Mine(T);    
     template<class T> bool Mutable(T);
     template<class T> T Old(T);
+    template<class T> int Span(T);
     template<class T> bool Threadlocal(T);
     template<class T> bool Wrapped(T);
 
