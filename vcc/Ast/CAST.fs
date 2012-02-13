@@ -688,8 +688,7 @@ module Microsoft.Research.Vcc.CAST
     Function = 
     {
       Token:Token;
-      IsSpec:bool;
-      AcceptsExtraArguments:bool;
+      Flags : Flags;
       mutable RetType:Type;
       mutable Name:Id;
       mutable Parameters:list<Variable>;
@@ -709,7 +708,7 @@ module Microsoft.Research.Vcc.CAST
 
     static member Empty() =
       { Token = bogusToken
-        IsSpec = false
+        Flags = Flags.None
         RetType = Type.Void
         Parameters = []
         TypeParameters = []
@@ -723,13 +722,16 @@ module Microsoft.Research.Vcc.CAST
         DecreasesLevel = 0
         Body = None
         IsProcessed = false
-        AcceptsExtraArguments = false
         DefExpansionLevel = 0
         UniqueId = unique() } : Function
     
     override this.GetHashCode () = int this.UniqueId
     override this.Equals (that:obj) = LanguagePrimitives.PhysicalEquality that (this :> obj)
     
+    member this.IsSpec = this.Flags.HasFlag(Flags.Spec)
+
+    member this.AcceptsExtraArguments = this.Flags.HasFlag(Flags.AcceptsExtraArguments)
+
     member this.InParameters = [ for p in this.Parameters do if p.Kind <> VarKind.OutParameter then yield p ]
     
     member this.OutParameters = [ for p in this.Parameters do if p.Kind = VarKind.OutParameter then yield p ]
