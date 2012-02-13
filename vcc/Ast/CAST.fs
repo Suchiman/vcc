@@ -691,7 +691,7 @@ module Microsoft.Research.Vcc.CAST
     Function = 
     {
       Token:Token;
-      Flags : Flags;
+      mutable Flags : Flags;
       mutable RetType:Type;
       mutable Name:Id;
       mutable Parameters:list<Variable>;
