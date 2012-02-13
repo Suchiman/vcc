@@ -110,6 +110,16 @@ module Microsoft.Research.Vcc.CAST
     | Lambda
     // sum and stuff here
 
+  [<System.FlagsAttribute>]
+  type Flags =
+    | None =                  0x00
+    | Static =                0x01
+    | Const =                 0x02
+    | Volatile =              0x04
+    | Spec =                  0x08
+    | Virtual =               0x10
+    | AcceptsExtraArguments = 0x20
+
   let PointerSizeInBytes = ref 8
 
   let uniqueCounter = ref 0UL
