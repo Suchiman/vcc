@@ -385,6 +385,7 @@ namespace Microsoft.Research.Vcc
       | Type.Ref td -> 
         match td.Name with
           | "$$bogus$$"
+          | "$$ellipsis$$"
           | "#Object" -> ()
           | _ ->
             cb.UseTypeDecl td
