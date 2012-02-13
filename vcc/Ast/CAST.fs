@@ -463,6 +463,7 @@ module Microsoft.Research.Vcc.CAST
  
     static member Math name = Type.Ref (Type.MathTd name)    
     static member Bogus = Type.Math "$$bogus$$"
+    static member Ellipsis = Type.Math "$$ellipsis$$"
     static member PtrSet = Type.Math "\\objset"
     static member MathStruct = Type.Math "struct"
     static member MathState = Type.Math "\\state"
