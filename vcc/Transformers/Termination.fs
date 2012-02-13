@@ -284,7 +284,9 @@ module Termination =
           if noEffect expr then
             self cont
           else
-            Macro (ec, "ite", [recExpr cond; self (thn :: cont); self (els :: cont)])
+            let thn' = self (thn :: cont)
+            let els' = self (els :: cont)
+            Macro ({ec with Type = thn'.Type}, "ite", [recExpr cond; thn'; els'])
 
         | Block (ec, exprs, None) ->
           self (exprs @ cont)
