@@ -49,6 +49,7 @@ namespace VCC
     template<class T> T Old(T);
     template<class T> int Span(T);
     template<class T> bool Threadlocal(T);
+    template<class T> void Unwrapping(T);
     template<class T> bool Wrapped(T);
 
    
