@@ -41,8 +41,12 @@ namespace VCC
     
     // object state
     template<class T> bool Activeclaim(T);
+    template<class T> void Always(T, bool);
     template<class T> void Atomic(T);
     template<class T> bool Claims(T, bool);
+    template<class T> int Claimcount(T);
+    template<class T> bool Closed(T);
+    template<class T> bool Consistent(T);
     template<class T> void HavocOthers(T);
     template<class T> bool Mine(T);    
     template<class T> bool Mutable(T);
@@ -50,8 +54,11 @@ namespace VCC
     template<class T> int Span(T);
     template<class T> bool Threadlocal(T);
     template<class T> void Unwrapping(T);
+    template<class T> bool Valid(T);
     template<class T> bool Wrapped(T);
-
+    
+    template<class T> void* Owns(T);
+    template<class T> void* Owner(T);
    
     // statements
     template<class T> void Wrap(T o)
