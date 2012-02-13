@@ -210,10 +210,9 @@ module Microsoft.Research.Vcc.CAST
     {
       Token:Token;
       mutable Name:string;
+      mutable Flags : Flags;
       Type:Type;
       Parent:TypeDecl;
-      IsSpec:bool;    
-      mutable IsVolatile:bool;
       Offset:FieldOffset;
       CustomAttr:list<CustomAttr>;
       UniqueId:Unique;
@@ -232,6 +231,10 @@ module Microsoft.Research.Vcc.CAST
       CustomAttr.AsString this.CustomAttr +
       this.Type.ToString() + " " + this.Name + postfix
     
+    member this.IsSpec = this.Flags.HasFlag(Flags.Spec)
+
+    member this.IsVolatile = this.Flags.HasFlag(Flags.Volatile)
+
     member this.ByteOffset =
       match this.Offset with
         | FieldOffset.Normal n -> n

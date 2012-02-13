@@ -751,8 +751,8 @@ namespace Microsoft.Research.Vcc
                   let trField isSpec (f:IFieldDefinition) =
                     let fldVolatile = 
                       match f with
-                        | :? Microsoft.Cci.Ast.FieldDefinition as fd -> fd.FieldDeclaration.IsVolatile
-                        | _ -> false
+                        | :? Microsoft.Cci.Ast.FieldDefinition as fd -> if  fd.FieldDeclaration.IsVolatile then C.Flags.Volatile else C.Flags.None
+                        | _ -> C.Flags.None
                       
                     let name =
                       match f with
@@ -772,6 +772,8 @@ namespace Microsoft.Research.Vcc
                           true
                         | _ -> isSpec
 
+                    let isSpecFlag = if isSpec then C.Flags.Spec else C.Flags.None
+
                     if f.IsBitField then
                       match t with 
                         | C.Type.Integer _ -> ()
@@ -779,10 +781,9 @@ namespace Microsoft.Research.Vcc
                     let res =
                       { Name = name
                         Token = tok
+                        Flags = isSpecFlag ||| fldVolatile
                         Type = t
                         Parent = td
-                        IsSpec = isSpec
-                        IsVolatile = fldVolatile
                         Offset =
                           if f.IsBitField then                               
                             C.FieldOffset.BitField (int f.Offset - minOffset, int (MemberHelper.GetFieldBitOffset f), int f.BitLength)
