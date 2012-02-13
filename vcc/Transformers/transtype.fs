@@ -194,8 +194,7 @@ namespace Microsoft.Research.Vcc
                                Token = parent.Token
                                Type = Type.Ref td
                                Parent = parent
-                               IsSpec = false
-                               IsVolatile = false 
+                               Flags = Flags.None
                                Offset = Normal 0
                                CustomAttr = []
                                UniqueId = CAST.unique() }
@@ -409,7 +408,7 @@ namespace Microsoft.Research.Vcc
             List.iter (fun (fld : Field) -> processType (fld.Type)) td.Fields
             match tryFindBackingMember td with
               | Some fld -> 
-                let bf = { backingField fld with IsVolatile = List.exists hasVolatileInExtent td.Fields }        
+                let bf = { backingField fld with Flags = if List.exists hasVolatileInExtent td.Fields then Flags.Volatile else Flags.None }        
                 let tdIsRecord = td.IsRecord
                 let addOtherFlds (f : Field) =
                   if f = bf || (f.IsSpec && not tdIsRecord) then () else fieldsToReplace.Add(f, bf)
@@ -952,7 +951,7 @@ namespace Microsoft.Research.Vcc
               { f with Type = Array(Type.Ref(mkVolTd tdRef), size); Parent = td }
             | Type.Ref({Kind = Struct|Union} as tdRef) when not tdRef.IsRecord ->
               { f with Type = Type.Ref(mkVolTd tdRef);  Parent = td }
-            | _ -> { f with IsVolatile = true; Parent = td}
+            | _ -> { f with Flags = f.Flags ||| Flags.Volatile; Parent = td}
         fldToVolatileFld.Add(f,f')
         f'
 
@@ -998,7 +997,7 @@ namespace Microsoft.Research.Vcc
           match f.Type with
             | Type.Ref({Kind = Struct|Union} as td) when f.IsVolatile && not td.IsRecord ->
               let td' = mkVolTd td
-              let f' = {f with IsVolatile = false; Type = Type.Ref(td')}
+              let f' = {f with Flags = f.Flags &&& ~~~ Flags.Volatile; Type = Type.Ref(td')}
               if initial then initialFldToVolatileFld.Add(f, f')
               f'
             | PtrSoP(Type.Volatile((Type.Ref({Kind = Struct|Union} as td))), isSpec) ->
@@ -1013,11 +1012,11 @@ namespace Microsoft.Research.Vcc
               f'
             | Type.Array(Type.Ref({Kind = Struct|Union} as td), size) when f.IsVolatile ->
               let td' = mkVolTd td
-              let f' = {f with Type = Type.Array(Type.Ref(td'), size); IsVolatile=false}
+              let f' = {f with Type = Type.Array(Type.Ref(td'), size); Flags = f.Flags &&& ~~~ Flags.Volatile}
               initialFldToVolatileFld.Add(f, f')
               f'
             | Type.Array(Type.Volatile(t), size) ->
-              let f' = {f with Type = Type.Array(t, size); IsVolatile=true}
+              let f' = {f with Type = Type.Array(t, size); Flags = f.Flags ||| Flags.Volatile}
               initialFldToVolatileFld.Add(f, f')
               f'
             | PtrSoP(Type.Volatile(t), isSpec) ->

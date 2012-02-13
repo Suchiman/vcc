@@ -5,5 +5,5 @@ void foo(int a _(ghost int b))
   
 void foo(int a) {};
 `
-Verification of foo#overload#void#int32_t succeeded.
+Verification of foo succeeded.
 `

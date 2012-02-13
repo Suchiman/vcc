@@ -291,15 +291,14 @@ namespace Microsoft.Research.Vcc
             IsSpec = isSpec
             DataTypeOptions = []
             UniqueId = CAST.unique() }
-      let (t, vol) = match t with | Volatile(t) -> (t, true) | t -> (t, false)
+      let (t, vol) = match t with | Volatile(t) -> (t, Flags.Volatile) | t -> (t, Flags.None)
       let singleField =
         { Name = field_name
           Token = tok
           Type = t
           Parent = td
-          IsSpec = false
+          Flags = vol
           Offset = Normal 0
-          IsVolatile = vol
           CustomAttr = []
           UniqueId = CAST.unique() }
       td.Fields <- [singleField]

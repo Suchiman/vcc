@@ -1041,8 +1041,7 @@ namespace Microsoft.Research.Vcc
                             Name = var.Name
                             Type = Type.Array(t, size)
                             Parent = td
-                            IsSpec = isSpec
-                            IsVolatile = false
+                            Flags = if isSpec then Flags.Spec else Flags.None
                             Offset = FieldOffset.Normal(offset)
                             CustomAttr = [VccAttr("as_array", "true")]
                             UniqueId = CAST.unique() } : Field
