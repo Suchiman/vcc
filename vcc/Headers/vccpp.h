@@ -20,6 +20,7 @@ namespace VCC
 {
     // types
     typedef int Claim;
+    typedef int Integer;
 
     // assert/assume
     void Assert(bool);
@@ -30,6 +31,7 @@ namespace VCC
     void AtomicInline();
     void BeginUpdate();
     void Ensures(bool);
+    void FrameAxiom();
     void Invariant(bool);
     void Pure();
     void Requires(bool);
@@ -50,8 +52,10 @@ namespace VCC
     template<class T> int Claimcount(T)         { return 0; };
     template<class T> bool Closed(T)            { return true; };
     template<class T> bool Consistent(T)        { return true; };
+    template<class T> bool Fresh(T)             { return true; };
     template<class T> void HavocOthers(T)       { };
     template<class T> Claim Makeclaim(T, bool)  { };
+    template<class T> bool Mallocroot(T)        { return true; }
     template<class T> bool Mine(T)              { return true; };
     template<class T> bool Mutable(T)           { return true; };
     template<class T> T Old(T)                  { T t; return t; };
