@@ -19,14 +19,15 @@ namespace Microsoft.Research.Vcc
   // ============================================================================================================    
 
   let specialFunctionMap = Map.ofList [
-                                        "VCC::Threadlocal",   "_vcc_thread_local2"
-                                        "VCC::Mutable",       "_vcc_mutable"
-                                        "VCC::Wrapped",       "_vcc_wrapped"
+                                                    "VCC::Threadlocal",   "_vcc_thread_local2"
+                                                    "VCC::Mutable",       "_vcc_mutable"
+                                                    "VCC::Wrapped",       "_vcc_wrapped"
                                       ]
 
-  let specialGlobalNames = Set.ofList [
-                                        "VCC::Implies"
-                                      ]
+  let specialFunctionWithContractMap = Map.ofList [
+                                                    "VCC::Unwrap",        "_vcc_unwrap"
+                                                    "VCC::Wrap",          "_vcc_wrap"
+                                                  ]
 
   let incrOpTable = Map.ofList [
                                   "()++", ("+", true)
@@ -222,6 +223,41 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let rewriteSpecialFunctionsWithContracts decls =
+      
+      // for VCC functions with contracts (e.g. VCC::Wrap), pick a single representative from the
+      // possible many generic instantiations, rename it to the internal name and
+      // rewrite all calls to these functions into calls to this single function
+
+      let representatives = new Dict<_,_>()
+
+      let pickRepresentatives = function
+        | Top.FunctionDecl(fn) ->
+          let name = nongeneric fn.Name
+          match Map.tryFind name specialFunctionWithContractMap with
+            | None -> true
+            | Some name' ->
+              if representatives.ContainsKey(name) then false 
+              else
+                fn.Body <- None // we should have picked up the contracts by now
+                fn.Name <- name'
+                representatives.Add(name, fn)
+                true
+        | _ -> true
+
+      let decls' = List.filter pickRepresentatives decls
+
+      let replaceCalls self = function
+        | Call(ec, fn, [], args) ->
+          match representatives.TryGetValue (nongeneric fn.Name) with
+            | true, fn' -> Some(Call(ec, fn', [], List.map self args))
+            | false, _ -> None
+        | _ -> None
+
+      decls' |> deepMapExpressions replaceCalls
+
+    // ============================================================================================================    
+
     let rewriteSpecialFunctions self = 
 
       let selfs = List.map self
@@ -258,6 +294,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
     helper.AddTransformer ("cpp-rewrite-literals", TransHelper.Expr rewriteLiterals)
     helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
+    helper.AddTransformer ("cpp-rewrite-functions-with-contracts", TransHelper.Decl rewriteSpecialFunctionsWithContracts)
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
     helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)
     helper.AddTransformer ("cpp-rewrite-ops", TransHelper.Expr rewriteExtraOps)
