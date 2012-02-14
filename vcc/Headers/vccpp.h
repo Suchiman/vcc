@@ -21,6 +21,7 @@ namespace VCC
     // types
     typedef int Claim;
     typedef int Integer;
+    typedef int Object;
 
     // assert/assume
     void Assert(bool);
@@ -45,28 +46,30 @@ namespace VCC
     void VolatileOwns();
     
     // object state
-    template<class T> bool Activeclaim(T)       { return true; };
-    template<class T> void Always(T, bool)      { };
-    template<class T> void Atomic(T)            { };
-    template<class T> bool Claims(T, bool)      { return true; };
-    template<class T> int Claimcount(T)         { return 0; };
-    template<class T> bool Closed(T)            { return true; };
-    template<class T> bool Consistent(T)        { return true; };
-    template<class T> bool Fresh(T)             { return true; };
-    template<class T> void HavocOthers(T)       { };
-    template<class T> Claim Makeclaim(T, bool)  { };
-    template<class T> bool Mallocroot(T)        { return true; }
-    template<class T> bool Mine(T)              { return true; };
-    template<class T> bool Mutable(T)           { return true; };
-    template<class T> T Old(T)                  { T t; return t; };
-    template<class T> int Span(T)               { return 0; };
-    template<class T> bool Threadlocal(T)       { return true; };
-    template<class T> void Unwrapping(T)        { };
-    template<class T> bool Valid(T)             { return true; };
-    template<class T> bool Wrapped(T)           { return true; };
+    template<class T> bool Activeclaim(T)         { return true; };
+    template<class T> void Always(T, bool)        { };
+    template<class T> void Atomic(T)              { };
+    template<class T> void BumpVolatileVersion(T) { };
+    template<class T> bool Claims(T, bool)        { return true; };
+    template<class T> int Claimcount(T)           { return 0; };
+    template<class T> bool Closed(T)              { return true; };
+    template<class T> bool Consistent(T)          { return true; };
+    template<class T> bool Fresh(T)               { return true; };
+    template<class T> void HavocOthers(T)         { };
+    template<class T> Claim Makeclaim(T, bool)    { };
+    template<class T> bool Mallocroot(T)          { return true; }
+    template<class T> bool Mine(T)                { return true; };
+    template<class T> bool Mutable(T)             { return true; };
+    template<class T> T Old(T)                    { T t; return t; };
+    template<class T> bool Onunwrap(T, bool)      { return true; }
+    template<class T> int Span(T)                 { return 0; };
+    template<class T> bool Threadlocal(T)         { return true; };
+    template<class T> void Unwrapping(T)          { };
+    template<class T> bool Valid(T)               { return true; };
+    template<class T> bool Wrapped(T)             { return true; };
     
-    template<class T> void* Owns(T)             { return 0; };
-    template<class T> void* Owner(T)            { return 0; };
+    template<class T> void* Owns(T)               { return 0; };
+    template<class T> void* Owner(T)              { return 0; };
    
     // statements
     template<class T> void Wrap(T o)
