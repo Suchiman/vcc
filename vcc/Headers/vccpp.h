@@ -21,6 +21,7 @@ namespace VCC
     // types
     typedef int Claim;
     typedef int Integer;
+    typedef int Object;
 
     // assert/assume
     void Assert(bool);
@@ -59,6 +60,7 @@ namespace VCC
     template<class T> bool Mine(T)              { return true; };
     template<class T> bool Mutable(T)           { return true; };
     template<class T> T Old(T)                  { T t; return t; };
+    template<class T> bool Onunwrap(T, bool)    { return true; }
     template<class T> int Span(T)               { return 0; };
     template<class T> bool Threadlocal(T)       { return true; };
     template<class T> void Unwrapping(T)        { };
