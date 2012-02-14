@@ -227,7 +227,7 @@ namespace Microsoft.Research.Vcc
       
       // for VCC functions with contracts (e.g. VCC::Wrap), pick a single representative from the
       // possible many generic instantiations, rename it to the internal name and
-      // rewrite all calls to these functions into calls to this single function
+      // rewrite all calls to these functions into calls to this representative
 
       let representatives = new Dict<_,_>()
 
@@ -277,6 +277,29 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let rewriteUnwrapping self = 
+
+      // associate a call to VCC::Unwrapping with the following stmt (block) and convert it into 
+      // the format expected by later processing
+
+      let rec rewriteUnwrapping' acc = function
+        | [] -> List.rev acc
+        | CallMacro(ec, StartsWith "VCC::Unwrapping", [], args) :: stmts ->
+          match rewriteUnwrapping' [] stmts with
+            | [] -> 
+              helper.Warning(ec.Token, 9127, "_(unwrapping ...) without following statements is ignored")
+              List.rev acc
+            | stmt :: stmts -> 
+              List.rev acc @ [Macro(ec, "unwrapping", stmt :: args)] @ stmts
+        | stmt :: stmts -> rewriteUnwrapping' ((self stmt)::acc) stmts
+          
+      function
+        | Block(ec, stmts, bc) -> Some(Block(ec, rewriteUnwrapping' [] stmts, bc))
+        | _ -> None
+      
+
+    // ============================================================================================================    
+
     let removeSpecialDecls decls =
 
       let filterSpecialDecls = function
@@ -294,6 +317,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
     helper.AddTransformer ("cpp-rewrite-literals", TransHelper.Expr rewriteLiterals)
     helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
+    helper.AddTransformer ("cpp-rewrite-unwrapping", TransHelper.Expr rewriteUnwrapping)
     helper.AddTransformer ("cpp-rewrite-functions-with-contracts", TransHelper.Decl rewriteSpecialFunctionsWithContracts)
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
     helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)

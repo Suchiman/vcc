@@ -88,4 +88,11 @@ namespace VCC
     // templates for quantifiers
     template<class T> bool ForAll(T)  { return true; };
     template<class T> bool Exists(T)  { return true; };
+
+    // helper function to ensure that we find certain functions in the AST
+    void asthelper() 
+    {
+      VCC::Wrap(0);
+      VCC::Unwrap(0);
+    }
 }
