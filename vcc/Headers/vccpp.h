@@ -54,6 +54,7 @@ namespace VCC
     template<class T> int Claimcount(T)           { return 0; };
     template<class T> bool Closed(T)              { return true; };
     template<class T> bool Consistent(T)          { return true; };
+    template<class T> T Extent(T t)               { return t; }
     template<class T> bool Fresh(T)               { return true; };
     template<class T> void HavocOthers(T)         { };
     template<class T> Claim Makeclaim(T, bool)    { };
