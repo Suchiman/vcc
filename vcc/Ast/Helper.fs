@@ -46,7 +46,7 @@ namespace Microsoft.Research.Vcc
 
       abstract member Error : Token * int * string * Token option -> unit
 
-      // 9100 <= code <= 9199; First available: 9127
+      // 9100 <= code <= 9199; First available: 9128
       abstract member Warning : Token * int * string * Token option -> unit
 
       // 9601 <= code <= 9799; First available: 9746
