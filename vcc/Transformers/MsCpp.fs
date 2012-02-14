@@ -24,25 +24,6 @@ namespace Microsoft.Research.Vcc
                                         "VCC::Wrapped",       "_vcc_wrapped"
                                       ]
 
-  let specialFunctionNames = Set.ofList [
-                                          "VCC::Assert"
-                                          "VCC::Assume"
-                                          "VCC::Result"
-                                          "VCC::Old"
-                                        ]
-
-  let isSpecialFunctionName name = Set.contains name specialFunctionNames || Map.containsKey name specialFunctionMap
-
-  let contractFunctionNames = Set.ofList [
-                                            "VCC::Requires"
-                                            "VCC::Ensures"
-                                            "VCC::Reads"
-                                            "VCC::Writes"
-                                            "VCC::Decreases"
-                                         ]
-
-  let isContractFunction (fn : Function) = Set.contains fn.Name contractFunctionNames
-
   let specialGlobalNames = Set.ofList [
                                         "VCC::Implies"
                                       ]
@@ -68,6 +49,17 @@ namespace Microsoft.Research.Vcc
                                   ]
 
   // ============================================================================================================    
+
+  let (|StartsWith|_|) prefix (s:string) = if s.StartsWith(prefix, System.StringComparison.Ordinal) then Some () else None
+
+  let nongeneric (name:string) = 
+    let endpos = name.IndexOf('<')
+    if endpos = -1 then name else name.Substring(0, endpos)
+
+  let (|SpecialCallTo|_|) name = Map.tryFind (nongeneric name) specialFunctionMap
+          
+  //============================================================================================================    
+
 
   let init (helper:TransHelper.TransEnv) =
 
@@ -178,18 +170,13 @@ namespace Microsoft.Research.Vcc
       // move contracts from list of statements to the surrounding block or function
 
       let findContracts stmts =
+
         let findContracts' (bc:BlockContract) = function
-          | CallMacro(ec, name, [], [arg]) when Set.contains name contractFunctionNames ->
-            match name with
-              | "VCC::Requires" ->  { bc with Requires = arg :: bc.Requires }
-              | "VCC::Ensures" ->   { bc with Ensures = arg :: bc.Ensures }
-              | "VCC::Reads" ->     { bc with Reads = arg :: bc.Reads }
-              | "VCC::Writes" ->    { bc with Writes = arg :: bc.Writes }
-              | "VCC::Decreases" -> { bc with Decreases = arg :: bc.Decreases }
-              | _ -> die()
-          | CallMacro(ec, name, _, _) when Set.contains name contractFunctionNames ->
-            helper.Oops(ec.Token, "unhandled occurrence of contract function")
-            bc
+          | CallMacro(ec, "VCC::Requires", [], [arg])         ->      { bc with Requires = arg :: bc.Requires }
+          | CallMacro(ec, "VCC::Ensures", [], [arg])          ->      { bc with Ensures = arg :: bc.Ensures }
+          | CallMacro(ec, StartsWith "VCC::Reads", [], [arg]) ->      { bc with Reads = arg :: bc.Reads }
+          | CallMacro(ec, StartsWith "VCC::Writes", [], [arg]) ->     { bc with Writes = arg :: bc.Writes }
+          | CallMacro(ec, StartsWith "VCC::Decreases", [], [arg]) ->  { bc with Decreases = arg :: bc.Decreases }
           | _ -> bc
 
         let found = List.fold findContracts' BlockContract.Empty stmts
@@ -202,7 +189,11 @@ namespace Microsoft.Research.Vcc
 
       let removeContracts = 
         let isNoContract = function
-          | CallMacro(ec, name , [], [arg]) when Set.contains name contractFunctionNames -> false
+          | CallMacro(ec, "VCC::Requires", [], [_])         
+          | CallMacro(ec, "VCC::Ensures", [], [_])          
+          | CallMacro(ec, StartsWith "VCC::Reads", [], [_]) 
+          | CallMacro(ec, StartsWith "VCC::Writes", [], [_])
+          | CallMacro(ec, StartsWith "VCC::Decreases", [], [_]) ->  false
           | _ -> true
         List.filter isNoContract
 
@@ -240,16 +231,12 @@ namespace Microsoft.Research.Vcc
           Some(Assert(ec, self arg, []))
         | CallMacro(ec, "VCC::Assume", [], [arg]) -> 
           Some(Assume(ec, self arg))
-        | CallMacro(ec, "VCC::Result", [], []) ->
+        | CallMacro(ec, StartsWith "VCC::Result", [], []) ->
           Some(Result(ec))
-        | CallMacro(ec, "VCC::Old", [], [arg]) ->
+        | CallMacro(ec, StartsWith "VCC::Old", [], [arg]) ->
           Some(Old(ec, Macro({ec with Type = Type.MathState}, "prestate", []), self arg))
-        | CallMacro(ec, name, [], args) when Map.containsKey name specialFunctionMap ->
-          Some(Macro(ec, Map.find name specialFunctionMap, List.map self args))
-        | CallMacro(ec, name, _, _) when isSpecialFunctionName name ->
-          helper.Oops(ec.Token, "Unhandled special function call or macro '" + name + "'")
-          None
-
+        | CallMacro(ec, SpecialCallTo(tgt), [], args)  ->
+          Some(Macro(ec, tgt, List.map self args))
         | _ -> None
 
     // ============================================================================================================    
@@ -257,8 +244,8 @@ namespace Microsoft.Research.Vcc
     let removeSpecialDecls decls =
 
       let filterSpecialDecls = function
-        | Top.FunctionDecl(fn) when isSpecialFunctionName fn.Name || isContractFunction fn -> false
-        | Top.Global({Name = name}, _) when Set.contains name specialGlobalNames -> false
+        | Top.FunctionDecl({Name = StartsWith "VCC::"}) -> false
+        | Top.Global({Name = StartsWith "VCC::"}, _) -> false
         | _ -> true
 
       List.filter filterSpecialDecls decls
@@ -268,12 +255,12 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
     helper.AddTransformer ("cpp-errors", TransHelper.Expr reportErrors)
+    helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
     helper.AddTransformer ("cpp-rewrite-literals", TransHelper.Expr rewriteLiterals)
     helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
     helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)
     helper.AddTransformer ("cpp-rewrite-ops", TransHelper.Expr rewriteExtraOps)
     helper.AddTransformer ("cpp-remove-decls", TransHelper.Decl removeSpecialDecls)
-    helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
 
     helper.AddTransformer ("cpp-end", TransHelper.DoNothing)
