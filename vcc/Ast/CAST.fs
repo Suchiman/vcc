@@ -738,6 +738,14 @@ module Microsoft.Research.Vcc.CAST
 
     member this.AcceptsExtraArguments = this.Flags.HasFlag(Flags.AcceptsExtraArguments)
 
+    member this.IsStatic = this.Flags.HasFlag(Flags.Static)
+
+    member this.IsConst = this.Flags.HasFlag(Flags.Const)
+
+    member this.IsVolatile = this.Flags.HasFlag(Flags.Volatile)
+
+    member this.IsVirtual = this.Flags.HasFlag(Flags.Virtual)
+
     member this.InParameters = [ for p in this.Parameters do if p.Kind <> VarKind.OutParameter then yield p ]
     
     member this.OutParameters = [ for p in this.Parameters do if p.Kind = VarKind.OutParameter then yield p ]
@@ -808,10 +816,14 @@ module Microsoft.Research.Vcc.CAST
     member this.ToStringWT (showTypes) = 
       let b = StringBuilder()
       let wr (s:string) = b.Append s |> ignore
-      if this.IsSpec then wr "spec " else ()
+      if this.IsSpec then wr "spec "
+      if this.IsStatic then wr "static "
+      if this.IsVirtual then wr "virtual "
       wr (CustomAttr.AsString this.CustomAttr)
       this.RetType.WriteTo b; wr " "
       doArgsAndTArgsb b (fun (p:Variable) -> p.WriteTo b) (fun (tp:TypeVariable) -> tp.WriteTo b) (this.Name) this.Parameters this.TypeParameters 
+      if this.IsConst then wr " const"
+      if this.IsVolatile then wr " volatile"
       wr "\r\n"
       
       let doList pref lst =
