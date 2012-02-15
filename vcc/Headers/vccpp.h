@@ -71,6 +71,13 @@ namespace VCC
     template<class T> void* Owns(T)               { return 0; };
     template<class T> void* Owner(T)              { return 0; };
    
+    template <typename T> class Ghost
+    {
+    public:
+      Ghost(T t);
+      operator T();
+    };
+    
     // statements
     template<class T> void Wrap(T o)
     {
