@@ -117,6 +117,11 @@ namespace Microsoft.Research.Vcc
     | [x] -> x
     | x :: xs -> List.fold (boolOp "&&") x xs
       
+  let multiOr = function
+    | [] -> Expr.False
+    | [x] -> x
+    | x ::xs -> List.fold (boolOp "||") x xs
+
   let mapInvariants f decls =
     let fLab = function
       | Macro (c, "labeled_invariant", [lab; i]) -> 
@@ -341,7 +346,7 @@ namespace Microsoft.Research.Vcc
       | Ref(_, ({Kind = SpecParameter|OutParameter} as v)) -> specFound := Some("parameter '" + v.Name + "'"); false
       | CallMacro(_, ("_vcc_alloc" | "_vcc_stack_alloc"), _, _) -> false
       | Macro(_, "by_claim", [_; obj; ptr]) -> self obj; self ptr; false
-      | Call(_, ({IsSpec = true} as f), _, _) -> specFound := Some("function '" + f.Name + "'"); false
+      | Call(_, f, _, _) when f.IsSpec -> specFound := Some("function '" + f.Name + "'"); false
       | Call(_, fn, _, args) ->
         let checkNonSpecPar (p : Variable) (e : Expr) =
           if p.Kind <> VarKind.SpecParameter && p.Kind <> VarKind.OutParameter then self e
@@ -381,6 +386,7 @@ namespace Microsoft.Research.Vcc
       | Type.Ref td -> 
         match td.Name with
           | "$$bogus$$"
+          | "$$ellipsis$$"
           | "#Object" -> ()
           | _ ->
             cb.UseTypeDecl td

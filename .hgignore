@@ -6,7 +6,7 @@ syntax: regexp
 ^vcc/Docs/Tutorial/c/.*\.i$
 ^vcc/Docs/Tutorial/(view\.pdf|Makefile\.local|fix)$
 ^vcc/Test/testsuite/.*\.i$
-
+^.*/*.vspscc$
 syntax: glob
 output.log
 actual.txt
