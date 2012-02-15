@@ -36,10 +36,10 @@ namespace VCC
     void Invariant(bool);
     void Pure();
     void Requires(bool);
-    template<class T> void Reads(T)     { };
-    template<class T> T Result()        { T t; return t; };
-    template<class T> void Returns(T)   { };
-    template<class T> void Writes(T)    { };
+    template<class T> void Reads(T, ...)  { };
+    template<class T> T Result()          { T t; return t; };
+    template<class T> void Returns(T)     { };
+    template<class T> void Writes(T, ...) { };
 
     // data contracts
     void DynamicOwns();
@@ -48,7 +48,7 @@ namespace VCC
     // object state
     template<class T> bool Activeclaim(T)               { return true; };
     template<class T> void Always(T, bool)              { };
-    template<class T> void Atomic(T)                    { };
+    template<class T> void Atomic(T, ...)               { };
     template<class T> void BumpVolatileVersion(T)       { };
     template<class T> bool Claims(T, bool)              { return true; };
     template<class T> int Claimcount(T)                 { return 0; };
@@ -60,7 +60,7 @@ namespace VCC
     template<class T> void HavocOthers(T)               { };
     template<class T> Claim Makeclaim(T, bool)          { };
     template<class T> bool Mallocroot(T)                { return true; }
-    template<class T> bool Mine(T)                      { return true; };
+    template<class T> bool Mine(T, ...)                 { return true; };
     template<class T> bool Mutable(T)                   { return true; };
     template<class T> T Old(T)                          { T t; return t; };
     template<class T> bool Onunwrap(T, bool)            { return true; }
