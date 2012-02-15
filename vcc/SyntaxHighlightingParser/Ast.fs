@@ -69,7 +69,6 @@ module Ast =
                   "\\at" ;
                   "\\now" ;
                   "\\claim_count" ;
-                  "\\consistent" ;
                   "\\closed" ;
                   "\\owns" ;
                   "\\owner" ;

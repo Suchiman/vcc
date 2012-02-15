@@ -80,7 +80,6 @@ namespace Microsoft.Research.Vcc
 
     let typestateFieldsMap = Map.ofList [ 
                                           "\\claim_count",  "_vcc_ref_cnt"
-                                          "\\consistent",   "_vcc_closed"
                                           "\\closed",       "_vcc_closed"
                                           "\\owns",         "_vcc_owns"
                                           "\\owner",        "_vcc_owner"
