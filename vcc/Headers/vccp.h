@@ -161,7 +161,6 @@ _(logic bool \on_unwrap(\object o, bool expr) = \old(o->\closed) && !o->\closed 
 
 _(struct \TypeState {
   _(ghost \integer \claim_count;)
-  _(ghost bool \consistent;)
   _(ghost bool \closed;)
   _(ghost \objset \owns;)
   _(ghost \object \owner;)
