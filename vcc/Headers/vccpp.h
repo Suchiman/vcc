@@ -79,6 +79,13 @@ namespace VCC
       operator T();
     };
     
+    template <typename T> class GhostOut
+    {
+    public:
+      GhostOut(T t);
+      operator T();
+    };
+
     // statements
     template<class T> void Wrap(T o)
     {
