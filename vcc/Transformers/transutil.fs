@@ -326,6 +326,7 @@ namespace Microsoft.Research.Vcc
     let isPure = ref true         
     let rec checkForSideEffect _ = function
       | Deref(_, Dot(_,e,f)) when f.Parent.IsRecord -> true
+      | Macro (_, "_vcc_vs_ctor", _)
       | Deref _ ->
         isPure := false
         false

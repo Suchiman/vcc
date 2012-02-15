@@ -270,6 +270,13 @@ module Termination =
           let bindings = Map.add v.UniqueId (recExpr e) bindings
           valueShouldFollow ctx (aux ctx bindings)
 
+        | If (c, None, cond, Block(_, [Assert(_, Macro(_, "_vcc_possibly_unreachable", []), []); VarWrite (_, [tmp], e1)], None),
+                               Block(_, [Assert(_, Macro(_, "_vcc_possibly_unreachable", []), []); VarWrite (_, [tmp'], e2)], None))
+        | If (c, None, cond, VarWrite (_, [tmp], e1), VarWrite (_, [tmp'], e2)) when tmp = tmp' ->
+          let e = Expr.Macro (e1.Common, "ite", [cond; e1; e2])
+          let bindings = Map.add tmp.UniqueId (recExpr e) bindings
+          valueShouldFollow ctx (aux ctx bindings)
+
         | If (ec, _, cond, thn, els) ->
           let rec noEffect = function
             | If (_, _, Macro (_, "check_termination", _), _, _) -> true
@@ -287,7 +294,7 @@ module Termination =
             let thn' = self (thn :: cont)
             let els' = self (els :: cont)
             Macro ({ec with Type = thn'.Type}, "ite", [recExpr cond; thn'; els'])
-
+ 
         | Block (ec, exprs, None) ->
           self (exprs @ cont)
 
