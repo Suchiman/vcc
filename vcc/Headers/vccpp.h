@@ -94,6 +94,14 @@ namespace VCC
       GhostOut(T t);
       operator T();
     };
+    
+    template <typename T> class Unchecked 
+    {
+    public:
+      Unchecked(const T&);
+      operator T() const;
+    };
+
 
     // statements
     template<class T> void Wrap(T o)
