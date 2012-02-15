@@ -14,10 +14,11 @@ namespace Microsoft.Research.Vcc.Cpp
       var etvl = FSharpList<CAST.TypeVariable>.Empty;
 
       var body = FSharpOption<CAST.Expr>.Some(CAST.Expr.NewBlock(CAST.bogusEC, eel, null));
+      var parent = FSharpOption<CAST.TypeDecl>.None;
 
       var fn =
         CAST.Top.NewFunctionDecl(
-          new CAST.Function(CAST.bogusToken, CAST.Flags.None, CAST.Type.Void, "foo", evl, etvl, eel, eel,
+          new CAST.Function(CAST.bogusToken, CAST.Flags.None, CAST.Type.Void, "foo", parent, evl, etvl, eel, eel,
                             eel, eel, eel, eal, body, false, 0, 0, 0));
       var decls = FSharpList<CAST.Top>.Cons(fn, FSharpList<CAST.Top>.Empty);
 

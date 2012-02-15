@@ -695,6 +695,7 @@ module Microsoft.Research.Vcc.CAST
       mutable Flags : Flags;
       mutable RetType:Type;
       mutable Name:Id;
+      mutable Parent:option<TypeDecl>;
       mutable Parameters:list<Variable>;
       mutable TypeParameters:list<TypeVariable>
       mutable Requires:list<Expr>;
@@ -717,6 +718,7 @@ module Microsoft.Research.Vcc.CAST
         Parameters = []
         TypeParameters = []
         Name = "<none>"
+        Parent = None
         Requires = []
         Ensures = []
         Writes = []
