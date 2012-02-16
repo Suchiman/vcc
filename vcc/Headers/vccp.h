@@ -235,8 +235,10 @@ _(bool \macro_maintains(bool cond)
   _(ensures cond))
 
 _(bool \macro_always(\claim c, bool cond)
-  _(requires \wrapped(c) && \active_claim(c) && \claims(c, cond))
-  _(ensures \wrapped(c) && \active_claim(c)))
+  _(requires \wrapped(c) && \claims(c, cond))
+  _(requires \assume(\active_claim(c)))
+  _(ensures \wrapped(c))
+  _(ensures \assume(\active_claim(c))))
 
 _(bool \macro_updates(\object o)
   _(requires \wrapped(o))
