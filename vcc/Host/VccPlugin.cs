@@ -147,13 +147,13 @@ namespace Microsoft.Research.Vcc
         // this needs to be done before pruning; otherwise call cycles might get hidden
         Termination.checkCallCycles(env, currentDecls);
         var decls = TransUtil.pruneBy(env, funcName, currentDecls);
-        var boogieDecls = Translator.translate(funcName, env, () => VccCommandLineHost.StandardPrelude, decls);
+        var boogieDecls = Translator.translate(funcName, env, () => VccCommandLineHost.StandardPrelude(parent.options), decls);
         if (!env.ShouldContinue) return VerificationResult.UserError;
         currentBoogie = PrepareBoogie(boogieDecls);
         mustRegenerateBoogie = true;
       } else {
         if (mustRegenerateBoogie || currentBoogie == null) {
-          var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, currentDecls);
+          var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude(parent.options), currentDecls);
           if (!env.ShouldContinue) return VerificationResult.UserError;
           currentBoogie = PrepareBoogie(boogieDecls);
           mustRegenerateBoogie = false;
@@ -289,7 +289,7 @@ namespace Microsoft.Research.Vcc
       Boogie.Program boogieToDump;
 
       if (generate) {
-        var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, currentDecls);
+        var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude(parent.options), currentDecls);
         boogieToDump = PrepareBoogie(boogieDecls);
       } else {
         boogieToDump = currentBoogie;
@@ -436,7 +436,7 @@ namespace Microsoft.Research.Vcc
           decls = TransUtil.pruneBy(env, env.Options.Functions.First(), decls);
         }
 
-        var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, decls);
+        var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude(options), decls);
         var p = TranslateToBoogie(boogieDecls);
         if (env.ShouldContinue) {
           try {
@@ -487,7 +487,7 @@ namespace Microsoft.Research.Vcc
       try {
         swBoogie.Start();
         var pp = new Boogie.Program();
-        pp.TopLevelDeclarations.AddRange(VccCommandLineHost.StandardPrelude.TopLevelDeclarations);
+        pp.TopLevelDeclarations.AddRange(VccCommandLineHost.StandardPrelude(options).TopLevelDeclarations);
         pp.TopLevelDeclarations.AddRange(p.TopLevelDeclarations);
         return pp;
       } finally {
