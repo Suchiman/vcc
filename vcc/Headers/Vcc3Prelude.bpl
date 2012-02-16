@@ -883,7 +883,7 @@ function $owns(S:$state, p:$ptr) : $ptrset
 function {:inline true} $keeps(S:$state, #l:$ptr, #p:$ptr) : bool
   { $set_in(#p, $owns(S, #l)) }
 
-function {:inline true} $wrapped(S:$state, #p:$ptr, #t:$ctype) : bool
+function $wrapped(S:$state, #p:$ptr, #t:$ctype) : bool
   { $is(#p,#t) && $is_proper(#p) && $owner(S, #p) == $me() && $closed(S, #p) && $is_non_primitive(#t) }
 
 function {:inline true} $nested(S:$state, p:$ptr) : bool
@@ -1239,7 +1239,11 @@ function {:inline true} $specials_eq(S0:$state, S:$state) : bool
     $f_timestamp(S0) == $f_timestamp(S) &&
     $f_closed(S0) == $f_closed(S) &&
     $f_owner(S0) == $f_owner(S) &&
-    $roots(S0) == $roots(S)
+    $roots(S0) == $roots(S) &&
+    (forall pp:$ptr :: {$wrapped(S, pp, $typ(pp))}
+        $wrapped(S0, pp, $typ(pp)) ==> $wrapped(S, pp, $typ(pp))) &&
+    (forall pp:$ptr :: {$mutable(S, pp)}
+        $mutable(S0, pp) ==> $mutable(S, pp))
   }
 
 function {:inline true} $specials_eq_except(S0:$state, S:$state, p:$ptr) : bool
@@ -1403,6 +1407,12 @@ function {:inline false} $modifies(S0:$state, S1:$state, W:$ptrset) : bool
       ($f_timestamp(S1)[p] >= $f_timestamp(S0)[p] && $f_timestamp(S1)[p] <= $current_timestamp(S1))) &&
     (forall p:$ptr :: {$f_closed(S1)[p]} $not_written(S0, p, W) ==> $f_closed(S1)[p] == $f_closed(S0)[p]) &&
     (forall p:$ptr :: {$f_owner(S1)[p]} $not_written(S0, p, W) ==> $f_owner(S0)[p] == $f_owner(S1)[p]) &&
+
+    (forall p:$ptr :: {$wrapped(S1, p, $typ(p))}
+        !$in(p, W) && $wrapped(S0, p, $typ(p)) ==> $wrapped(S1, p, $typ(p))) &&
+    (forall p:$ptr :: {$mutable(S1, p)}
+        !$in(p, W) && $mutable(S0, p) ==> $mutable(S1, p)) &&
+
     $timestamp_post(S0, S1) }
 
 function {:inline true} $preserves_thread_local(S0:$state, S1:$state) : bool
