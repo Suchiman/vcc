@@ -145,6 +145,7 @@ _(bool _(_boogie0) \in_range_spec_ptr(\object))
 _(bool _(_boogie0) \may_diverge())
 _(bool \normal_exit())
 _(bool \writable(\object))
+_(bool \assume(bool))
 
 _(template<typename T> \integer \size(T dt);)
 

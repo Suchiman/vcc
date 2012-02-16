@@ -349,11 +349,11 @@ namespace Microsoft.Research.Vcc
         loop (fn.InParameters, args)
 
       let stripFreeFromEnsures = function
-        | C.Macro(_, "free_ensures", [e]) -> e
+        | C.Macro(_, "_vcc_assume", [e]) -> e
         | e -> e
 
       let stripFreeFromRequires = function
-        | C.Macro(_, "free_requires", [e]) -> e
+        | C.Macro(_, "_vcc_assume", [e]) -> e
         | e -> e
 
       let isSetEmpty = function
@@ -1785,10 +1785,10 @@ namespace Microsoft.Research.Vcc
              B.Modifies "$cev_pc";
              ]
         let tEnsures = function
-          | C.Macro(_, "free_ensures", [e]) -> B.FreeEnsures(te e)
+          | C.Macro(_, "_vcc_assume", [e]) -> B.FreeEnsures(te e)
           | e -> B.Ensures(e.Token, te e)
         let tRequires = function
-          | C.Macro(_, "free_requires", [e]) -> B.FreeRequires(te e)
+          | C.Macro(_, "_vcc_assume", [e]) -> B.FreeRequires(te e)
           | e -> B.Requires(e.Token, te e)
         let rec splitConjuncts = function
           | C.Prim(_, C.Op("&&", _), [e1;e2]) -> splitConjuncts e1 @ splitConjuncts e2
