@@ -288,27 +288,33 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
-    let rewriteUnwrapping self = 
+    let rewriteBlockDecorators self = 
 
-      // associate a call to VCC::Unwrapping with the following stmt (block) and convert it into 
-      // the format expected by later processing
+      // associate a call to a construct that applies to the following block (like VCC::Unwrapping or VCC::Atomic) 
+      // with the following stmt (block) and convert it into the format expected by later processing
 
-      let rec rewriteUnwrapping' acc = function
+      let rec rewriteBlockDecorators' acc = function
         | [] -> List.rev acc
         | CallMacro(ec, StartsWith "VCC::Unwrapping", [], args) :: stmts ->
-          match rewriteUnwrapping' [] stmts with
+          match rewriteBlockDecorators' [] stmts with
             | [] -> 
               helper.Warning(ec.Token, 9127, "_(unwrapping ...) without following statements is ignored")
               List.rev acc
             | stmt :: stmts -> 
               List.rev acc @ [Macro(ec, "unwrapping", stmt :: args)] @ stmts
-        | stmt :: stmts -> rewriteUnwrapping' ((self stmt)::acc) stmts
+        | CallMacro(ec, StartsWith "VCC::Atomic", [], args) :: stmts ->
+          match rewriteBlockDecorators' [] stmts with
+            | [] -> 
+              helper.Warning(ec.Token, 9127, "_(atomic ...) without following statements is ignored")
+              List.rev acc
+            | stmt :: stmts -> 
+              List.rev acc @ [Atomic(ec, args, stmt)] @ stmts
+        | stmt :: stmts -> rewriteBlockDecorators' ((self stmt)::acc) stmts
           
       function
-        | Block(ec, stmts, bc) -> Some(Block(ec, rewriteUnwrapping' [] stmts, bc))
+        | Block(ec, stmts, bc) -> Some(Block(ec, rewriteBlockDecorators' [] stmts, bc))
         | _ -> None
       
-
     // ============================================================================================================    
 
     let removeSpecialDecls decls =
@@ -328,7 +334,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
     helper.AddTransformer ("cpp-rewrite-literals", TransHelper.Expr rewriteLiterals)
     helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
-    helper.AddTransformer ("cpp-rewrite-unwrapping", TransHelper.Expr rewriteUnwrapping)
+    helper.AddTransformer ("cpp-rewrite-block-decorators", TransHelper.Expr rewriteBlockDecorators)
     helper.AddTransformer ("cpp-rewrite-functions-with-contracts", TransHelper.Decl rewriteSpecialFunctionsWithContracts)
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
     helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)
