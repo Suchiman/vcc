@@ -186,9 +186,9 @@ namespace Microsoft.Research.Vcc
         let findContracts' (bc:BlockContract) = function
           | CallMacro(ec, "VCC::Requires", [], [arg])         ->      { bc with Requires = arg :: bc.Requires }
           | CallMacro(ec, "VCC::Ensures", [], [arg])          ->      { bc with Ensures = arg :: bc.Ensures }
-          | CallMacro(ec, StartsWith "VCC::Reads", [], [arg]) ->      { bc with Reads = arg :: bc.Reads }
-          | CallMacro(ec, StartsWith "VCC::Writes", [], [arg]) ->     { bc with Writes = arg :: bc.Writes }
-          | CallMacro(ec, StartsWith "VCC::Decreases", [], [arg]) ->  { bc with Decreases = arg :: bc.Decreases }
+          | CallMacro(ec, StartsWith "VCC::Reads", [], args) ->      { bc with Reads = args @ bc.Reads }
+          | CallMacro(ec, StartsWith "VCC::Writes", [], args) ->     { bc with Writes = args @ bc.Writes }
+          | CallMacro(ec, StartsWith "VCC::Decreases", [], args) ->  { bc with Decreases = args @ bc.Decreases }
           | _ -> bc
 
         let found = List.fold findContracts' BlockContract.Empty stmts
@@ -203,9 +203,9 @@ namespace Microsoft.Research.Vcc
         let isNoContract = function
           | CallMacro(ec, "VCC::Requires", [], [_])         
           | CallMacro(ec, "VCC::Ensures", [], [_])          
-          | CallMacro(ec, StartsWith "VCC::Reads", [], [_]) 
-          | CallMacro(ec, StartsWith "VCC::Writes", [], [_])
-          | CallMacro(ec, StartsWith "VCC::Decreases", [], [_]) ->  false
+          | CallMacro(ec, StartsWith "VCC::Reads", [], _) 
+          | CallMacro(ec, StartsWith "VCC::Writes", [], _)
+          | CallMacro(ec, StartsWith "VCC::Decreases", [], _) ->  false
           | _ -> true
         List.filter isNoContract
 
