@@ -98,6 +98,12 @@ namespace Microsoft.Research.Vcc
         Macro({ec with Type = Type.Void}, "=", [e0; calc])        
 
       function
+
+        | Macro(ec, "init", [arr; Macro(_, "array_init", args)]) ->         
+          let assignIdx idx (arg:Expr) = 
+            Expr.Macro({ec with Type = Type.Void}, "=", [Expr.Deref({arr.Common with Type = arg.Type}, Index(arr.Common, arr, mkInt idx)); arg])
+          Some(Expr.MkBlock(List.mapi assignIdx (List.map self args)))
+
         | Macro(ec, "init", [lhs; rhs]) -> Some(Macro(ec, "=", [self lhs; self rhs]))
         
         | Macro(_, incrOp, [e; IntLiteral(_, _one)]) when _one.IsOne && incrOpTable.ContainsKey incrOp -> 
@@ -164,6 +170,32 @@ namespace Microsoft.Research.Vcc
           Some(Prim(ec, op, args |> List.map self |> List.map toBool))
         | _ -> None
           
+    // ============================================================================================================    
+
+    let handleStackArrays decls = 
+    
+      let varSubst = new Dict<_,_>()
+      let typeSubst = new Dict<_,_>()
+
+      let replaceDeclsAndAllocate self = function
+        | VarDecl(ec, ({Type = Array(t, n)} as v), attr) as decl ->
+          let ptrType = Type.PhysPtr(t) // TODO: could be spec ptr
+          let vptr = Variable.CreateUnique v.Name ptrType v.Kind
+          let vptrRef = Expr.Ref({ec with Type=v.Type}, vptr)
+          let stackAlloc = Expr.Macro({ ec with Type = ptrType }, "stack_allocate_array", [mkInt n; Expr.False])
+          let assign = Expr.Macro(ec, "=", [vptrRef; stackAlloc])
+          varSubst.Add(v, vptr)
+          typeSubst.[v.Type] <- ptrType
+          Some(Expr.Macro(ec, "fake_block", [VarDecl(ec, vptr, attr); assign]))
+        | _ -> None
+
+      let typeSubst t = 
+        match typeSubst.TryGetValue(t) with
+          | true, t' -> Some t'
+          | _ -> None
+
+      decls |> deepMapExpressions replaceDeclsAndAllocate |> mapExpressions (fun _ (expr:Expr) -> expr.SubstType(typeSubst, varSubst))
+
     // ============================================================================================================    
 
     let reportErrors self = 
@@ -333,6 +365,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-errors", TransHelper.Expr reportErrors)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
     helper.AddTransformer ("cpp-rewrite-literals", TransHelper.Expr rewriteLiterals)
+    helper.AddTransformer ("cpp-stack-arrays", TransHelper.Decl handleStackArrays)
     helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
     helper.AddTransformer ("cpp-rewrite-block-decorators", TransHelper.Expr rewriteBlockDecorators)
     helper.AddTransformer ("cpp-rewrite-functions-with-contracts", TransHelper.Decl rewriteSpecialFunctionsWithContracts)
