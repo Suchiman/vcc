@@ -77,14 +77,15 @@ namespace VCC
     {
     public:
       Ghost(T t);
-      operator T();
+      Ghost(const Ghost<T> &g);
+      operator T() const;
     };
     
     template <typename T> class GhostOut
     {
     public:
       GhostOut(T t);
-      operator T();
+      operator T() const;
     };
     
     template <typename T> class Unchecked 
