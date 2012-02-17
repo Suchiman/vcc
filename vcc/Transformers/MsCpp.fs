@@ -79,6 +79,9 @@ namespace Microsoft.Research.Vcc
 
     let rewriteLiterals self = function
       | IntLiteral(ec, i)  when ec.Type = Type.Bool -> Some(BoolLiteral(ec, i.IsOne))
+      | Macro(_, "implicit_cast", [Cast(ec, cs, IntLiteral(_, n))]) 
+      | Cast(ec, cs, IntLiteral(_, n)) when TransUtil.intInRange ec.Type n ->
+          Some(IntLiteral(ec, n))
       | _ -> None
 
     // ============================================================================================================    
@@ -127,9 +130,8 @@ namespace Microsoft.Research.Vcc
             | Checked -> 
               if not (Type.ConversionIsLossless(expr.Type, ec.Type)) then
                 helper.Error(ec.Token, 37, "Cannot implicitly convert type '" + expr.Type.ToString() + "' to '" + ec.Type.ToString() + "'")
-              Some(self cast)
-            | _ -> Some(self cast)
-
+            | _ -> ()
+          Some(self cast)
         | _ -> None
   
     // ============================================================================================================    
@@ -320,6 +322,12 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let rewriteGhostParameters decls = 
+
+      decls
+
+    // ============================================================================================================    
+
     let rewriteBlockDecorators self = 
 
       // associate a call to a construct that applies to the following block (like VCC::Unwrapping or VCC::Atomic) 
@@ -364,6 +372,7 @@ namespace Microsoft.Research.Vcc
 
     helper.AddTransformer ("cpp-errors", TransHelper.Expr reportErrors)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
+    helper.AddTransformer ("cpp-ghost-params", TransHelper.Decl rewriteGhostParameters)
     helper.AddTransformer ("cpp-rewrite-literals", TransHelper.Expr rewriteLiterals)
     helper.AddTransformer ("cpp-stack-arrays", TransHelper.Decl handleStackArrays)
     helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
