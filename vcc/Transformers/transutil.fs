@@ -184,6 +184,34 @@ namespace Microsoft.Research.Vcc
       | MathInteger Unsigned -> "nat"
       | _ -> failwith "integer type expected"
   
+  let private maxu8 =   new bigint( 255)
+  let private mini8 =   new bigint(-128)
+  let private maxi8 =   new bigint( 127)
+  let private maxu16 =  new bigint( 65535)
+  let private mini16 =  new bigint(-32768)
+  let private maxi16 =  new bigint( 32767)
+  let private maxu32 =  new bigint(  65536*65536-1)
+  let private mini32 =  new bigint(-(65536*32768))
+  let private maxi32 =  new bigint(  65536*32768-1)
+  let private maxu64 =  new bigint( 65536*65536*65536*65536-1)
+  let private mini64 =  new bigint(-(65536*65536*65536*32768))
+  let private maxi64 =  new bigint(  65536*65536*65536*32768-1)
+
+  let intInRange (t:Type) (n:bigint) =
+    let zero = bigint.Zero
+    match t with
+      | Integer k ->
+        match k with 
+          | UInt8   ->   zero <= n && n <= maxu8
+          | Int8    ->  mini8 <= n && n <= maxi8
+          | UInt16  ->   zero <= n && n <= maxu16
+          | Int16   -> mini16 <= n && n <= maxi16
+          | UInt32  ->   zero <= n && n <= maxu32
+          | Int32   -> mini32 <= n && n <= maxi32
+          | UInt64  ->   zero <= n && n <= maxu64
+          | Int64   -> mini64 <= n && n <= maxi64
+      | _ -> true
+
   let inRange (helper:TransHelper.TransEnv) ec (expr:Expr) =
     let castToInt expr = expr
     match expr.Type with
