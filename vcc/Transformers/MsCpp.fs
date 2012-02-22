@@ -15,7 +15,7 @@ namespace Microsoft.Research.Vcc
  open Microsoft.Research.Vcc.CAST
  
  module MsCpp =
-  
+
   // ============================================================================================================    
 
   let specialFunctionMap = Map.ofList [
@@ -59,6 +59,17 @@ namespace Microsoft.Research.Vcc
                                     "<<=", ("<<", false)
                                     ">>=", (">>", false)
                                   ]
+
+  let sanitizeFullName (fullName : string) =
+    let s = new System.Text.StringBuilder(fullName)
+    s.Replace(' ', '#') |> ignore
+    s.Replace('(', '$') |> ignore
+    s.Replace(')', '$') |> ignore
+    s.Replace('<', '$') |> ignore
+    s.Replace('>', '$') |> ignore
+    s.Replace('*', '^') |> ignore
+    s.Replace(',', '`') |> ignore
+    s.ToString()
 
   // ============================================================================================================    
 
@@ -211,18 +222,20 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+
     let collectContracts decls =
 
       // move contracts from list of statements to the surrounding block or function
+      
 
       let findContracts stmts =
 
         let findContracts' (bc:BlockContract) = function
-          | CallMacro(ec, "VCC::Requires", [], [arg])         ->      { bc with Requires = arg :: bc.Requires }
-          | CallMacro(ec, "VCC::Ensures", [], [arg])          ->      { bc with Ensures = arg :: bc.Ensures }
-          | CallMacro(ec, StartsWith "VCC::Reads", [], args) ->      { bc with Reads = args @ bc.Reads }
-          | CallMacro(ec, StartsWith "VCC::Writes", [], args) ->     { bc with Writes = args @ bc.Writes }
-          | CallMacro(ec, StartsWith "VCC::Decreases", [], args) ->  { bc with Decreases = args @ bc.Decreases }
+          | Call(ec, {FriendlyName = StartsWith "VCC::Requires"}, [], [arg]) ->  { bc with Requires = arg :: bc.Requires }
+          | Call(ec, {FriendlyName = StartsWith "VCC::Ensures"}, [], [arg]) ->   { bc with Ensures = arg :: bc.Ensures }
+          | Call(ec, {FriendlyName = StartsWith "VCC::Reads"}, [], args) ->      { bc with Reads = args @ bc.Reads }
+          | Call(ec, {FriendlyName = StartsWith "VCC::Writes"}, [], args) ->     { bc with Writes = args @ bc.Writes }
+          | Call(ec, {FriendlyName = StartsWith "VCC::Decreases"}, [], args) ->  { bc with Decreases = args @ bc.Decreases }
           | _ -> bc
 
         let found = List.fold findContracts' BlockContract.Empty stmts
@@ -235,11 +248,11 @@ namespace Microsoft.Research.Vcc
 
       let removeContracts = 
         let isNoContract = function
-          | CallMacro(ec, "VCC::Requires", [], [_])         
-          | CallMacro(ec, "VCC::Ensures", [], [_])          
-          | CallMacro(ec, StartsWith "VCC::Reads", [], _) 
-          | CallMacro(ec, StartsWith "VCC::Writes", [], _)
-          | CallMacro(ec, StartsWith "VCC::Decreases", [], _) ->  false
+          | Call(ec, {FriendlyName = StartsWith "VCC::Requires"}, [], [_])         
+          | Call(ec, {FriendlyName = StartsWith "VCC::Ensures"}, [], [_])          
+          | Call(ec, {FriendlyName = StartsWith "VCC::Reads"}, [], _) 
+          | Call(ec, {FriendlyName = StartsWith "VCC::Writes"}, [], _)
+          | Call(ec, {FriendlyName = StartsWith "VCC::Decreases"}, [], _) ->  false
           | _ -> true
         List.filter isNoContract
 
@@ -278,7 +291,7 @@ namespace Microsoft.Research.Vcc
 
       let pickRepresentatives = function
         | Top.FunctionDecl(fn) ->
-          let name = nongeneric fn.Name
+          let name = nongeneric fn.FriendlyName
           match Map.tryFind name specialFunctionWithContractMap with
             | None -> true
             | Some name' ->
@@ -286,6 +299,7 @@ namespace Microsoft.Research.Vcc
               else
                 fn.Body <- None // we should have picked up the contracts by now
                 fn.Name <- name'
+                fn.FriendlyName <- name'
                 representatives.Add(name, fn)
                 true
         | _ -> true
@@ -294,7 +308,7 @@ namespace Microsoft.Research.Vcc
 
       let replaceCalls self = function
         | Call(ec, fn, [], args) ->
-          match representatives.TryGetValue (nongeneric fn.Name) with
+          match representatives.TryGetValue (nongeneric fn.FriendlyName) with
             | true, fn' -> Some(Call(ec, fn', [], List.map self args))
             | false, _ -> None
         | _ -> None
@@ -308,15 +322,15 @@ namespace Microsoft.Research.Vcc
       let selfs = List.map self
 
       function
-        | CallMacro(ec, "VCC::Assert", [], [arg]) -> 
+        | Call(ec, {FriendlyName = "VCC::Assert"}, [], [arg]) -> 
           Some(Assert(ec, self arg, []))
-        | CallMacro(ec, "VCC::Assume", [], [arg]) -> 
+        | Call(ec, {FriendlyName = "VCC::Assume"}, [], [arg]) -> 
           Some(Assume(ec, self arg))
-        | CallMacro(ec, StartsWith "VCC::Result", [], []) ->
+        | Call(ec, {FriendlyName = StartsWith "VCC::Result"}, [], []) ->
           Some(Result(ec))
-        | CallMacro(ec, StartsWith "VCC::Old", [], [arg]) ->
+        | Call(ec, {FriendlyName = StartsWith "VCC::Old"}, [], [arg]) ->
           Some(Old(ec, Macro({ec with Type = Type.MathState}, "prestate", []), self arg))
-        | CallMacro(ec, SpecialCallTo(tgt), [], args)  ->
+        | Call(ec, {FriendlyName = SpecialCallTo(tgt)}, [], args)  ->
           Some(Macro(ec, tgt, List.map self args))
         | _ -> None
 
@@ -335,14 +349,14 @@ namespace Microsoft.Research.Vcc
 
       let rec rewriteBlockDecorators' acc = function
         | [] -> List.rev acc
-        | CallMacro(ec, StartsWith "VCC::Unwrapping", [], args) :: stmts ->
+        | Call(ec, {FriendlyName = StartsWith "VCC::Unwrapping"}, [], args) :: stmts ->
           match rewriteBlockDecorators' [] stmts with
             | [] -> 
               helper.Warning(ec.Token, 9127, "_(unwrapping ...) without following statements is ignored")
               List.rev acc
             | stmt :: stmts -> 
               List.rev acc @ [Macro(ec, "unwrapping", stmt :: args)] @ stmts
-        | CallMacro(ec, StartsWith "VCC::Atomic", [], args) :: stmts ->
+        | Call(ec, {FriendlyName = StartsWith "VCC::Atomic"}, [], args) :: stmts ->
           match rewriteBlockDecorators' [] stmts with
             | [] -> 
               helper.Warning(ec.Token, 9127, "_(atomic ...) without following statements is ignored")
@@ -357,10 +371,19 @@ namespace Microsoft.Research.Vcc
       
     // ============================================================================================================    
 
+    let sanitizeNames decls =
+      for d in decls do
+        match d with 
+          | Top.FunctionDecl(fn) -> fn.Name <- sanitizeFullName fn.Name
+          | _ -> ()
+      decls
+
+    // ============================================================================================================    
+
     let removeSpecialDecls decls =
 
       let filterSpecialDecls = function
-        | Top.FunctionDecl({Name = StartsWith "VCC::"}) -> false
+        | Top.FunctionDecl({FriendlyName = StartsWith "VCC::"}) -> false
         | Top.Global({Name = StartsWith "VCC::"}, _) -> false
         | _ -> true
 
@@ -381,6 +404,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
     helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)
     helper.AddTransformer ("cpp-rewrite-ops", TransHelper.Expr rewriteExtraOps)
+    helper.AddTransformer ("cpp-sanitize-names", TransHelper.Decl sanitizeNames)
     helper.AddTransformer ("cpp-remove-decls", TransHelper.Decl removeSpecialDecls)
 
     helper.AddTransformer ("cpp-end", TransHelper.DoNothing)

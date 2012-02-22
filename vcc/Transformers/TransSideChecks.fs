@@ -105,6 +105,7 @@ namespace Microsoft.Research.Vcc
                 Token = td.Token
                 Flags = Flags.Spec  
                 Name = td.Name + "#adm"
+                FriendlyName = td.Name + "#adm"
                 Parameters = [parm]
                 Ensures = post
                 CustomAttr = VccAttr(AttrIsAdmissibility, "") :: (inheritedAttrs td.CustomAttr)
@@ -362,6 +363,7 @@ namespace Microsoft.Research.Vcc
               Token = f.Token
               Flags = Flags.Spec
               Name = f.Name + "#reads"
+              FriendlyName = f.Name + "#reads"
               CustomAttr = ReadsCheck f :: inheritedAttrs f.CustomAttr
               Body = Some body
               IsProcessed = true }

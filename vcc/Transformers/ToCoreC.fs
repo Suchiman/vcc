@@ -876,6 +876,7 @@ namespace Microsoft.Research.Vcc
                              RetType = Type.Bool
                              Parameters = List.map inMap localsThatGoIn @ List.map outMap localsThatGoOut
                              Name = (!currentFunction).Name + "#block#" + blockPrefix + blockId
+                             FriendlyName = (!currentFunction).Name + "#block#" + blockPrefix + blockId
                              Requires = stripInitialPure cs'.Requires
                              Ensures = cs'.Ensures |> stripInitialPure |> List.map (fun (expr:Expr) -> expr.SelfMap(rewriteNormalExit))
                              Writes = stripInitialPure cs'.Writes
