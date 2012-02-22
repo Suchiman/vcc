@@ -268,7 +268,7 @@ namespace Microsoft.Research.Vcc
           helper.GraveWarning (f.Token, 9310, "a non-equality postcondition in a pure function (not ensures(result == ...))")
           expr
           
-      let freebies, normals = f.Ensures |> List.partition (function CallMacro (_, "free_ensures", _, _) -> true | _ -> false)
+      let freebies, normals = f.Ensures |> List.partition (function CallMacro (_, "_vcc_assume", _, _) -> true | _ -> false)
       f.Ensures <- freebies @ (normals |> List.map splitConjunction |> List.concat |> List.map checkOne)
       
       let gave = ref false
@@ -438,7 +438,7 @@ namespace Microsoft.Research.Vcc
           | _ -> None
         let subst (e:Expr) = e.SelfMap subst
         
-        let preconds = f.Requires |> List.map( function | Macro(_, "free_requires", [e]) -> e | e -> e)  |> List.map (fun e -> Expr.MkAssume (subst e)) 
+        let preconds = f.Requires |> List.map( function | Macro(_, "_vcc_assume", [e]) -> e | e -> e)  |> List.map (fun e -> Expr.MkAssume (subst e)) 
         let fixupHavocOthers self = function
           | Stmt (_, CallMacro (ec, "_vcc_reads_havoc", _, [])) as call ->
             let isSame (expr:Expr) =

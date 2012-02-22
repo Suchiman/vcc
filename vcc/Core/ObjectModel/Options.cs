@@ -50,6 +50,7 @@ namespace Microsoft.Research.Vcc
     public string VerificationLocation;
     public string OutputDir;
     public string IgnoreIncludes;
+    public string PreludePath;
     public int TerminationLevel = 1;
     public bool TerminationForPure { get { return TerminationLevel >= 1; } }
     public bool TerminationForGhost { get { return TerminationLevel >= 2; } }
@@ -122,6 +123,7 @@ namespace Microsoft.Research.Vcc
       this.DefExpansionLevel = other.DefExpansionLevel;
       this.NoVerification = other.NoVerification;
       this.DeterminizeOutput = other.DeterminizeOutput;
+      this.PreludePath = other.PreludePath;
     }
   }
 
@@ -375,6 +377,12 @@ namespace Microsoft.Research.Vcc
           List<string> /*?*/ pipeOptions = this.ParseNamedArgumentList(arg, "pipe", "pipe");
           if (pipeOptions != null && pipeOptions.Count > 0) {
             this.options.PipeOperations.AddRange(pipeOptions);
+            return true;
+          }
+
+          string prelude = this.ParseNamedArgument(arg, "prelude", "prelude");
+          if (prelude != null) {
+            this.options.PreludePath = prelude;
             return true;
           }
 

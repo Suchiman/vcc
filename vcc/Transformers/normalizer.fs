@@ -1242,8 +1242,8 @@ namespace Microsoft.Research.Vcc
             if isSpecMacro fn then
               addExtraAxioms !eqs decl
             else
-              fn.Ensures <- fn.Ensures @ (List.map (fun (eq:Expr) -> Expr.Macro(eq.Common, "free_ensures", [eq])) !eqs)
-              fn.Requires <- fn.Requires @ (List.map (fun (eq:Expr) -> Expr.Macro(eq.Common, "free_requires", [eq])) !eqs)
+              fn.Ensures <- fn.Ensures @ (List.map (fun (eq:Expr) -> Expr.Macro(eq.Common, "_vcc_assume", [eq])) !eqs)
+              fn.Requires <- fn.Requires @ (List.map (fun (eq:Expr) -> Expr.Macro(eq.Common, "_vcc_assume", [eq])) !eqs)
             eqs := []
             match fn.Body with
               | None -> ()

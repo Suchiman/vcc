@@ -36,10 +36,11 @@ namespace Microsoft.Research.Vcc
       "/proverWarnings:1",
       // skip AI (inference of variable ranges mostly)
       //"/noinfer",  
-      "/z3opt:/memory:300",
       "/liveVariableAnalysis:0",
       "/prover:SMTLib",
-      // "/prover:Z3",
+      "/z3opt:/memory:300",
+      "/z3opt:CASE_SPLIT=5",
+      "/z3opt:QI_EAGER_THRESHOLD=1000",
     };
         
     internal VccFunctionVerifier(VccPlugin parent, Microsoft.FSharp.Collections.FSharpList<CAST.Top> currentDecls, TransHelper.TransEnv env)
@@ -94,17 +95,16 @@ namespace Microsoft.Research.Vcc
 
     private bool InitBoogie()
     {
+      options.AddRange(standardBoogieOptions);
+      options.AddRange(parent.options.BoogieOptions);
+
       if (parent.options.RunInspector)
         options.Add(PathHelper.InspectorOption);
-
-      options.AddRange(standardBoogieOptions);
-      options.Add("/z3opt:QI_EAGER_THRESHOLD=1000");
 
       if (parent.BvdModelFileName != null) {
         options.Add("/mv:" + parent.BvdModelFileName);
       }
 
-      options.AddRange(parent.options.BoogieOptions);
       foreach (string z3option in parent.options.Z3Options) {
         if (z3option.StartsWith("-") || z3option.StartsWith("/") || z3option.Contains("="))
           options.Add("/z3opt:" + z3option);
@@ -112,8 +112,8 @@ namespace Microsoft.Research.Vcc
           Logger.Instance.Error("Z3 option '{0}' is syntactically invalid.", z3option);
           return false;
         }
-
       }
+
       return ReParseBoogieOptions(options, parent.options.RunningFromCommandLine);
     }
 
@@ -147,13 +147,13 @@ namespace Microsoft.Research.Vcc
         // this needs to be done before pruning; otherwise call cycles might get hidden
         Termination.checkCallCycles(env, currentDecls);
         var decls = TransUtil.pruneBy(env, funcName, currentDecls);
-        var boogieDecls = Translator.translate(funcName, env, () => VccCommandLineHost.StandardPrelude, decls);
+        var boogieDecls = Translator.translate(funcName, env, () => VccCommandLineHost.StandardPrelude(parent.options), decls);
         if (!env.ShouldContinue) return VerificationResult.UserError;
         currentBoogie = PrepareBoogie(boogieDecls);
         mustRegenerateBoogie = true;
       } else {
         if (mustRegenerateBoogie || currentBoogie == null) {
-          var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, currentDecls);
+          var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude(parent.options), currentDecls);
           if (!env.ShouldContinue) return VerificationResult.UserError;
           currentBoogie = PrepareBoogie(boogieDecls);
           mustRegenerateBoogie = false;
@@ -197,10 +197,9 @@ namespace Microsoft.Research.Vcc
         effectiveOptions.AddRange(options);
         if (isBvLemmaCheck) {
           effectiveOptions.Add("/proverOpt:OPTIMIZE_FOR_BV=true");
+          effectiveOptions.RemoveAll(opt => opt == "/z3opt:CASE_SPLIT");
           effectiveOptions.Add("/z3opt:CASE_SPLIT=1");
-        } else {
-          effectiveOptions.Add("/z3opt:CASE_SPLIT=5");
-        }
+        } 
 
         if (skipSmoke) {
           effectiveOptions.RemoveAll(opt => opt == "/smoke");
@@ -289,7 +288,7 @@ namespace Microsoft.Research.Vcc
       Boogie.Program boogieToDump;
 
       if (generate) {
-        var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, currentDecls);
+        var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude(parent.options), currentDecls);
         boogieToDump = PrepareBoogie(boogieDecls);
       } else {
         boogieToDump = currentBoogie;
@@ -436,7 +435,7 @@ namespace Microsoft.Research.Vcc
           decls = TransUtil.pruneBy(env, env.Options.Functions.First(), decls);
         }
 
-        var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude, decls);
+        var boogieDecls = Translator.translate(null, env, () => VccCommandLineHost.StandardPrelude(options), decls);
         var p = TranslateToBoogie(boogieDecls);
         if (env.ShouldContinue) {
           try {
@@ -487,7 +486,7 @@ namespace Microsoft.Research.Vcc
       try {
         swBoogie.Start();
         var pp = new Boogie.Program();
-        pp.TopLevelDeclarations.AddRange(VccCommandLineHost.StandardPrelude.TopLevelDeclarations);
+        pp.TopLevelDeclarations.AddRange(VccCommandLineHost.StandardPrelude(options).TopLevelDeclarations);
         pp.TopLevelDeclarations.AddRange(p.TopLevelDeclarations);
         return pp;
       } finally {

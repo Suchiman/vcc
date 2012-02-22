@@ -429,7 +429,7 @@ namespace Microsoft.Research.Vcc
               | _ -> die()
           [Cmd (Microsoft.Boogie.AssignCmd (noToken, glist [lhs], glist [trExpr rhs]) :> Microsoft.Boogie.Cmd)]
         | Call (token, il, f, args) ->
-          [Cmd (Microsoft.Boogie.CallCmd (tok token, f, toExprSeq args, toIdentifierExprSeq il) :> Microsoft.Boogie.Cmd)]
+          [Cmd (Microsoft.Boogie.CallCmd (tok token, sanitize f, toExprSeq args, toIdentifierExprSeq il) :> Microsoft.Boogie.Cmd)]
         | If (token, c, t, Block []) -> 
           [StructuredCmd 
             (Microsoft.Boogie.IfCmd (tok token, trExpr c, toStmtList (trStmt t), null, null) :> Microsoft.Boogie.StructuredCmd)]

@@ -172,17 +172,30 @@
         <File Id="FSharp.PowerPack.dll_2" Source="$(var.RedistDir)\FSharp.PowerPack.dll" />
         <File Id="FSharp.PowerPack.pdb_2" Source="$(var.RedistDir)\FSharp.PowerPack.pdb" />
       </Component>
+      
       <!-- Here the two links in Visual Studio's dir are created that install the VSPackage in VS2010.-->
-      <Directory Id="DEVENV_DIR" Name=".">
-        <Directory Id="EXTENSIONS" Name="Extensions">
-          <Directory Id="VCCEXTENSIONDIR" Name="Microsoft Research Vcc">
-            <Component Id="ExtensionShortcuts" Guid="{BDA42EA8-33E1-42D2-BFC2-DE01EF3F6CA3}" KeyPath="yes">
-              <Shortcut Id="MANIFESTSHORTCUT" Name="extension.vsixmanifest.lnk" Target="[VSPACKAGEDIR]extension.vsixmanifest"/>
-              <Shortcut Id="PKGDEFSHORTCUT" Name="Microsoft.Research.Vcc.VSPackage.pkgdef.lnk" Target="[VSPACKAGEDIR]Microsoft.Research.Vcc.VSPackage.pkgdef"/>
+      <Directory Id="DEVENV10_DIR" Name=".">
+        <Directory Id="EXTENSIONS10" Name="Extensions">
+          <Directory Id="VCCEXTENSIONDIR10" Name="Microsoft Research Vcc">
+            <Component Id="ExtensionShortcuts10" Guid="{BDA42EA8-33E1-42D2-BFC2-DE01EF3F6CA3}" KeyPath="yes">
+              <Shortcut Id="MANIFESTSHORTCUT10" Name="extension.vsixmanifest.lnk" Target="[VSPACKAGEDIR]extension.vsixmanifest"/>
+              <Shortcut Id="PKGDEFSHORTCUT10" Name="Microsoft.Research.Vcc.VSPackage.pkgdef.lnk" Target="[VSPACKAGEDIR]Microsoft.Research.Vcc.VSPackage.pkgdef"/>
             </Component>
           </Directory>
         </Directory>
       </Directory>
+    
+      <Directory Id="DEVENV11_DIR" Name=".">
+        <Directory Id="EXTENSIONS11" Name="Extensions">
+          <Directory Id="VCCEXTENSIONDIR11" Name="Microsoft Research Vcc">
+            <Component Id="ExtensionShortcuts11" Guid="{A9457025-6443-44C8-8FBF-AA56A7CE6500}" KeyPath="yes">
+              <Shortcut Id="MANIFESTSHORTCUT11" Name="extension.vsixmanifest.lnk" Target="[VSPACKAGEDIR]extension.vsixmanifest"/>
+              <Shortcut Id="PKGDEFSHORTCUT11" Name="Microsoft.Research.Vcc.VSPackage.pkgdef.lnk" Target="[VSPACKAGEDIR]Microsoft.Research.Vcc.VSPackage.pkgdef"/>
+            </Component>
+          </Directory>
+        </Directory>
+      </Directory>
+
     </DirectoryRef>
     
     <DirectoryRef Id="DOCDIR">
@@ -244,8 +257,13 @@
     <WixVariable Id="WixUIDialogBmp" Value="vcc_wix_dialog.bmp" />
 
     <!-- This is the registry path for VS2010. If VS2010 is not installed, this is null (and evaluates to false).-->
-    <Property Id="DEVENV_DIR">
-      <RegistrySearch Id="RegSearch_Devenv_Directory" Root="HKLM" Key="Software\Microsoft\VisualStudio\10.0\Setup\VS" Name="EnvironmentDirectory" Type="raw" />
+    <Property Id="DEVENV10_DIR">
+      <RegistrySearch Id="RegSearch_Devenv10_Directory" Root="HKLM" Key="Software\Microsoft\VisualStudio\10.0\Setup\VS" Name="EnvironmentDirectory" Type="raw" />
+    </Property>
+
+    <!-- This is the registry path for VS2011 Developer Preview. If VS2011 is not installed, this is null (and evaluates to false).-->
+    <Property Id="DEVENV11_DIR">
+      <RegistrySearch Id="RegSearch_Devenv11_Directory" Root="HKLM" Key="Software\Microsoft\VisualStudio\11.0\Setup\VS" Name="EnvironmentDirectory" Type="raw" />
     </Property>
 
     <Property Id="FSHARPINSTALLED">
@@ -287,9 +305,14 @@
       <MergeRef Id="VCOpenMPRedistPol" />
     </Feature>
     <Feature Id ="VisualStudio2010Integration" Title ="Visual Studio 2010 Integration" AllowAdvertise="no" Level="0">
-      <Condition Level="1">DEVENV_DIR</Condition>
+      <Condition Level="1">DEVENV10_DIR</Condition>
       <ComponentRef Id ="VsPackage"/>
-      <ComponentRef Id ="ExtensionShortcuts"/>
+      <ComponentRef Id ="ExtensionShortcuts10"/>
+    </Feature>
+    <Feature Id ="VisualStudio2011Integration" Title ="Visual Studio 2011 Integration" AllowAdvertise="no" Level="0">
+      <Condition Level="1">DEVENV11_DIR</Condition>
+      <ComponentRef Id ="VsPackage"/>
+      <ComponentRef Id ="ExtensionShortcuts11"/>
     </Feature>
 
     <MajorUpgrade AllowDowngrades="no" DowngradeErrorMessage="A newer version of Microsoft Research VCC is already installed. Setup will now exit." Schedule="afterInstallValidate" />

@@ -28,7 +28,7 @@ namespace Microsoft.Research.Vcc
           | _ ->
             []                    
 
-      let mkFreeEnsures (expr:Expr) = Expr.Macro(expr.Common, "free_ensures", [expr])
+      let mkFreeEnsures (expr:Expr) = Expr.Macro(expr.Common, "_vcc_assume", [expr])
 
       let quantRange self = function
         | Quant (c, q) ->
@@ -534,8 +534,7 @@ namespace Microsoft.Research.Vcc
       let removeTrivialAsserts _ = function
         | Assert(ec, BoolLiteral(_, true), _) -> Some(Expr.Comment(ec, "assert true"))
         | Assume(ec, BoolLiteral(_, true)) -> Some(Expr.Comment(ec, "assume true"))
-        | Macro(ec, "free_requires", [BoolLiteral(_, true)]) -> Some(BoolLiteral(ec, true))
-        | Macro(ec, "free_ensures", [BoolLiteral(_, true)]) -> Some(BoolLiteral(ec, true))
+        | Macro(ec, "_vcc_assume", [BoolLiteral(_, true)]) -> Some(BoolLiteral(ec, true))
         | _ -> None
         
       let decls' = decls |> deepMapExpressions replaceTrivialEqualities |> deepMapExpressions removeTrivialAsserts

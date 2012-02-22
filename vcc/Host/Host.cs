@@ -585,10 +585,8 @@ namespace Microsoft.Research.Vcc
       }
     }
 
-    internal static Program StandardPrelude
+    internal static Program StandardPrelude(VccOptions options)
     {
-      get
-      {
         // For now Boogie does not support reusing the prelude.
 
         //if (standardPrelude == null)
@@ -598,13 +596,12 @@ namespace Microsoft.Research.Vcc
         try
         {
           swPrelude.Start();
-          return GetStandardPrelude();
+          return GetStandardPrelude(options);
         }
         finally
         {
           swPrelude.Stop();
         }
-      }
     }
 
     public static string preludePath = "";
@@ -617,9 +614,9 @@ namespace Microsoft.Research.Vcc
 
     static List<String> standardPreludeLines;
 
-    private static Program GetStandardPrelude()
+    private static Program GetStandardPrelude(VccOptions options)
     {
-      string _preludePath = PathHelper.PreludePath(StandardPreludePath);
+      string _preludePath = string.IsNullOrEmpty(options.PreludePath) ? PathHelper.PreludePath(StandardPreludePath) : options.PreludePath;
       if (standardPreludeLines == null)
       {
         var lines = File.ReadAllLines(_preludePath, Encoding.UTF8);
