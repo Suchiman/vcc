@@ -19,9 +19,20 @@
 namespace VCC
 {
     // types
-    typedef int Claim;
-    typedef int Integer;
-    typedef int Object;
+    class Claim {
+    };
+
+    class Integer {
+    };
+
+    class Natural {
+    };
+
+    class Object {
+    };
+
+    class Set {
+    };
 
     // assert/assume
     void Assert(bool);
@@ -50,7 +61,7 @@ namespace VCC
     template<class T> void Always(T, bool)              { };
     template<class T> void Atomic(T, ...)               { };
     template<class T> void BumpVolatileVersion(T)       { };
-    template<class T> bool Claims(T, bool)              { return true; };
+    bool Claims(Claim, bool)                            { return true; };
     template<class T> int Claimcount(T)                 { return 0; };
     template<class T> bool Closed(T)                    { return true; };
     template<class T1, class T2> bool Depends(T1, T2)   { return true; }
@@ -70,11 +81,14 @@ namespace VCC
     template<class T> bool Valid(T)                     { return true; };
     template<class T> bool Wrapped(T)                   { return true; };
     
-    template<class T> void* Owns(T)                     { return 0; };
-    template<class T> void* Owner(T)                    { return 0; };
+    template<class T> Set Owns(T)                       { Set s; return s; };
+    template<class T> Object Owner(T)                   { Object o; return o; };
    
     template <typename T> class Ghost
     {
+    private:
+      T _t_member_;
+
     public:
       Ghost(T t);
       Ghost(const Ghost<T> &g);
@@ -83,6 +97,9 @@ namespace VCC
     
     template <typename T> class GhostOut
     {
+    private:
+      T _t_member_;
+
     public:
       GhostOut(T t);
       operator T() const;
@@ -90,6 +107,9 @@ namespace VCC
     
     template <typename T> class Unchecked 
     {
+    private:
+      T _t_member_;
+
     public:
       Unchecked(const T&);
       operator T() const;
