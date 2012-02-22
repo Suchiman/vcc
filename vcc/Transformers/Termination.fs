@@ -293,7 +293,7 @@ module Termination =
           else
             let thn' = self (thn :: cont)
             let els' = self (els :: cont)
-            Macro ({ec with Type = thn'.Type}, "ite", [recExpr cond; thn'; els']) 
+            Macro ({ec with Type = thn'.Type}, "ite", [recExpr cond; thn'; els'])
  
         | Block (ec, exprs, None) ->
           self (exprs @ cont)

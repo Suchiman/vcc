@@ -447,6 +447,9 @@ namespace Microsoft.Research.Vcc
                   | "~" -> bCall "$_not" targs
                   | "^" -> bCall "$_xor" targs 
                   | "*" when ch <> C.Unchecked -> bCall "$op_mul" args
+                  | "&&" when c.Type <> C.Type.Bool -> bCall "$op_and" args
+                  | "||" when c.Type <> C.Type.Bool -> bCall "$op_or" args
+                  | "!" when c.Type <> C.Type.Bool -> bCall "$op_not" args
                   | _ -> 
                     if ch = C.Unchecked then
                       match opName with

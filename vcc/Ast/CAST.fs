@@ -110,6 +110,16 @@ module Microsoft.Research.Vcc.CAST
     | Lambda
     // sum and stuff here
 
+  [<System.FlagsAttribute>]
+  type Flags =
+    | None =                  0x00
+    | Static =                0x01
+    | Const =                 0x02
+    | Volatile =              0x04
+    | Spec =                  0x08
+    | Virtual =               0x10
+    | AcceptsExtraArguments = 0x20
+
   let PointerSizeInBytes = ref 8
 
   let uniqueCounter = ref 0UL
@@ -158,6 +168,11 @@ module Microsoft.Research.Vcc.CAST
     | Float32
     | Float64
 
+    override this.ToString () =
+        match this with
+        | PrimKind.Float32 -> "float32_t"
+        | PrimKind.Float64 -> "float64_t"
+
   type StructEqualityKind =
     | NoEq
     | ShallowEq
@@ -195,10 +210,9 @@ module Microsoft.Research.Vcc.CAST
     {
       Token:Token;
       mutable Name:string;
+      mutable Flags : Flags;
       Type:Type;
       Parent:TypeDecl;
-      IsSpec:bool;    
-      mutable IsVolatile:bool;
       Offset:FieldOffset;
       CustomAttr:list<CustomAttr>;
       UniqueId:Unique;
@@ -217,6 +231,10 @@ module Microsoft.Research.Vcc.CAST
       CustomAttr.AsString this.CustomAttr +
       this.Type.ToString() + " " + this.Name + postfix
     
+    member this.IsSpec = this.Flags.HasFlag(Flags.Spec)
+
+    member this.IsVolatile = this.Flags.HasFlag(Flags.Volatile)
+
     member this.ByteOffset =
       match this.Offset with
         | FieldOffset.Normal n -> n
@@ -385,6 +403,11 @@ module Microsoft.Research.Vcc.CAST
     member this.IsNumber =
       this._IsInteger || this._IsMathInteger
 
+    member this.IsFloat = 
+      match this with 
+      | Primitive _ -> true
+      | _ -> false
+
     member this.Deref =
       match this with
       | SpecPtr t 
@@ -440,6 +463,7 @@ module Microsoft.Research.Vcc.CAST
  
     static member Math name = Type.Ref (Type.MathTd name)    
     static member Bogus = Type.Math "$$bogus$$"
+    static member Ellipsis = Type.Math "$$ellipsis$$"
     static member PtrSet = Type.Math "\\objset"
     static member MathStruct = Type.Math "struct"
     static member MathState = Type.Math "\\state"
@@ -668,10 +692,10 @@ module Microsoft.Research.Vcc.CAST
     Function = 
     {
       Token:Token;
-      IsSpec:bool;
-      AcceptsExtraArguments:bool;
+      mutable Flags : Flags;
       mutable RetType:Type;
       mutable Name:Id;
+      mutable Parent:option<TypeDecl>;
       mutable Parameters:list<Variable>;
       mutable TypeParameters:list<TypeVariable>
       mutable Requires:list<Expr>;
@@ -689,11 +713,12 @@ module Microsoft.Research.Vcc.CAST
 
     static member Empty() =
       { Token = bogusToken
-        IsSpec = false
+        Flags = Flags.None
         RetType = Type.Void
         Parameters = []
         TypeParameters = []
         Name = "<none>"
+        Parent = None
         Requires = []
         Ensures = []
         Writes = []
@@ -703,13 +728,24 @@ module Microsoft.Research.Vcc.CAST
         DecreasesLevel = 0
         Body = None
         IsProcessed = false
-        AcceptsExtraArguments = false
         DefExpansionLevel = 0
         UniqueId = unique() } : Function
     
     override this.GetHashCode () = int this.UniqueId
     override this.Equals (that:obj) = LanguagePrimitives.PhysicalEquality that (this :> obj)
     
+    member this.IsSpec = this.Flags.HasFlag(Flags.Spec)
+
+    member this.AcceptsExtraArguments = this.Flags.HasFlag(Flags.AcceptsExtraArguments)
+
+    member this.IsStatic = this.Flags.HasFlag(Flags.Static)
+
+    member this.IsConst = this.Flags.HasFlag(Flags.Const)
+
+    member this.IsVolatile = this.Flags.HasFlag(Flags.Volatile)
+
+    member this.IsVirtual = this.Flags.HasFlag(Flags.Virtual)
+
     member this.InParameters = [ for p in this.Parameters do if p.Kind <> VarKind.OutParameter then yield p ]
     
     member this.OutParameters = [ for p in this.Parameters do if p.Kind = VarKind.OutParameter then yield p ]
@@ -780,10 +816,14 @@ module Microsoft.Research.Vcc.CAST
     member this.ToStringWT (showTypes) = 
       let b = StringBuilder()
       let wr (s:string) = b.Append s |> ignore
-      if this.IsSpec then wr "spec " else ()
+      if this.IsSpec then wr "spec "
+      if this.IsStatic then wr "static "
+      if this.IsVirtual then wr "virtual "
       wr (CustomAttr.AsString this.CustomAttr)
       this.RetType.WriteTo b; wr " "
       doArgsAndTArgsb b (fun (p:Variable) -> p.WriteTo b) (fun (tp:TypeVariable) -> tp.WriteTo b) (this.Name) this.Parameters this.TypeParameters 
+      if this.IsConst then wr " const"
+      if this.IsVolatile then wr " volatile"
       wr "\r\n"
       
       let doList pref lst =
@@ -871,6 +911,16 @@ module Microsoft.Research.Vcc.CAST
       Decreases : list<Expr>;
       IsPureBlock : bool
     }
+
+    static member Empty = { Requires = []; Ensures = []; Reads = []; Writes = []; Decreases = []; IsPureBlock = false }
+
+    member this.IsEmpty = 
+      this.Requires.IsEmpty 
+      && this.Ensures.IsEmpty 
+      && this.Reads.IsEmpty 
+      && this.Writes.IsEmpty 
+      && this.Decreases.IsEmpty 
+      && not (this.IsPureBlock)
 
   and TestClassifier = Expr
   

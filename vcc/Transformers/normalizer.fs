@@ -974,7 +974,7 @@ namespace Microsoft.Research.Vcc
         let checkFunctionFor (lemma:Expr) = 
           { Function.Empty() with
               Token = lemma.Token
-              IsSpec = true
+              Flags = Flags.Spec
               Name = fn.Name + "#bv_lemma#" + (incr idCount; (!idCount).ToString())
               CustomAttr = VccAttr (AttrIsPure, "") :: VccAttr(AttrBvLemmaCheck, "true") :: inheritedAttrs fn.CustomAttr
               Body = Some (Expr.Block(lemma.Common, [lemma], None))
@@ -1041,8 +1041,7 @@ namespace Microsoft.Research.Vcc
                             Name = var.Name
                             Type = Type.Array(t, size)
                             Parent = td
-                            IsSpec = isSpec
-                            IsVolatile = false
+                            Flags = if isSpec then Flags.Spec else Flags.None
                             Offset = FieldOffset.Normal(offset)
                             CustomAttr = [VccAttr("as_array", "true")]
                             UniqueId = CAST.unique() } : Field
@@ -1303,7 +1302,7 @@ namespace Microsoft.Research.Vcc
       let stackAlloc = 
         Top.FunctionDecl ( 
           { Function.Empty() with 
-              IsSpec = true
+              Flags = Flags.Spec
               Name = "_vcc_stack_alloc"
               RetType = Type.ObjectT
               Parameters = [ Variable.CreateUnique "stack_frame" (Type.MathInteger(MathIntKind.Signed)) VarKind.Parameter
@@ -1315,7 +1314,7 @@ namespace Microsoft.Research.Vcc
       let stackFree = 
         Top.FunctionDecl ( 
           { Function.Empty() with 
-              IsSpec = true
+              Flags = Flags.Spec
               Name = "_vcc_stack_free"
               Parameters = [ Variable.CreateUnique "stack_frame" (Type.MathInteger(MathIntKind.Signed)) VarKind.Parameter
                              Variable.CreateUnique "obj" Type.ObjectT VarKind.Parameter ]

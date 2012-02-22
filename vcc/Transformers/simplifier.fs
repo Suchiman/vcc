@@ -138,7 +138,7 @@ namespace Microsoft.Research.Vcc
           let fn =
             { Function.Empty() with
                 Token           = c.Token
-                IsSpec          = true
+                Flags           = Flags.Spec  
                 RetType         = c.Type
                 Name            = "lambda#" + (helper.UniqueId()).ToString()
                 Parameters      = [for (_, var) in !parms -> { var with Kind = Parameter }]
@@ -291,15 +291,14 @@ namespace Microsoft.Research.Vcc
             IsSpec = isSpec
             DataTypeOptions = []
             UniqueId = CAST.unique() }
-      let (t, vol) = match t with | Volatile(t) -> (t, true) | t -> (t, false)
+      let (t, vol) = match t with | Volatile(t) -> (t, Flags.Volatile) | t -> (t, Flags.None)
       let singleField =
         { Name = field_name
           Token = tok
           Type = t
           Parent = td
-          IsSpec = false
+          Flags = vol
           Offset = Normal 0
-          IsVolatile = vol
           CustomAttr = []
           UniqueId = CAST.unique() }
       td.Fields <- [singleField]
@@ -874,7 +873,7 @@ namespace Microsoft.Research.Vcc
               helper.GraveWarning(tgt.Token, 9301, "write to specification " + specThing + " from non-specification code")
               false
             | _ -> true
-        | Call(cmn, ({IsSpec = true} as fn), _, args) when fn.Name <> "_vcc_retype" ->
+        | Call(cmn, fn, _, args) when fn.IsSpec && fn.Name <> "_vcc_retype" ->
           helper.GraveWarning(cmn.Token, 9301, "access to specification function '" + fn.Name + "' within non-specification code")
           false
         | Call(_, f, _, args) ->
@@ -934,7 +933,7 @@ namespace Microsoft.Research.Vcc
 
       for d in decls do
         match d with 
-          | Top.FunctionDecl({IsSpec = true}) -> ()
+          | Top.FunctionDecl(fn) when fn.IsSpec -> ()
           | Top.FunctionDecl(fn) -> 
             if isSpecType fn.RetType then
               helper.GraveWarning(fn.Token, 9301, "non-specification function '" + fn.Name + "' returns value of specification type")
@@ -945,7 +944,7 @@ namespace Microsoft.Research.Vcc
         
       for d in decls do
         match d with 
-          | Top.FunctionDecl({IsSpec = true}) as d -> deepVisitExpressions (checkNoWritesToPhysicalFromSpec true) [d]
+          | Top.FunctionDecl(fn) as d when fn.IsSpec -> deepVisitExpressions (checkNoWritesToPhysicalFromSpec true) [d]
           | _ -> [d] |> deepVisitExpressionsCtx checkAccessToSpecFields 
                  [d] |> deepVisitExpressions (checkNoWritesToPhysicalFromSpec false)
                  [d] |> deepVisitExpressions checkAtMostOnePhysicalAccessInAtomic

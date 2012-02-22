@@ -103,7 +103,7 @@ namespace Microsoft.Research.Vcc
           let check = 
             { Function.Empty() with
                 Token = td.Token
-                IsSpec = true  
+                Flags = Flags.Spec  
                 Name = td.Name + "#adm"
                 Parameters = [parm]
                 Ensures = post
@@ -360,7 +360,7 @@ namespace Microsoft.Research.Vcc
         let rc =
           { Function.Empty() with
               Token = f.Token
-              IsSpec = true  
+              Flags = Flags.Spec
               Name = f.Name + "#reads"
               CustomAttr = ReadsCheck f :: inheritedAttrs f.CustomAttr
               Body = Some body
