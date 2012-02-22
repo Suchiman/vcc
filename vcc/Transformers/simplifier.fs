@@ -136,11 +136,13 @@ namespace Microsoft.Research.Vcc
           let body = q.Body.SelfMap repl
           
           let fn =
+            let name = "lambda#" + (helper.UniqueId()).ToString()
             { Function.Empty() with
                 Token           = c.Token
                 Flags           = Flags.Spec  
                 RetType         = c.Type
-                Name            = "lambda#" + (helper.UniqueId()).ToString()
+                Name            = name
+                FriendlyName    = name
                 Parameters      = [for (_, var) in !parms -> { var with Kind = Parameter }]
                 Reads           = computeReads body
                 CustomAttr      = [VccAttr (AttrIsPure, "")]

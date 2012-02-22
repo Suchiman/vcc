@@ -695,6 +695,7 @@ module Microsoft.Research.Vcc.CAST
       mutable Flags : Flags;
       mutable RetType:Type;
       mutable Name:Id;
+      mutable FriendlyName:Id;
       mutable Parent:option<TypeDecl>;
       mutable Parameters:list<Variable>;
       mutable TypeParameters:list<TypeVariable>
@@ -718,6 +719,7 @@ module Microsoft.Research.Vcc.CAST
         Parameters = []
         TypeParameters = []
         Name = "<none>"
+        FriendlyName = "<none>"
         Parent = None
         Requires = []
         Ensures = []
@@ -821,7 +823,7 @@ module Microsoft.Research.Vcc.CAST
       if this.IsVirtual then wr "virtual "
       wr (CustomAttr.AsString this.CustomAttr)
       this.RetType.WriteTo b; wr " "
-      doArgsAndTArgsb b (fun (p:Variable) -> p.WriteTo b) (fun (tp:TypeVariable) -> tp.WriteTo b) (this.Name) this.Parameters this.TypeParameters 
+      doArgsAndTArgsb b (fun (p:Variable) -> p.WriteTo b) (fun (tp:TypeVariable) -> tp.WriteTo b) (this.FriendlyName) this.Parameters this.TypeParameters 
       if this.IsConst then wr " const"
       if this.IsVolatile then wr " volatile"
       wr "\r\n"

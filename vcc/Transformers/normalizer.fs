@@ -972,10 +972,12 @@ namespace Microsoft.Research.Vcc
       let extractBvLemmas (fn : Function) = 
         let idCount = ref -1
         let checkFunctionFor (lemma:Expr) = 
+          let name = fn.Name + "#bv_lemma#" + (incr idCount; (!idCount).ToString())
           { Function.Empty() with
               Token = lemma.Token
               Flags = Flags.Spec
-              Name = fn.Name + "#bv_lemma#" + (incr idCount; (!idCount).ToString())
+              Name = name
+              FriendlyName = name
               CustomAttr = VccAttr (AttrIsPure, "") :: VccAttr(AttrBvLemmaCheck, "true") :: inheritedAttrs fn.CustomAttr
               Body = Some (Expr.Block(lemma.Common, [lemma], None))
               IsProcessed = true }
@@ -1256,40 +1258,21 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
 
     let renameOverloads decls =
+
+      // try to use FriendlyNames as Names where they do not collide
       
       let findOverloads (seen, clashes) = function
         | Top.FunctionDecl({Name = ("_vcc_when_claimed"|"_vcc_by_claim")}) -> (seen, clashes) // we introduce our own name clash during NewSyntax
-        | Top.FunctionDecl({Name = name}) ->
+        | Top.FunctionDecl({FriendlyName = name}) ->
           if Set.contains name seen then (seen, Set.add name clashes) else (Set.add name seen, clashes)
         | _ -> (seen, clashes)
 
       let (_, overloadedNames) = List.fold findOverloads (Set.empty, Set.empty) decls
 
-      let overloads = new Dict<_,_>()
-
       for d in decls do
         match d with 
-          | Top.FunctionDecl({Name = name} as fn) when Set.contains name overloadedNames -> 
-
-            let sanitizedTypeName (t : Type) = t.ToString().Replace(' ', '_').Replace('*', '.')
-
-            let parKindStr =  function
-              | VarKind.Parameter -> ""
-              | VarKind.SpecParameter -> "spec_"
-              | VarKind.OutParameter -> "out_"
-              | _ -> die()
-
-            let parTypes = [| for p in fn.Parameters -> parKindStr p.Kind + sanitizedTypeName p.Type |]
-            let parTypeString = if parTypes.Length = 0 then "" else "#" + System.String.Join("#", parTypes)
-            let overloadName = fn.Name + "#overload#" + (sanitizedTypeName fn.RetType) + parTypeString
-
-            match overloads.TryGetValue(overloadName) with
-              | true, clashingDecl ->
-                helper.Error(fn.Token, 9717, "function '" + fn.Name + "' already has a body", Some clashingDecl.Token)
-              | _ -> overloads.Add(overloadName, fn)
-
-            fn.Name <- overloadName
-
+          | Top.FunctionDecl({FriendlyName = name} as fn) when not (Set.contains name overloadedNames) -> 
+            fn.Name <- name
           | _ -> ()
 
       decls
@@ -1304,6 +1287,7 @@ namespace Microsoft.Research.Vcc
           { Function.Empty() with 
               Flags = Flags.Spec
               Name = "_vcc_stack_alloc"
+              FriendlyName = "_vcc_stack_alloc"
               RetType = Type.ObjectT
               Parameters = [ Variable.CreateUnique "stack_frame" (Type.MathInteger(MathIntKind.Signed)) VarKind.Parameter
                              Variable.CreateUnique "is_spec" Type.Bool VarKind.Parameter ]
@@ -1316,6 +1300,7 @@ namespace Microsoft.Research.Vcc
           { Function.Empty() with 
               Flags = Flags.Spec
               Name = "_vcc_stack_free"
+              FriendlyName = "_vcc_stack_free"
               Parameters = [ Variable.CreateUnique "stack_frame" (Type.MathInteger(MathIntKind.Signed)) VarKind.Parameter
                              Variable.CreateUnique "obj" Type.ObjectT VarKind.Parameter ]
         })
