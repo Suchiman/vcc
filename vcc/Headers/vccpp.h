@@ -68,10 +68,11 @@ namespace VCC
     template<class T> bool Closed(T)                    { return true; };
     template<class T1, class T2> bool Depends(T1, T2)   { return true; }
     template<class T> void Destroyclaim(Claim, T)       { };
+    template<class T> Set Domain(T)                     { return null; };
     template<class T> T Extent(T t)                     { return t; }
     template<class T> bool Fresh(T)                     { return true; };
     template<class T> void HavocOthers(T)               { };
-    template<class T1, class T2> bool In(T1, T2)        { return true; }; 
+    template<class T> bool In(T, Set)                   { return true; }; 
     template<class T> Claim Makeclaim(T, bool)          { };
     template<class T> bool Mallocroot(T)                { return true; }
     template<class T> bool Mine(T, ...)                 { return true; };
