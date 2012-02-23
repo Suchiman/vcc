@@ -317,6 +317,100 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let rewriteQuantifiers decls =
+
+      // rewrites quantifier expressions, which have been turned into lambdas by the rewriter, back into
+      // their original form
+
+      let (|Quantifier|_|) = function
+        | Call(ec, {FriendlyName = (StartsWith "VCC::Exists" | StartsWith "VCC::ForAll" as friendlyName)}, [], 
+                   [Deref(_, Call(_, closureCtor, [], _this :: captures))])
+          -> Some(ec, closureCtor, captures, if friendlyName.StartsWith("VCC::Exists") then QuantKind.Exists else QuantKind.Forall)
+        | _ -> None
+
+      let closures = new HashSet<_>()
+      let lambdas = new Dict<_,_>()
+
+      let findClosures self = function
+        | Quantifier(_, {Parent = Some(closure)}, _, _) -> closures.Add(closure) |> ignore; true
+        | _ -> true
+               
+      let findLambdas = function
+        | Top.FunctionDecl({Parent = Some parent; FriendlyName = fname; Body = Some(Block(_, [Return(_, Some expr)], _))} as lambda) 
+          when closures.Contains(parent) && fname.EndsWith("::operator()") ->
+          lambdas.Add(parent, (lambda, expr))
+        | _ -> ()
+
+      let buildArgsToActualsMap args actuals = 
+        let f map arg = function
+          | Macro(_, "&", [actual]) -> Map.add arg actual map
+          | _ -> die()
+        List.fold2 f Map.empty args actuals
+
+      let buildFieldsToActuals ctorBody argsToActuals =
+        // build a structure that maps the fields in the closure to the locals that they are meant to capture
+
+        let f2a = new Dict<_,_>()
+        let f = function
+          | Macro(_, "=", [Deref(_, Dot(_, Ref(_, {Name = "this"}), f)); Macro(_, "implicit_cast", [Cast(_, _, Deref(_, Ref(_, v)))])]) ->
+            f2a.Add(f, (Map.find v argsToActuals))
+          | Return(_, None) -> ()
+          | expr -> helper.Oops(expr.Common.Token, "unexpected statement in closure constructor")
+
+        match ctorBody with
+          | Some(Block(_, [Block(_, assigns, _)], _)) ->
+            List.iter f assigns
+            f2a
+          | Some(expr) -> 
+            helper.Oops(expr.Common.Token, "unexpected closure constructor structure when processing quantifiers")
+            f2a
+          | _ -> die()
+
+      let makeArgsQuantifierBound args = 
+        let v2v = new Dict<_,_>()
+        let f (v:Variable) = 
+          let v' = { v.UniqueCopy() with Kind = QuantBound }
+          v2v.Add(v,v')
+          v'
+        (List.map f args), v2v
+
+      let replaceClosureFieldsAndBoundVariables (f2a : Dict<_,_>) (v2v : Dict<_,_>) self = function
+        | Deref(_, Dot(_, Ref(_, {Name = "this"}), f)) ->
+          match f2a.TryGetValue(f) with
+            | true, actual -> Some(actual)
+            | false, _ -> None
+        | Ref(ec, v) ->
+          match v2v.TryGetValue(v) with
+            | true, v' -> Some(Ref(ec, v'))
+            | false, _ -> None
+        | _ -> None
+
+      let rewriteQuantifiers' self = function
+        | Quantifier(ec, ({Parent = Some(closure)} as closureCtor), captures, kind) -> 
+          match lambdas.TryGetValue(closure) with
+            | true, (lambda, expr) ->
+              let argsToActuals = buildArgsToActualsMap closureCtor.Parameters.Tail captures
+              let fieldsToActuals = buildFieldsToActuals closureCtor.Body argsToActuals
+              let (qvars, varsToVars) = makeArgsQuantifierBound (lambda.Parameters.Tail)
+              let body = expr.SelfMap(replaceClosureFieldsAndBoundVariables fieldsToActuals varsToVars)
+              Some(Quant(ec, { Kind = kind; Variables = qvars; Triggers = []; Condition = None; Body = body }))
+            | false, _ ->
+              helper.Oops(ec.Token, "no lambda expression found for quantifier")
+              None             
+        | _ -> None
+
+      let isNotLambdaClosure = function
+        | Top.FunctionDecl({Parent = Some parent}) when closures.Contains(parent) -> false
+        | Top.TypeDecl(td) when closures.Contains(td) -> false
+        | _ -> true
+
+      decls |> deepVisitExpressions findClosures 
+      decls |> List.iter findLambdas
+      decls |> deepMapExpressions rewriteQuantifiers' |> ignore
+      decls |> List.filter isNotLambdaClosure
+
+    // ============================================================================================================    
+
     let rewriteSpecialFunctions self = 
 
       let selfs = List.map self
@@ -397,6 +491,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
     helper.AddTransformer ("cpp-ghost-params", TransHelper.Decl rewriteGhostParameters)
     helper.AddTransformer ("cpp-rewrite-literals", TransHelper.Expr rewriteLiterals)
+    helper.AddTransformer ("cpp-quantifiers", TransHelper.Decl rewriteQuantifiers)
     helper.AddTransformer ("cpp-stack-arrays", TransHelper.Decl handleStackArrays)
     helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
     helper.AddTransformer ("cpp-rewrite-block-decorators", TransHelper.Expr rewriteBlockDecorators)
