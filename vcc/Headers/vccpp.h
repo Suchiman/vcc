@@ -78,10 +78,12 @@ namespace VCC
     template<class T> bool Mine(T, ...)                 { return true; };
     template<class T> bool Mutable(T)                   { return true; };
     template<class T> T Old(T)                          { T t; return t; };
-    template<class T> bool Onunwrap(T, bool)            { return true; }
+    template<class T> bool Onunwrap(T, bool)            { return true; };
+    bool Programentrypoint()                            { return true; };
     template<class T> int Span(T)                       { return 0; };
     template<class T> bool Threadlocal(T)               { return true; };
     template<class T> bool Unchanged(T)                 { return true; };
+    void* Universe()                                    { return null; };
     template<class T> void Unwrapping(T)                { };
     template<class T> bool Valid(T)                     { return true; };
     template<class T> T Whenclaimed(T t)                { return t; };
