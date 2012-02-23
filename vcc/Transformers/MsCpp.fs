@@ -352,7 +352,7 @@ namespace Microsoft.Research.Vcc
 
         let f2a = new Dict<_,_>()
         let f = function
-          | Macro(_, "=", [Deref(_, Dot(_, Ref(_, {Name = "this"}), f)); Macro(_, "implicit_cast", [Cast(_, _, Deref(_, Ref(_, v)))])]) ->
+          | Macro(_, "=", [Deref(_, Dot(_, Ref(_, {Name = "this"}), f)); Macro(_, "&", [Deref(_, Ref(_, v))])]) ->
             f2a.Add(f, (Map.find v argsToActuals))
           | Return(_, None) -> ()
           | expr -> helper.Oops(expr.Common.Token, "unexpected statement in closure constructor")
@@ -375,7 +375,7 @@ namespace Microsoft.Research.Vcc
         (List.map f args), v2v
 
       let replaceClosureFieldsAndBoundVariables (f2a : Dict<_,_>) (v2v : Dict<_,_>) self = function
-        | Deref(_, Dot(_, Ref(_, {Name = "this"}), f)) ->
+        | Deref(_, Deref(_, Dot(_, Ref(_, {Name = "this"}), f))) ->
           match f2a.TryGetValue(f) with
             | true, actual -> Some(actual)
             | false, _ -> None
