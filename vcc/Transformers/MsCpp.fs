@@ -358,7 +358,7 @@ namespace Microsoft.Research.Vcc
           | expr -> helper.Oops(expr.Common.Token, "unexpected statement in closure constructor")
 
         match ctorBody with
-          | Some(Block(_, [Block(_, assigns, _)], _)) ->
+          | Some(Block(_, assigns, _)) ->
             List.iter f assigns
             f2a
           | Some(expr) -> 
@@ -389,6 +389,7 @@ namespace Microsoft.Research.Vcc
         | Quantifier(ec, ({Parent = Some(closure)} as closureCtor), captures, kind) -> 
           match lambdas.TryGetValue(closure) with
             | true, (lambda, expr) ->
+              let (expr:Expr) = self expr
               let argsToActuals = buildArgsToActualsMap closureCtor.Parameters.Tail captures
               let fieldsToActuals = buildFieldsToActuals closureCtor.Body argsToActuals
               let (qvars, varsToVars) = makeArgsQuantifierBound (lambda.Parameters.Tail)
@@ -406,8 +407,7 @@ namespace Microsoft.Research.Vcc
 
       decls |> deepVisitExpressions findClosures 
       decls |> List.iter findLambdas
-      decls |> deepMapExpressions rewriteQuantifiers' |> ignore
-      decls |> List.filter isNotLambdaClosure
+      decls |> List.filter isNotLambdaClosure |> deepMapExpressions rewriteQuantifiers' 
 
     // ============================================================================================================    
 
@@ -428,6 +428,22 @@ namespace Microsoft.Research.Vcc
           Some(Macro(ec, tgt, List.map self args))
         | _ -> None
 
+    // ============================================================================================================    
+
+    let normalizeBlocks self = 
+
+      let rec loop acc = function
+        | [] -> List.rev acc
+        | stmt :: stmts ->
+          match self stmt with
+            | Block(_, [], _) -> loop acc stmts
+            | block' -> loop (block' :: acc) stmts
+
+      function
+      | Block(ec, [Block(_, _, _) as block], None) -> Some(self block)
+      | Block(ec, stmts, bc) -> Some(Block(ec, loop [] stmts, bc))
+      | _ -> None
+    
     // ============================================================================================================    
 
     let rewriteGhostParameters decls = 
@@ -488,6 +504,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
     helper.AddTransformer ("cpp-errors", TransHelper.Expr reportErrors)
+    helper.AddTransformer ("cpp-blocks", TransHelper.Expr normalizeBlocks)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
     helper.AddTransformer ("cpp-ghost-params", TransHelper.Decl rewriteGhostParameters)
     helper.AddTransformer ("cpp-rewrite-literals", TransHelper.Expr rewriteLiterals)
