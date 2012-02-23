@@ -32,6 +32,8 @@ namespace VCC
     };
 
     class Set {
+    public:
+      Set(...);
     };
 
     // assert/assume
@@ -80,6 +82,7 @@ namespace VCC
     template<class T> bool Unchanged(T)                 { return true; };
     template<class T> void Unwrapping(T)                { };
     template<class T> bool Valid(T)                     { return true; };
+    template<class T> T Whenclaimed(T t)                { return t; };
     template<class T> bool Wrapped(T)                   { return true; };
     
     template<class T> Set Owns(T)                       { Set s; return s; };
@@ -115,7 +118,7 @@ namespace VCC
       Unchecked(const T&);
       operator T() const;
     };
-
+    
 
     // statements
     template<class T> void Wrap(T o)
