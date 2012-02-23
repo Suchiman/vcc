@@ -64,10 +64,13 @@ namespace VCC
     // object state
     template<class T> bool Activeclaim(T)               { return true; };
     template<class T> void Always(T, bool)              { };
+    template<class T1, class T2> bool Approves(T1, T2)  { return true; };
+    template<class T> T At(State, T t)                  { return t; };
     template<class T> void Atomic(T, ...)               { };
     template<class T> void BumpVolatileVersion(T)       { };
     bool Claims(Claim, bool)                            { return true; };
     template<class T> int Claimcount(T)                 { return 0; };
+    template<class T> bool Claimsobject(Claim, T)       { return true; };
     template<class T> bool Closed(T)                    { return true; };
     template<class T1, class T2> bool Depends(T1, T2)   { return true; }
     template<class T> void Destroyclaim(Claim, T)       { };
@@ -80,6 +83,7 @@ namespace VCC
     template<class T> bool Mallocroot(T)                { return true; }
     template<class T> bool Mine(T, ...)                 { return true; };
     template<class T> bool Mutable(T)                   { return true; };
+    State Now()                                         { State s; return s; };
     template<class T> T Old(T)                          { T t; return t; };
     template<class T> bool Onunwrap(T, bool)            { return true; };
     bool Programentrypoint()                            { return true; };
