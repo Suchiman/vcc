@@ -39,6 +39,9 @@ namespace VCC
     class State {
     };
 
+    template <class From, class To> class Map {
+    };
+
     // assert/assume
     void Assert(bool);
     void Assume(bool);
@@ -130,6 +133,9 @@ namespace VCC
       operator T() const;
     };
     
+    template <typename T> Ghost<T> CreateGhost(T);
+    template <typename T> GhostOut<T> CreateGhostOut(T);
+    template <typename T> Unchecked<T> CreateUnchecked(T);
 
     // statements
     template<class T> void Wrap(T o)
