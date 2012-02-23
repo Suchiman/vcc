@@ -77,6 +77,7 @@ namespace VCC
     template<class T> bool Onunwrap(T, bool)            { return true; }
     template<class T> int Span(T)                       { return 0; };
     template<class T> bool Threadlocal(T)               { return true; };
+    template<class T> bool Unchanged(T)                 { return true; };
     template<class T> void Unwrapping(T)                { };
     template<class T> bool Valid(T)                     { return true; };
     template<class T> bool Wrapped(T)                   { return true; };
