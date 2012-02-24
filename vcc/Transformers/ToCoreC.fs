@@ -427,6 +427,7 @@ namespace Microsoft.Research.Vcc
                       Triggers = List.map (List.map self) qd.Triggers
                       Condition = Option.map self qd.Condition
                       Body = self qd.Body
+                      Weight = qd.Weight
                     } : QuantData
           localsMapping := savedLocalsMapping
           Some(Quant(c, qd'))

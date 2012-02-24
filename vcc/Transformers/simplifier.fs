@@ -158,6 +158,7 @@ namespace Microsoft.Research.Vcc
                                Triggers = [[trigIdx]]
                                Condition = Some cond
                                Body = Prim ({ c with Type = Bool }, Op ("==", Processed), [idx; body])
+                               Weight = "c-lambda-def"
                              })
           
           defs := Top.FunctionDecl fn :: Top.GeneratedAxiom(axiom, Top.FunctionDecl(fn)) :: !defs
