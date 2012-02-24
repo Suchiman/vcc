@@ -27,6 +27,7 @@ namespace Microsoft.Research.Vcc
       abstract ExplicitTargetsGiven : bool with get
       abstract AggressivePruning : bool with get
       abstract Functions : string seq with get
+      abstract WeightOptions : string seq with get
 
     [<AbstractClass>]
     type public Env(options:Options) =

@@ -149,6 +149,13 @@
                                      'move &lt;stage&gt; before &lt;stage&gt;' moves stage in the pipeline
                                      'move ... after ...', ditto
                                      'isabelle &lt;theory-name&gt; &lt;filename-prefix&gt;', dump Isabelle theory
+/weight:&lt;name=N&gt;,...           Set weight for a particular kind of quantifier. Quantifiers with lower weights are instantiated first. 
+                                     To learn abouts kinds of quantifiers use /weight:dump-names /t and inspect the resulting .bpl file.
+                                     Specyfing /weight:foo=5 will set weight to 5 to 'foo' as well as 'foobar'.
+                                     The default weight for user supplied quantifier (user-exists and user-forall) is 10.
+                                     Most of the VCC generated ones have default of 1.
+                                     Definition axioms for lambda expressions (c-lambda-def) and _(def ...) function (c-def-function) have a default of 10.
+                                     You should avoid setting weight to 0.
 /smoke                         Run smoke tests, which is equivalent to /b:/smoke (Short form: /sm)
 /stats                         Display time statistics (Short form: /st)
 /suite &lt;file or directory&gt;     Treat the given file or directory as a collection of test cases with expected output and report any differences (Short form: /s)

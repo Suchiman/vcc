@@ -177,7 +177,9 @@ namespace Microsoft.Research.Vcc
                                                  Variables = [v]
                                                  Triggers = [[ptr]]
                                                  Condition = None
-                                                 Body = eq })
+                                                 Body = eq 
+                                                 Weight = "c-group-axiom"
+                                                 })
         Top.GeneratedAxiom(forall, Top.TypeDecl(parent))                                                             
         
            
@@ -726,7 +728,9 @@ namespace Microsoft.Research.Vcc
                                                  Variables = [var] 
                                                  Triggers = [[left]] 
                                                  Condition = None 
-                                                 Body = Prim(mkBogusEC Bool, Op("==", Unchecked), [left; right]) }), Top.TypeDecl(td))
+                                                 Body = Prim(mkBogusEC Bool, Op("==", Unchecked), [left; right]) 
+                                                 Weight = "c-dot-inline-axiom"
+                                                 }), Top.TypeDecl(td))
         let oldFieldTypeDecl = 
           match oldField.Type with
             | Type.Ref(td) -> td
@@ -745,7 +749,9 @@ namespace Microsoft.Research.Vcc
                                                Variables = [var] 
                                                Triggers = [[trigger]] 
                                                Condition = None 
-                                               Body = instExpr }), Top.TypeDecl(td))
+                                               Body = instExpr 
+                                               Weight = "c-array-inline-axiom"
+                                               }), Top.TypeDecl(td))
           
       let rec processTypeDecl = function
         | td ->
@@ -1191,6 +1197,7 @@ namespace Microsoft.Research.Vcc
                 Triggers = [[goodState]]
                 Condition = Some goodState
                 Body = axBody [stateRef]
+                Weight = "c-global-always-good"
               } : QuantData
             Top.GeneratedAxiom(Expr.Quant (boolBogusEC(), qd), Top.Global(v,None))
           Global (v, None) :: threadLocalAxiom :: (readAxioms init) 
@@ -1205,7 +1212,9 @@ namespace Microsoft.Research.Vcc
                                                           Variables = [state]
                                                           Triggers = [[readAtEntry; programEntryState]]
                                                           Condition = Some(programEntryState)
-                                                          Body = Expr.Prim(boolBogusEC(), Op("==", Unchecked), [readAtEntry; init])})
+                                                          Body = Expr.Prim(boolBogusEC(), Op("==", Unchecked), [readAtEntry; init])
+                                                          Weight = "c-global-initial-value"
+                                                          })
           Global (v, None) :: Top.GeneratedAxiom(readCondition, Top.Global(v, None)) :: []         
         | Global (v, Some(init)) -> 
           helper.Warning(init.Token, 9112, "unhandled initializer")
