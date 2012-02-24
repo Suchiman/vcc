@@ -347,9 +347,9 @@ namespace Microsoft.Research.Vcc
         | _ -> true
                
       let findLambdas = function
-        | Top.FunctionDecl({Parent = Some parent; FriendlyName = fname; Body = Some(Block(_, [Return(_, Some expr)], _))} as lambda) 
+        | Top.FunctionDecl({Parent = Some parent; FriendlyName = fname; Body = Some(body)} as lambda) 
           when closures.Contains(parent) && fname.EndsWith("::operator()") ->
-          lambdas.Add(parent, (lambda, expr))
+          lambdas.Add(parent, (lambda, body))
         | _ -> ()
 
       let buildArgsToActualsMap args actuals = 
@@ -396,16 +396,32 @@ namespace Microsoft.Research.Vcc
             | false, _ -> None
         | _ -> None
 
+      let splitBody = function
+        | Block(ec, stmts, None) ->
+          let rec loop triggers = function
+            | [Return(_, Some expr)] -> 
+              expr, List.rev triggers
+            | Call(ec, {FriendlyName = "VCC::Trigger"}, [], args) :: ((_ :: _) as stmts) ->
+              loop (args::triggers) stmts
+            | _ ->
+              helper.Oops(ec.Token, "unexpected lambda body structure for quantifier")
+              Expr.Bogus, []
+          loop [] stmts
+        | expr ->               
+          helper.Oops(expr.Token, "unexpected lambda body structure for quantifier")
+          Expr.Bogus, []
+
       let rewriteQuantifiers' self = function
         | Quantifier(ec, ({Parent = Some(closure)} as closureCtor), captures, kind) -> 
           match lambdas.TryGetValue(closure) with
-            | true, (lambda, expr) ->
-              let (expr:Expr) = self expr
+            | true, (lambda, body) ->
+              let expr, triggers = splitBody body
+              let (expr':Expr) = self expr
               let argsToActuals = buildArgsToActualsMap closureCtor.Parameters.Tail captures
               let fieldsToActuals = buildFieldsToActuals closureCtor.Body argsToActuals
               let (qvars, varsToVars) = makeArgsQuantifierBound (lambda.Parameters.Tail)
-              let body = expr.SelfMap(replaceClosureFieldsAndBoundVariables fieldsToActuals varsToVars)
-              Some(Quant(ec, { Kind = kind; Variables = qvars; Triggers = []; Condition = None; Body = body; Weight = "" }))
+              let quant = Quant(ec, { Kind = kind; Variables = qvars; Triggers = triggers; Condition = None; Body = expr'; Weight = "" })              
+              Some(quant.SelfMap(replaceClosureFieldsAndBoundVariables fieldsToActuals varsToVars))
             | false, _ ->
               helper.Oops(ec.Token, "no lambda expression found for quantifier")
               None             
