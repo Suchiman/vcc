@@ -394,7 +394,7 @@ namespace Microsoft.Research.Vcc
               let fieldsToActuals = buildFieldsToActuals closureCtor.Body argsToActuals
               let (qvars, varsToVars) = makeArgsQuantifierBound (lambda.Parameters.Tail)
               let body = expr.SelfMap(replaceClosureFieldsAndBoundVariables fieldsToActuals varsToVars)
-              Some(Quant(ec, { Kind = kind; Variables = qvars; Triggers = []; Condition = None; Body = body }))
+              Some(Quant(ec, { Kind = kind; Variables = qvars; Triggers = []; Condition = None; Body = body; Weight = "" }))
             | false, _ ->
               helper.Oops(ec.Token, "no lambda expression found for quantifier")
               None             
