@@ -55,7 +55,7 @@ namespace VCC
     void BeginUpdate();
     void Ensures(bool);
     void FrameAxiom();
-    void LoopInvariant(bool);
+    void Invariant(bool);
     void Pure();
     void Requires(bool);
     template<class T> void Reads(T, ...)  { };
