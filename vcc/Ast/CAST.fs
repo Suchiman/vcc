@@ -235,6 +235,8 @@ module Microsoft.Research.Vcc.CAST
 
     member this.IsVolatile = this.Flags.HasFlag(Flags.Volatile)
 
+    member this.IsStatic = this.Flags.HasFlag(Flags.Static)
+
     member this.ByteOffset =
       match this.Offset with
         | FieldOffset.Normal n -> n

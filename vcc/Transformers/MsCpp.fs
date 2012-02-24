@@ -475,6 +475,36 @@ namespace Microsoft.Research.Vcc
 
     let rewriteGhost decls = 
 
+      // rewrite the various forms of how _(ghost ...) annotations are rewritte back into their intended form
+
+      // spec fields in classes/structures are marked by an initial static field named VCCBeginGhost and
+      // and a closing VCCEndGhost; remove the marker fields and make everything between such fields
+      // 'spec'
+
+      let collectGhostFields = function
+        | Top.TypeDecl(td) -> 
+          let rec loop inSpec acc = function
+            | ([] : Field list) -> 
+              if inSpec then helper.Oops(td.Token, "unbalanced VCCBeginGhost and VCCEndGhost in type declaration")
+              List.rev acc
+            | { Name = StartsWith "VCCBeginGhost" } :: fields ->
+              if inSpec then helper.Oops(td.Token, "nested VCCBeginGhost and VCCEndGhost in type declaration")
+              loop true acc fields
+            | { Name = StartsWith "VCCEndGhost" } :: fields ->
+              if not inSpec then helper.Oops(td.Token, "unbalanced VCCBeginGhost and VCCEndGhost in type declaration")
+              loop true acc fields
+            | f :: fields ->
+              if inSpec && not f.IsStatic then helper.Oops(f.Token, "spec field should have been marked 'static'")
+              if inSpec then f.Flags <- (f.Flags ||| Flags.Spec) &&& ~~~ Flags.Static
+              loop inSpec (f::acc) fields
+          td.Fields <- loop false [] td.Fields
+          Top.TypeDecl(td)
+        | d -> d
+        
+      // spec blocks in code are marked by an initial local variable decl for a variable named VCCBeginGhost and
+      // ended by a similar declaration of a local with name VCCEndGhost; take everything between two such
+      // declarations and make them 'spec'
+
       let localsMap = new Dict<_,_>()
 
       let mkSpec = function
@@ -487,11 +517,11 @@ namespace Microsoft.Research.Vcc
       let collectGhostStmts self = 
         let rec loop acc = function
           | [] -> List.rev acc, []
-          | VarDecl(_, {Name = Contains("::VCCBeginGhost")}, []) :: stmts ->
+          | VarDecl(_, {Name = Contains "::VCCBeginGhost"}, []) :: stmts ->
             let specStmts, rest = loop [] stmts
             let specStmts' = List.map mkSpec specStmts
             loop (specStmts' @ acc) rest
-          | VarDecl(_, {Name = Contains("::VCCEndGhost")}, []) :: stmts ->
+          | VarDecl(_, {Name = Contains "::VCCEndGhost"}, []) :: stmts ->
             acc, stmts
           | stmt :: stmts ->
             loop ((self stmt) :: acc) stmts
@@ -510,7 +540,10 @@ namespace Microsoft.Research.Vcc
             | false, _ -> None
         | _ -> None
 
-      decls |> deepMapExpressions collectGhostStmts |> deepMapExpressions substVars
+      decls 
+      |> List.map collectGhostFields
+      |> deepMapExpressions collectGhostStmts 
+      |> deepMapExpressions substVars
 
     // ============================================================================================================    
 
