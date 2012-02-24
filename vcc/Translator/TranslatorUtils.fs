@@ -133,9 +133,19 @@ namespace Microsoft.Research.Vcc
       
       let addDecls lst = tokenConstants := lst @ !tokenConstants
     
-      let defaultWeights = [("user-forall", 10); ("user-exists", 10); ("eqprop", 5); ("", 1)]
-    
-      let weights = defaultWeights
+      let defaultWeights = [("user-forall", 10); ("user-exists", 10); ("c-lambda-def", 10); ("c-def-function", 10); ("c-", 5); ("eqprop", 5); ("", 1)]
+   
+      let dumpWeightNames = not ((helper.Options.WeightOptions |> Seq.filter (fun s -> s = "dump-names") |> Seq.isEmpty))
+      let weights = 
+        let parse (s:string) =
+          let idx = s.IndexOf '='
+          let n = s.Substring (idx + 1)
+          match Int32.TryParse n with
+            | true, k when idx >= 0 -> (s.Substring (0, idx), k)
+            | _ ->
+              failwith "invalid -weight: option"
+        (helper.Options.WeightOptions |> Seq.filter (fun s -> s <> "dump-names") |> Seq.map parse |> Seq.toList) @ defaultWeights
+
       let weight (id:string) =
         let w =
           let rec aux = function
@@ -144,8 +154,9 @@ namespace Microsoft.Research.Vcc
               else aux rest
             | [] -> failwith "weight"
           aux weights
-        if w = 1 then []
-        else [B.ExprAttr ("weight", bInt w)]
+        let res = if dumpWeightNames then [B.StringAttr ("weight_name", id)] else []
+        if w = 1 then res
+        else B.ExprAttr ("weight", bInt w) :: res
       
       let castSuffix t = 
         let rec suff = function

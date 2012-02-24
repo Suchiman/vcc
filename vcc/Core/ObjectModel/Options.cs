@@ -27,6 +27,7 @@ namespace Microsoft.Research.Vcc
     public string/*?*/ ClPath;
     public List<string> Functions = new List<string>();
     public List<string> FunctionsWithExactName = new List<string>();
+    public List<string> WeightOptions = new List<string>();
     public bool RunningFromCommandLine;
     public uint? VerifyUpToLine;
     public bool RunInBatchMode;
@@ -79,6 +80,7 @@ namespace Microsoft.Research.Vcc
       // this class
       this.HandledOptions.Clear(); this.HandledOptions.AddRange(other.HandledOptions);
       this.BoogieOptions.Clear(); this.BoogieOptions.AddRange(other.BoogieOptions);
+      this.WeightOptions.Clear(); this.WeightOptions.AddRange(other.WeightOptions);
       this.PreprocessorOptions.Clear(); this.PreprocessorOptions.AddRange(other.PreprocessorOptions);
       this.Z3Options.Clear(); this.Z3Options.AddRange(other.Z3Options);
       this.Functions.Clear(); this.Functions.AddRange(other.Functions);
@@ -494,6 +496,11 @@ namespace Microsoft.Research.Vcc
           bool? wx = this.ParseNamedBoolean(arg, "warningsaserrors", "wx");
           if (wx != null) {
             this.options.WarningsAsErrors = wx.Value;
+            return true;
+          }
+          var wopts = this.ParseNamedArgumentList(arg, "weight", "weight");
+          if (wopts != null && wopts.Count != 0) {
+            this.options.WeightOptions.AddRange(wopts);
             return true;
           }
           return false;

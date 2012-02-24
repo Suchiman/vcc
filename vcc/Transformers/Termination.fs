@@ -531,6 +531,7 @@ module Termination =
                   Kind = Forall
                   Condition = None
                   Triggers = [[app]]
+                  Weight = "c-def-function"
                 }
               Top.Axiom (if vars = [] then eq else Quant (ec Type.Bool, qd))
             let rec genAxiom k =

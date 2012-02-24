@@ -851,6 +851,7 @@ module Microsoft.Research.Vcc.CAST
       Triggers:list<list<Expr>>;
       Condition:option<Expr>;
       Body:Expr;
+      Weight:string;
     }
 
 
