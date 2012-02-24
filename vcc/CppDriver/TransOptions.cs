@@ -71,6 +71,11 @@ namespace Microsoft.Research.Vcc.Cpp
       get { return false; }
     }
 
+    public override IEnumerable<string> WeightOptions
+    {
+      get { return new string[] {}; }
+    }
+
     public override bool YarraMode
     {
       get { return false; }
