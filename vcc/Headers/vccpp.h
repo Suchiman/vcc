@@ -36,10 +36,13 @@ namespace VCC
       Set(...);
     };
 
-    class State {
+    class State {      
     };
 
     template <class From, class To> class Map {
+    public:
+      To operator[](From);
+      To operator[](From) volatile;
     };
 
     // assert/assume
@@ -155,6 +158,7 @@ namespace VCC
     // templates for quantifiers
     template<class T> bool ForAll(T)  { return true; };
     template<class T> bool Exists(T)  { return true; };
+    void Trigger(...);
 
     // helper function to ensure that we find certain functions in the AST
     void asthelper() 
