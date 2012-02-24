@@ -183,19 +183,22 @@ namespace Microsoft.Research.Vcc
       | Integer k -> Type.IntSuffix k
       | MathInteger Unsigned -> "nat"
       | _ -> failwith "integer type expected"
+
+  let bi32768 = new bigint(32768)
+  let bi65536 = new bigint(65536)
   
   let private maxu8 =   new bigint( 255)
   let private mini8 =   new bigint(-128)
   let private maxi8 =   new bigint( 127)
-  let private maxu16 =  new bigint( 65535)
-  let private mini16 =  new bigint(-32768)
-  let private maxi16 =  new bigint( 32767)
-  let private maxu32 =  new bigint(  65536*65536-1)
-  let private mini32 =  new bigint(-(65536*32768))
-  let private maxi32 =  new bigint(  65536*32768-1)
-  let private maxu64 =  new bigint( 65536*65536*65536*65536-1)
-  let private mini64 =  new bigint(-(65536*65536*65536*32768))
-  let private maxi64 =  new bigint(  65536*65536*65536*32768-1)
+  let private maxu16 =  bi65536 - bigint.One
+  let private mini16 =  - bi32768
+  let private maxi16 =  bi32768 - bigint.One
+  let private maxu32 =  bi65536 *bi65536 - bigint.One
+  let private mini32 =  -(bi65536 * bi32768)
+  let private maxi32 =  bi65536 * bi32768 - bigint.One
+  let private maxu64 =  bi65536 * bi65536 * bi65536 * bi65536 - bigint.One
+  let private mini64 =  -(bi65536 * bi65536 * bi65536 * bi32768)
+  let private maxi64 =  bi65536 * bi65536 * bi65536 * bi32768 - bigint.One
 
   let intInRange (t:Type) (n:bigint) =
     let zero = bigint.Zero
