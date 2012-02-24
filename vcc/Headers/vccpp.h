@@ -90,6 +90,7 @@ namespace VCC
     template<class T> bool Mallocroot(T)                { return true; }
     template<class T> bool Mine(T, ...)                 { return true; };
     template<class T> bool Mutable(T)                   { return true; };
+    template<class T> bool Notshared(T)                 { return true; };
     State Now()                                         { State s; return s; };
     template<class T> T Old(T)                          { T t; return t; };
     template<class T> bool Onunwrap(T, bool)            { return true; };
