@@ -139,7 +139,6 @@ namespace VCC
     
     template <typename T> Ghost<T> CreateGhost(T);
     template <typename T> GhostOut<T> CreateGhostOut(T);
-    template <typename T> Unchecked<T> CreateUnchecked(T);
 
     // statements
     template<class T> void Wrap(T o)
