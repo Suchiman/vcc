@@ -955,6 +955,7 @@ namespace Microsoft.Research.Vcc
         Condition = None // TODO: figure out where condition is in code model
         Body = body
         Kind = kind
+        Weight = ""
       } : C.QuantData 
     
     member this.DoLoopContract (loop:IStatement) =

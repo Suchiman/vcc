@@ -83,6 +83,11 @@ namespace Microsoft.Research.Vcc
     {
       get { return this.options.Functions; }
     }
+
+    public override IEnumerable<string> WeightOptions
+    {
+      get { return this.options.WeightOptions; }
+    }
   }
 
 }

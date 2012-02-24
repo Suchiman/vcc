@@ -531,6 +531,7 @@ namespace Microsoft.Research.Vcc
                   bTrue
                 else
                   let (body, triggers) = TriggerInference(helper, preludeBodies, c.Token, invMapping, vars).Run (body, List.map selfs q.Triggers)
+                  let weight n = if System.String.IsNullOrEmpty(q.Weight) then weight n else weight q.Weight
                   match q.Kind with
                     | C.Forall -> B.Forall (c.Token, vars, triggers, weight "user-forall", body)
                     | C.Exists -> B.Exists (c.Token, vars, triggers, weight "user-exists", body)
@@ -2597,6 +2598,7 @@ namespace Microsoft.Research.Vcc
             *)  
           let (fappls, fdecls) = (h.RetType, "") :: List.map (fun (v:C.Variable) -> (v.Type, "OP#" + v.Name)) h.OutParameters |> List.map fForPureContext |> List.unzip
           
+          // this is just saying f#limited#0 = f#limited#1 with the appropriate triggering
           let rec limitedFun decls prevName n =
             if n > h.DefExpansionLevel then decls
             else
@@ -2849,6 +2851,7 @@ namespace Microsoft.Research.Vcc
                             Triggers = []
                             Condition = Some goodState
                             Body = inState e
+                            Weight = null
                           } : C.QuantData
                       C.Expr.Quant (e.Common, qd)
               // run trExpr again, so it will infer triggers 
