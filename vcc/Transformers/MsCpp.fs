@@ -88,11 +88,21 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
-    let rewriteLiterals self = function
-      | IntLiteral(ec, i)  when ec.Type = Type.Bool -> Some(BoolLiteral(ec, i.IsOne))
+    let rewriteCasts self = function
+
+      // perform some normalization on literals and casts
+
+      | IntLiteral(ec, i) when ec.Type = Type.Bool -> Some(BoolLiteral(ec, i.IsOne))
+      | IntLiteral(ec, i) when ec.Type._IsPtr -> Some(Macro(ec, "null", []))
       | Macro(_, "implicit_cast", [Cast(ec, cs, IntLiteral(_, n))]) 
       | Cast(ec, cs, IntLiteral(_, n)) when TransUtil.intInRange ec.Type n ->
-          Some(IntLiteral(ec, n))
+          Some(self (IntLiteral(ec, n)))
+      | Macro(_, "implicit_cast", [Cast(ec, cs, IntLiteral(_, n))]) -> die()
+      | Macro(_, "implicit_cast", [Cast(cc, cs, Macro(ec, "ite", [cond; _then; _else]))]) ->
+        let cond' = self cond
+        let _then' = self (Macro(cc, "implicit_cast", [Cast(cc, cs, _then)]))
+        let _else' = self (Macro(cc, "implicit_cast", [Cast(cc, cs, _else)]))       
+        Some(Macro({ec with Type = cc.Type}, "ite", [cond'; _then'; _else']))
       | _ -> None
 
     // ============================================================================================================    
@@ -507,7 +517,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-blocks", TransHelper.Expr normalizeBlocks)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
     helper.AddTransformer ("cpp-ghost-params", TransHelper.Decl rewriteGhostParameters)
-    helper.AddTransformer ("cpp-rewrite-literals", TransHelper.Expr rewriteLiterals)
+    helper.AddTransformer ("cpp-rewrite-casts", TransHelper.Expr rewriteCasts)
     helper.AddTransformer ("cpp-quantifiers", TransHelper.Decl rewriteQuantifiers)
     helper.AddTransformer ("cpp-stack-arrays", TransHelper.Decl handleStackArrays)
     helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
