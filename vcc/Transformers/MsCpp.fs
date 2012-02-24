@@ -75,6 +75,8 @@ namespace Microsoft.Research.Vcc
 
   let (|StartsWith|_|) prefix (s:string) = if s.StartsWith(prefix, System.StringComparison.Ordinal) then Some () else None
 
+  let (|Contains|_|) substr (s:string) = if s.Contains(substr) then Some() else None
+
   let nongeneric (name:string) = 
     let endpos = name.IndexOf('<')
     if endpos = -1 then name else name.Substring(0, endpos)
@@ -97,7 +99,6 @@ namespace Microsoft.Research.Vcc
       | Macro(_, "implicit_cast", [Cast(ec, cs, IntLiteral(_, n))]) 
       | Cast(ec, cs, IntLiteral(_, n)) when TransUtil.intInRange ec.Type n ->
           Some(self (IntLiteral(ec, n)))
-      | Macro(_, "implicit_cast", [Cast(ec, cs, IntLiteral(_, n))]) -> die()
       | Macro(_, "implicit_cast", [Cast(cc, cs, Macro(ec, "ite", [cond; _then; _else]))]) ->
         let cond' = self cond
         let _then' = self (Macro(cc, "implicit_cast", [Cast(cc, cs, _then)]))
@@ -456,9 +457,44 @@ namespace Microsoft.Research.Vcc
     
     // ============================================================================================================    
 
-    let rewriteGhostParameters decls = 
+    let rewriteGhost decls = 
 
-      decls
+      let localsMap = new Dict<_,_>()
+
+      let mkSpec = function
+        | VarDecl(ec, ({Kind = Local} as v), attr) ->
+          let v' = { v.UniqueCopy() with Kind = SpecLocal }
+          localsMap.Add(v, v')
+          VarDecl(ec, v', attr)
+        | expr -> Expr.SpecCode expr
+
+      let collectGhostStmts self = 
+        let rec loop acc = function
+          | [] -> List.rev acc, []
+          | VarDecl(_, {Name = Contains("::VCCBeginGhost")}, []) :: stmts ->
+            let specStmts, rest = loop [] stmts
+            let specStmts' = List.map mkSpec specStmts
+            loop (specStmts' @ acc) rest
+          | VarDecl(_, {Name = Contains("::VCCEndGhost")}, []) :: stmts ->
+            acc, stmts
+          | stmt :: stmts ->
+            loop ((self stmt) :: acc) stmts
+      
+        function
+          | Block(ec, stmts, bc) -> 
+            match loop [] stmts with
+              | stmts', [] -> Some(Block(ec, stmts', bc))
+              | _, _ -> helper.Oops(ec.Token, "unbalanced VCCBeginGhost and VCCEndGhost"); None
+          | _ -> None
+
+      let substVars self = function
+        | Expr.Ref(ec, v) ->
+          match localsMap.TryGetValue(v) with
+            | true, v' -> Some(Ref(ec, v'))
+            | false, _ -> None
+        | _ -> None
+
+      decls |> deepMapExpressions collectGhostStmts |> deepMapExpressions substVars
 
     // ============================================================================================================    
 
@@ -516,7 +552,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-errors", TransHelper.Expr reportErrors)
     helper.AddTransformer ("cpp-blocks", TransHelper.Expr normalizeBlocks)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
-    helper.AddTransformer ("cpp-ghost-params", TransHelper.Decl rewriteGhostParameters)
+    helper.AddTransformer ("cpp-ghost", TransHelper.Decl rewriteGhost)
     helper.AddTransformer ("cpp-rewrite-casts", TransHelper.Expr rewriteCasts)
     helper.AddTransformer ("cpp-quantifiers", TransHelper.Decl rewriteQuantifiers)
     helper.AddTransformer ("cpp-stack-arrays", TransHelper.Decl handleStackArrays)
