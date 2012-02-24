@@ -94,7 +94,7 @@ namespace VCC
     template<class T> bool Threadlocal(T)               { return true; };
     template<class T> bool Unchanged(T)                 { return true; };
     void* Universe()                                    { return 0; };
-    template<class T> void Unwrapping(T)                { };
+    template<class T> void Unwrapping(T, ...)           { };
     template<class T> bool Valid(T)                     { return true; };
     template<class T> T Whenclaimed(T t)                { return t; };
     template<class T> bool Wrapped(T)                   { return true; };
