@@ -71,6 +71,7 @@ namespace VCC
     template<class T> bool Activeclaim(T)               { return true; };
     template<class T> void Always(T, bool)              { };
     template<class T1, class T2> bool Approves(T1, T2)  { return true; };
+    template<class T> T Array(T t, int)                 { return t; };
     template<class T> T Arrayrange(T t, int)            { return t; };
     template<class T> T At(State, T t)                  { return t; };
     template<class T> void Atomic(T, ...)               { };
