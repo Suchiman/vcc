@@ -15,7 +15,6 @@
     /// </summary>
     internal static class VCCLauncher
     {
-        private static Process vccProcess;
         private static NotifyIcon notifyIcon;
 
         internal static string GetVccVersion()
@@ -65,7 +64,7 @@
         {
             string addArguments = GetArgumentsFromOptions(options, true);
             addArguments += String.Format(" /loc:\"{0}\":{1} ", currentFile, line);
-            LaunchVCC(String.Format("{0} \"{1}\"", addArguments, filename));
+            LaunchVCC(filename, addArguments);
         }
 
         internal static void CustomVerify(string filename, VccOptionPage options)
@@ -74,7 +73,7 @@
             {
                 if (customVerifyForm.ShowDialog() == DialogResult.OK)
                 {
-                    LaunchVCC(String.Format("{0} \"{1}\"", customVerifyForm.Arguments, filename));
+                    LaunchVCC(filename, customVerifyForm.Arguments);
                 }
             }
         }
@@ -82,14 +81,14 @@
         internal static void VerifyFile(string filename, VccOptionPage options)
         {
             string addArguments = GetArgumentsFromOptions(options, true);
-            LaunchVCC(String.Format("{0} \"{1}\"", addArguments, filename));
+            LaunchVCC(filename, addArguments);
         }
 
         internal static void VerifyFileWithoutIncludes(string filename, string currentFile, VccOptionPage options)
         {
             string addArguments = GetArgumentsFromOptions(options, true);
             addArguments += " /ii:" + currentFile;
-            LaunchVCC(String.Format("{0} \"{1}\"", addArguments, filename));
+            LaunchVCC(filename, addArguments);
         }
 
         #endregion
@@ -125,52 +124,45 @@
             }
         }
 
-        internal static void LaunchVCC(string arguments)
+        internal static void LaunchVCC(string filename, string vccargs)
         {
-            var vccPath = VccPath;
-
-            arguments += " ";
-            arguments += VSIntegration.CurrentCompilerSettings.ToVccOptions();
+            vccargs += " ";
+            vccargs += VSIntegration.CurrentCompilerSettings.ToVccOptions();
             var clPath = GetCLPath(VSIntegration.CurrentPlatform);
-            if (clPath != null) arguments += String.Format(" /clpath:\"{0}\"", clPath);
+            if (clPath != null) vccargs += String.Format(" /clpath:\"{0}\"", clPath);
 
             VSIntegration.ClearErrorsAndMarkers();
             VSIntegration.UpdateStatus("Verifying...", true);
-
-            //// Prepare VCC-Process, execute it and read its Output
-            vccProcess = new Process();
-            vccProcess.StartInfo.FileName = string.Format("\"{0}\"", vccPath);
-            vccProcess.StartInfo.Arguments = arguments;
-            vccProcess.StartInfo.UseShellExecute = false;
-            vccProcess.StartInfo.RedirectStandardOutput = true;
-            vccProcess.StartInfo.RedirectStandardError = true;
-            vccProcess.StartInfo.CreateNoWindow = true;
 
             //// Clear Verification Outputpane
             VSIntegration.ClearAndShowPane();
             VSIntegration.WriteToPane("=== VCC started. ===");
             //// Write Commandline-Command to Verification Outputpane
-            VSIntegration.WriteToPane(string.Format("Command Line: \"{0}\" {1}\n", vccPath, arguments));
-            //// Get notified when VCC sends Output or Error Data
-            vccProcess.OutputDataReceived += vccProcess_OutputDataReceived;
-            vccProcess.ErrorDataReceived += vccProcess_OutputDataReceived;
+            VSIntegration.WriteToPane(string.Format("Command Line: \"{0}\" {1}\n", VccPath, vccargs));
             //// Get notified when VCC-Process finishes.
-            vccProcess.EnableRaisingEvents = true;
-            vccProcess.Exited += vccProcess_Exited;
 
-            //// Finally start the process
+            //// Start the process
             try
             {
-                vccProcess.Start();
-                vccProcess.BeginOutputReadLine();
-                vccProcess.BeginErrorReadLine();
+                VCCRunning = true;
+               
+                //string mspdbdllPath = Path.Combine(Path.GetDirectoryName(clPath), "..\\..\\Common7\\IDE");
+                //Environment.SetEnvironmentVariable("Path", Environment.GetEnvironmentVariable("Path") + ";" + mspdbdllPath);
+
+                string cl11Path = Path.Combine(Environment.CurrentDirectory, "..\\..\\..\\..\\..\\..\\..\\Ext\\VS11\\cl.exe");
+                bool result = Microsoft.Research.Vcc.VccppMain.ProcessFile(filename, cl11Path, null); //TODO generic clpath & vccargs
+
+                //TODO
+                int exitCode = result ? 0 : 1;
+                vccProcess_Exited(exitCode);
+
                 //// When the process was started, remember the cmdlinearguments
-                VSPackagePackage.LastAction = arguments;
+                VSPackagePackage.LastArguments = vccargs;
+                VSPackagePackage.LastFilename = filename;
             }
             catch (Exception)
             {
-                vccProcess = null;
-                VSIntegration.WriteToPane("Executing\n" + vccPath + "\nfailed.\n"
+                VSIntegration.WriteToPane("Executing\n" + VccPath + "\nfailed.\n"
                     + "You can specify the folder in which the VCC executable is located in the menu under Verify/Vcc Options/Vcc/General.");
                 VSIntegration.WriteToPane("=== Verification failed. ===");
                 VSIntegration.UpdateStatus("Verification failed.", false);
@@ -184,47 +176,8 @@
         {
             if (VCCRunning)
             {
-                int vccProcess_Id = vccProcess.Id;
-                try
-                {
-                    vccProcess.Kill();
-                }//try
-                catch
-                {
-                    VSIntegration.WriteToPane("Canceling VCC failed.");
-                }//catch
-
-                foreach (Process subProcess in Process.GetProcesses())
-                {
-                    if (GetParentProcess(subProcess.Id) == vccProcess_Id)
-                    {
-                        try
-                        {
-                            subProcess.Kill();
-                        }
-                        catch
-                        {
-                            VSIntegration.WriteToPane("Canceling a subprocess of VCC failed.");
-                        }
-                    }//if
-                }//foreach
-            }//if
-        }//method
-
-        private static int GetParentProcess(int Id)
-        {
-            int parentPid = 0;
-            using (ManagementObject mo = new ManagementObject("win32_process.handle='" + Id + "'"))
-            {
-
-                try
-                {
-                    mo.Get();
-                    parentPid = Convert.ToInt32(mo["ParentProcessId"]);
-                }
-                catch { }
+                // vccProcess_Exited(-1); TODO
             }
-            return parentPid;
         }
 
         #endregion
@@ -237,68 +190,66 @@
         private static readonly Regex VCCWarningRegEx =
             new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:(\swarning\s(.*?):)\s(?<errormessage>(.*))");
 
-        private static void vccProcess_Exited(object sender, EventArgs e)
+        private static void vccProcess_Exited(int exitCode)
         {
-            if (vccProcess != null)
+            VCCRunning = false;
+
+            if (VSPackagePackage.Instance.OptionPage.ShowNotifications &&
+                new IntPtr(VSIntegration.DTE.MainWindow.HWnd) != NativeMethods.GetForegroundWindow())
             {
-                if (VSPackagePackage.Instance.OptionPage.ShowNotifications &&
-                    new IntPtr(VSIntegration.DTE.MainWindow.HWnd) != NativeMethods.GetForegroundWindow())
+                if (notifyIcon == null)
                 {
-                    if (notifyIcon == null)
-                    {
-                        notifyIcon = new NotifyIcon();
-                        notifyIcon.Icon = VSPackage.Resources.VccIcon;
-                        notifyIcon.Visible = true;
-                        notifyIcon.Text = "Vcc " + GetVccVersion();
-                    }
-
-                    if (vccProcess.ExitCode == 0)
-                    {
-                        notifyIcon.ShowBalloonTip(4000, "Verification succeeded!", "Verification run completed successfully.", ToolTipIcon.Info);
-                    }
-                    else
-                    {
-                        notifyIcon.ShowBalloonTip(4000, "Verification failed!", "Verification run completed with errors.", ToolTipIcon.Error);
-                    }
+                    notifyIcon = new NotifyIcon();
+                    notifyIcon.Icon = VSPackage.Resources.VccIcon;
+                    notifyIcon.Visible = true;
+                    notifyIcon.Text = "Vcc " + GetVccVersion();
                 }
 
-                switch (vccProcess.ExitCode)
+                if (exitCode == 0)
                 {
-                    case -1:
-                        vccProcess.CancelOutputRead();
-                        vccProcess.CancelErrorRead();
-                        vccProcess = null;
-                        VSIntegration.WriteToPane("\n=== VCC was canceled. ===");
-                        VSIntegration.UpdateStatus("Verification canceled.", false);
-                        break;
-                    case 0:
-                        Thread.Sleep(1000);
-                        VSIntegration.WriteToPane("\n=== Verification succeeded. ===");
-                        VSIntegration.UpdateStatus("Verification succeeded.", false);
-                        break;
-                    case 2:
-                        Thread.Sleep(1000);
-                        VSIntegration.WriteToPane("Incorrect commandline arguments were used.");
-                        VSIntegration.WriteToPane("\n=== Verification failed. ===\n");
-                        VSIntegration.UpdateStatus("Verification failed.", false);
-                        break;
-                    case 1:
-                    case 3:
-                        Thread.Sleep(1000);
-                        VSIntegration.WriteToPane("\n=== Verification failed. ===");
-                        VSIntegration.UpdateStatus("Verification failed.", false);
-                        break;
-                    default:
-                        Thread.Sleep(1000);
-                        VSIntegration.WriteToPane("\n=== VCC finished with unknown exitcode. ===");
-                        VSIntegration.WriteToPane(vccProcess.ExitCode.ToString());
-                        break;
+                    notifyIcon.ShowBalloonTip(4000, "Verification succeeded!", "Verification run completed successfully.", ToolTipIcon.Info);
                 }
+                else
+                {
+                    notifyIcon.ShowBalloonTip(4000, "Verification failed!", "Verification run completed with errors.", ToolTipIcon.Error);
+                }
+            }
+
+            switch (exitCode)
+            {
+                case -1:
+                    VSIntegration.WriteToPane("\n=== VCC was canceled. ===");
+                    VSIntegration.UpdateStatus("Verification canceled.", false);
+                    break;
+                case 0:
+                    Thread.Sleep(1000);
+                    VSIntegration.WriteToPane("\n=== Verification succeeded. ===");
+                    VSIntegration.UpdateStatus("Verification succeeded.", false);
+                    break;
+                case 2:
+                    Thread.Sleep(1000);
+                    VSIntegration.WriteToPane("Incorrect commandline arguments were used.");
+                    VSIntegration.WriteToPane("\n=== Verification failed. ===\n");
+                    VSIntegration.UpdateStatus("Verification failed.", false);
+                    break;
+                case 1:
+                case 3:
+                    Thread.Sleep(1000);
+                    VSIntegration.WriteToPane("\n=== Verification failed. ===");
+                    VSIntegration.UpdateStatus("Verification failed.", false);
+                    break;
+                default:
+                    Thread.Sleep(1000);
+                    VSIntegration.WriteToPane("\n=== VCC finished with unknown exitcode. ===");
+                    VSIntegration.WriteToPane(exitCode.ToString());
+                    break;
             }
         }
 
         private static void vccProcess_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
+            //TODO
+
             //// Write Output from VCC to Verification Outputpane
             if (e != null && e.Data != null)
             {
@@ -326,10 +277,7 @@
             }
         }
 
-        internal static bool VCCRunning
-        {
-            get { return vccProcess != null && !vccProcess.HasExited; }
-        }
+        internal static bool VCCRunning { get; private set; }
 
         #endregion
     }
