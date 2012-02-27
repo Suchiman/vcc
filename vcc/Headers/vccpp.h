@@ -45,8 +45,8 @@ namespace VCC
 
     template <class From, class To> class Map {
     public:
-      To operator[](From);
-      To operator[](From) volatile;
+      To& operator[](From);
+      To& operator[](From) volatile;
     };
 
     // assert/assume
