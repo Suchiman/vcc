@@ -101,7 +101,7 @@ namespace Microsoft.Research.Vcc.Cpp
       return true;
     }
 
-    public bool Verify(FSharpList<CAST.Top> decls)
+    public bool Verify(FSharpList<CAST.Top> decls, string reference)
     {
       var program = TranslateToBoogie(decls);
       if (program == null) return false;
