@@ -37,11 +37,10 @@ namespace VCC
     };
 
     class State {      
-// Todo: Enable after Dirks fix
-//    public:
-//      State();
-//      State(const volatile State&);
-//      State(const State&);
+    public:
+      State();
+      State(const volatile State&);
+      State(const State&);
     };
 
     template <class From, class To> class Map {
@@ -75,6 +74,7 @@ namespace VCC
     // object state
     template<class T> bool Activeclaim(T)               { return true; };
     template<class T> void Always(T, bool)              { };
+    template<class T> T* Alloc()                        { return 0; };
     template<class T1, class T2> bool Approves(T1, T2)  { return true; };
     template<class T> T Array(T t, int)                 { return t; };
     template<class T> T Arrayrange(T t, int)            { return t; };
@@ -87,8 +87,7 @@ namespace VCC
     template<class T> bool Closed(T)                    { return true; };
     template<class T1, class T2> bool Depends(T1, T2)   { return true; }
     template<class T> void Destroyclaim(Claim, T)       { };
-// Todo: Enable after Dirks fix
-//    Set Diff(Set s, Set)                                { return s; };
+    Set Diff(Set s, Set)                                { return s; };
     template<class T> Set Domain(T)                     { return 0; };
     template<class T> T Extent(T t)                     { return t; }
     template<class T> bool Fresh(T)                     { return true; };
@@ -108,8 +107,7 @@ namespace VCC
     template<class T> int Span(T)                       { return 0; };
     template<class T> bool Threadlocal(T)               { return true; };
     template<class T> bool Unchanged(T)                 { return true; };
-// Todo: Enable after Dirks fix
-//    Set Union(Set s, Set)                               { return s; };
+    Set Union(Set s, Set)                               { return s; };
     void* Universe()                                    { return 0; };
     template<class T> void Unwrapping(T, ...)           { };
     template<class T> bool Valid(T)                     { return true; };
