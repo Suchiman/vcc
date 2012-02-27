@@ -120,7 +120,7 @@ namespace Microsoft.Research.Vcc
 
       let handleAssignOp ec op (e0:Expr) e1 =
         let calc = Expr.Prim(e0.Common, op, [e0; e1])
-        Macro({ec with Type = Type.Void}, "=", [e0; calc])        
+        Macro(ec, "=", [e0; calc])        
 
       function
 
