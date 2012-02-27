@@ -20,7 +20,6 @@ namespace Microsoft.Research.Vcc.Cpp
     {
       // reference these so they get copied to the output directory
       #pragma warning disable 168
-      var x = new Boogie.Z3.Factory();
       var y = new Boogie.SMTLib.Factory();
       #pragma warning restore 168
     }
