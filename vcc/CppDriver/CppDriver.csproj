@@ -74,14 +74,8 @@
     <Reference Include="Provers.Isabelle">
       <HintPath>..\Boogie\Provers.Isabelle.dll</HintPath>
     </Reference>
-    <Reference Include="Provers.Simplify">
-      <HintPath>..\Boogie\Provers.Simplify.dll</HintPath>
-    </Reference>
     <Reference Include="Provers.SMTLib">
       <HintPath>..\Boogie\Provers.SMTLib.dll</HintPath>
-    </Reference>
-    <Reference Include="Provers.Z3">
-      <HintPath>..\Boogie\Provers.Z3.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
