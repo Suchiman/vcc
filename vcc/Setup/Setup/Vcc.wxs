@@ -121,18 +121,12 @@
         <File Name="ParserHelper.pdb" />
         <File Name="Provers.Isabelle.dll" />
         <File Name="Provers.Isabelle.pdb" />
-        <File Name="Provers.Simplify.dll" />
-        <File Name="Provers.Simplify.pdb" />
-        <File Name="Provers.Z3.dll" />
-        <File Name="Provers.Z3.pdb" />
         <File Name="Provers.SMTLib.dll" />
         <File Name="Provers.SMTLib.pdb" />
         <File Name="VCExpr.dll" />
         <File Name="VCExpr.pdb" />
         <File Name="VCGeneration.dll" />
         <File Name="VCGeneration.pdb" />
-        <File Name="TypedUnivBackPred2.sx" />
-        <File Name="UnivBackPred2.sx" />
         <File Name="UnivBackPred2.smt2" />
       </Component>
       <Component Id="Z3" Guid="8862D1F3-9D6E-4304-A84F-56E2BD309BF1">
