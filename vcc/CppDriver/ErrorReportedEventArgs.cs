@@ -11,7 +11,7 @@ namespace Microsoft.Research.Vcc
       this.details = details;
     }
 
-    public ErrorDetails Detail
+    public ErrorDetails Details
     {
       get { return this.details; }
     }

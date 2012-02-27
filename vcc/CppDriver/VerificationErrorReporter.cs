@@ -9,19 +9,26 @@ namespace Microsoft.Research.Vcc.Cpp
     private bool errorReported;
 
     public event EventHandler<ErrorReportedEventArgs> ErrorReported;
+    public event EventHandler<VerificationFinishedEventArgs> VerificationFinished;
     
     public bool AnyErrorReported { get; private set; }
 
     public override void OnCounterexample(Counterexample ce, string reason)
     {
+      if (!errorReported)
+      {
+        OnVerificationFinished(currentFunction, "failed");
+        Console.WriteLine("Verification of {0} failed.", this.currentFunction);
+      }
+
       this.ReportCounterexample(ce, reason);
-      Console.WriteLine("Verification of {0} failed.", this.currentFunction);
       this.AnyErrorReported = true;
       this.errorReported = true;
     }
 
     public override void OnOutOfMemory(string reason)
     {
+      OnVerificationFinished(currentFunction, "ran out of memory");
       Console.WriteLine("Verification of {0} ran out of memory: {1}", this.currentFunction, reason);
       this.AnyErrorReported = true;
       this.errorReported = true;
@@ -29,6 +36,7 @@ namespace Microsoft.Research.Vcc.Cpp
 
     public override void OnTimeout(string reason)
     {
+      OnVerificationFinished(currentFunction, "timed out");
       Console.WriteLine("Verification of {0} timed out : {1}", this.currentFunction, reason);
       this.AnyErrorReported = true;
       this.errorReported = true;
@@ -36,6 +44,8 @@ namespace Microsoft.Research.Vcc.Cpp
 
     public override void OnUnreachableCode(Implementation impl)
     {
+      OnVerificationFinished(currentFunction, "smoke");
+
       Console.WriteLine("Verification of {0} found unreachable code", this.currentFunction);
       this.AnyErrorReported = true;
       this.errorReported = true;
@@ -43,6 +53,7 @@ namespace Microsoft.Research.Vcc.Cpp
 
     public override void OnWarning(string msg)
     {
+      OnVerificationFinished(currentFunction, "warning");
       Console.WriteLine("Verification of {0} gave warning: {1}", this.currentFunction, msg);
     }
 
@@ -55,12 +66,22 @@ namespace Microsoft.Research.Vcc.Cpp
     public bool EndFunction()
     {
       if (!this.errorReported) {
+        OnVerificationFinished(currentFunction, "succeeded");
         Console.WriteLine("Verification of {0} succeeded.", this.currentFunction);
         return true;
       }
 
       this.errorReported = false;
       return false;
+    }
+
+    private void OnVerificationFinished(string name, string outcome)
+    {
+      EventHandler<VerificationFinishedEventArgs> temp = VerificationFinished;
+      if (temp != null)
+      {
+        temp(this, new VerificationFinishedEventArgs(name, outcome));
+      }
     }
 
     private void ReportError(IToken tok, string fmt, params object[] args)

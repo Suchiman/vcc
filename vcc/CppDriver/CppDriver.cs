@@ -4,6 +4,7 @@
 //
 //-----------------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using Microsoft.Boogie;
 using Microsoft.Boogie.AbstractInterpretation;
@@ -103,6 +104,16 @@ namespace Microsoft.Research.Vcc.Cpp
 
     public bool Verify(FSharpList<CAST.Top> decls, string reference)
     {
+      var errorReporter = new VerificationErrorReporter();
+      var checker = string.IsNullOrEmpty(reference) ? null : new ExpectedOutputChecker(reference);
+
+      if (checker != null)
+      {
+        this.env.ErrorReportedEvent += checker.ErrorReported;
+        errorReporter.ErrorReported += checker.ErrorReported;
+        errorReporter.VerificationFinished += checker.VerificationFinished;
+      }
+
       var program = TranslateToBoogie(decls);
       if (program == null) return false;
 
@@ -122,7 +133,6 @@ namespace Microsoft.Research.Vcc.Cpp
       LambdaHelper.ExpandLambdas(verifierInput);
 
       // verify all implementation functions
-      var errorReporter = new VerificationErrorReporter();
 
       foreach (var decl in verifierInput.TopLevelDeclarations)
       {
@@ -135,6 +145,29 @@ namespace Microsoft.Research.Vcc.Cpp
           errorReporter.EndFunction();
           vcGen.Close();
         }
+      }
+
+      if (checker != null)
+      {
+        errorReporter.VerificationFinished -= checker.VerificationFinished;
+        errorReporter.ErrorReported -= checker.ErrorReported;
+        this.env.ErrorReportedEvent -= checker.ErrorReported;
+
+        checker.CompleteChecking();
+
+        if (checker.Mismatches > 0)
+        {
+          Console.WriteLine("\n\n*** Found output mismatch. ***\n");
+          Console.WriteLine("*** Expected (line {0}): ***", checker.FirstMismatchFoundAt);
+          Console.WriteLine(checker.FirstMismatchExpected);
+          Console.WriteLine("*** Received: ***");
+          Console.WriteLine(checker.FirstMismatchReceived);
+          Console.WriteLine("*** End of mismatch. ***\n\n");
+
+          return false;
+        }
+
+        return true;
       }
 
       return !errorReporter.AnyErrorReported;
