@@ -67,6 +67,11 @@ namespace Microsoft.Research.Vcc.Cpp
       Console.WriteLine("{0}({1},{2}): error: {3}", tok.filename, tok.line, tok.col, String.Format(fmt, args));
     }
 
+    private void ReportError(IToken tok, int errno, string fmt, params string[] args)
+    {
+      Console.WriteLine("{0}({1},{2}): error VC{3:0000}: {4}", tok.filename, tok.line, tok.col, errno, String.Format(fmt, args));
+    }
+
 
     private void ReportCounterexample(Counterexample ce, string message)
     {
@@ -124,8 +129,8 @@ namespace Microsoft.Research.Vcc.Cpp
 
     private void ReportOutcomeAssertFailed(IToken assertTok, string kind, string comment)
     {
-      string msg = assertTok.val;
-      ReportError(assertTok, "{0}{2} '{1}' did not verify.", kind, msg, comment);
+      var errnoAndMsg = GetErrorNumber(assertTok.val, 8000);
+      ReportError(assertTok, errnoAndMsg.Item1, "{0}{2} '{1}' did not verify.", kind, errnoAndMsg.Item2, comment);
       ReportAllRelated(assertTok);
     }
 
@@ -173,6 +178,20 @@ namespace Microsoft.Research.Vcc.Cpp
     public static string RemoveWhiteSpace(string str)
     {
       return String.Join(" ", Array.FindAll(str.Split(new[] { '\n', '\r', '\t', ' ' }), s => !String.IsNullOrEmpty(s)));
+    }
+
+    private static Tuple<int, string> GetErrorNumber(string msg, int _default)
+    {
+      msg = RemoveWhiteSpace(msg);
+      if (msg.StartsWith("#VCCERR:")) {
+        int i = 8;
+        while (i < msg.Length && char.IsDigit(msg[i])) i++;
+        int num = int.Parse(msg.Substring(8, i - 8));
+        msg = msg.Substring(i + 1);
+        return Tuple.Create(num, msg);
+      } 
+        
+      return Tuple.Create(_default, msg);
     }
   }
 }
