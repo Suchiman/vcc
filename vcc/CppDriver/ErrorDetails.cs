@@ -5,7 +5,7 @@ namespace Microsoft.Research.Vcc
   public class ErrorDetails
   {
     private static readonly Regex ErrorPattern =
-      new Regex(@"(?<path>(.*?))\((?<line> \d+),(?<column> \d+)\):\s+(?<kind> (error|warning))\s+\w\w (?<errno>\d+):(?<msg>.*)", 
+      new Regex(@"(?<path>(.*?))\((?<line> \d+),(?<column> \d+)\)\s*:\s+(?<kind> (error|warning))\s+\w\w (?<errno>\d+):(?<msg>.*)", 
           RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnorePatternWhitespace);
 
     public ErrorDetails(string filename, bool isWarning, int line, int column, int errno, string msg)
@@ -25,13 +25,13 @@ namespace Microsoft.Research.Vcc
     public int ErrorNumber { get; private set; }
     public string Message { get; private set; }
 
-    public bool IsMatch(ErrorDetails other)
+    public bool IsMatch(ErrorDetails other, bool compareMessage, bool compareColumn)
     {
       return this.IsWarning == other.IsWarning
           && this.ErrorNumber == other.ErrorNumber
-          && this.Column == other.Column
           && this.Line == other.Line
-          && this.Message == other.Message;
+          && (!compareColumn || this.Column == other.Column)
+          && (!compareMessage || this.Message == other.Message);
     }
 
     public override string ToString()
