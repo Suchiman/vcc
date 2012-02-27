@@ -88,6 +88,7 @@ namespace VCC
     template<class T> void HavocOthers(T)               { };
     template<class T> bool In(T, Set)                   { return true; }; 
     template<class T> bool Inv(T)                       { return true; };
+    template<class T> T Labeled(const char*, T t)       { return t; };
     template<class T> Claim Makeclaim(T, bool)          { };
     template<class T> bool Mallocroot(T)                { return true; }
     template<class T> bool Mine(T, ...)                 { return true; };
