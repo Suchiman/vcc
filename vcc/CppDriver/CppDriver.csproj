@@ -93,6 +93,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CppDriver.cs" />
+    <Compile Include="ErrorDetails.cs" />
+    <Compile Include="ErrorReportedEventArgs.cs" />
     <Compile Include="PathHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TransEnv.cs" />

@@ -8,6 +8,8 @@ namespace Microsoft.Research.Vcc.Cpp
 
     public TransEnv(string [] pipeOperations) : base(new TransOptions(pipeOperations)) {}
 
+    public event EventHandler<ErrorReportedEventArgs> ErrorReportedEvent;
+
     private bool errorReported;
 
     public override bool ErrorReported
@@ -23,6 +25,12 @@ namespace Microsoft.Research.Vcc.Cpp
     public override void Error(Token tok, int code, string msg, FSharp.Core.FSharpOption<Token> related)
     {
       errorReported = true;
+      EventHandler<ErrorReportedEventArgs> temp = ErrorReportedEvent;
+      if (temp != null)
+      {
+        temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.Filename, false, tok.Line, tok.Column, code, msg)));
+      }
+
       Console.WriteLine("{0}({1},{2}): error {3}: {4}", tok.Filename, tok.Line, tok.Column, code, msg);
     }
 
@@ -30,6 +38,11 @@ namespace Microsoft.Research.Vcc.Cpp
     {
       if (!errorReported)
       {
+        EventHandler<ErrorReportedEventArgs> temp = ErrorReportedEvent;
+        if (temp != null) {
+          temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.Filename, false, tok.Line, tok.Column, -1, msg)));
+        }
+
         Console.WriteLine("{0}({1},{2}): oops: {3}", tok.Filename, tok.Line, tok.Column, msg);
       }
     }
@@ -41,12 +54,22 @@ namespace Microsoft.Research.Vcc.Cpp
 
     public override void Warning(Token tok, int code, string msg, FSharp.Core.FSharpOption<Token> related)
     {
+      EventHandler<ErrorReportedEventArgs> temp = ErrorReportedEvent;
+      if (temp != null) {
+        temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.Filename, true, tok.Line, tok.Column, code, msg)));
+      }
+
       Console.WriteLine("{0}({1},{2}): warning {3}: {4}", tok.Filename, tok.Line, tok.Column, code, msg);
     }
 
     public void Error(IToken tok, string msg)
     {
       errorReported = true;
+      EventHandler<ErrorReportedEventArgs> temp = ErrorReportedEvent;
+      if (temp != null) {
+        temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.filename, false, tok.line, tok.col, -2, msg)));
+      }
+
       Console.WriteLine("{0}({1},{2}): Boogie error: {3}", tok.filename, tok.line, tok.col, msg);
     }
   }
