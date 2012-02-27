@@ -29,6 +29,9 @@ namespace VCC
     };
 
     class Object {
+    public:
+      bool operator==(Object);
+      bool operator!=(Object);
     };
     
     class Set {
