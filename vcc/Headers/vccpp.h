@@ -86,6 +86,7 @@ namespace VCC
     template<class T> bool Closed(T)                    { return true; };
     template<class T1, class T2> bool Depends(T1, T2)   { return true; }
     template<class T> void Destroyclaim(Claim, T)       { };
+    Set Diff(Set s, Set)                                { return s; };
     template<class T> Set Domain(T)                     { return 0; };
     template<class T> T Extent(T t)                     { return t; }
     template<class T> bool Fresh(T)                     { return true; };
@@ -105,6 +106,7 @@ namespace VCC
     template<class T> int Span(T)                       { return 0; };
     template<class T> bool Threadlocal(T)               { return true; };
     template<class T> bool Unchanged(T)                 { return true; };
+    Set Union(Set s, Set)                               { return s; };
     void* Universe()                                    { return 0; };
     template<class T> void Unwrapping(T, ...)           { };
     template<class T> bool Valid(T)                     { return true; };
