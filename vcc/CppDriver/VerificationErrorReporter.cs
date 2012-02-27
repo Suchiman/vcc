@@ -8,6 +8,8 @@ namespace Microsoft.Research.Vcc.Cpp
     private string currentFunction = "<unknown>";
     private bool errorReported;
 
+    public event EventHandler<ErrorReportedEventArgs> ErrorReported;
+    
     public bool AnyErrorReported { get; private set; }
 
     public override void OnCounterexample(Counterexample ce, string reason)
@@ -61,14 +63,21 @@ namespace Microsoft.Research.Vcc.Cpp
       return false;
     }
 
-
-    private void ReportError(IToken tok, string fmt, params string[] args)
+    private void ReportError(IToken tok, string fmt, params object[] args)
     {
-      Console.WriteLine("{0}({1},{2}): error: {3}", tok.filename, tok.line, tok.col, String.Format(fmt, args));
+      ReportError(tok, 0, fmt, args);
     }
 
-    private void ReportError(IToken tok, int errno, string fmt, params string[] args)
+    private void ReportError(IToken tok, int errno, string fmt, params object[] args)
     {
+      var msg = String.Format(fmt, args);
+      
+      EventHandler<ErrorReportedEventArgs> temp = ErrorReported;
+      if (temp != null)
+      {
+        temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.filename, false, tok.line, tok.col, errno, msg)));
+      }
+
       Console.WriteLine("{0}({1},{2}): error VC{3:0000}: {4}", tok.filename, tok.line, tok.col, errno, String.Format(fmt, args));
     }
 
