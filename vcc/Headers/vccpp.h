@@ -37,6 +37,10 @@ namespace VCC
     };
 
     class State {      
+    public:
+      State();
+      State(const volatile State&);
+      State(const State&);
     };
 
     template <class From, class To> class Map {
