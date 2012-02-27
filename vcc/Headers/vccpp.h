@@ -20,23 +20,47 @@ namespace VCC
 {
     // types
     class Claim {
+    public:
+      Claim();
+      Claim(const volatile Claim&);
+      Claim(const Claim&);
+      bool operator==(Claim);
+      bool operator!=(Claim);
     };
 
     class Integer {
+    public:
+      bool operator==(Integer);
+      bool operator!=(Integer);
+      bool operator<(Integer);
+      bool operator>(Integer);
+      bool operator<=(Integer);
+      bool operator>=(Integer);
     };
 
     class Natural {
+    public:
+      bool operator==(Natural);
+      bool operator!=(Natural);
+      bool operator<(Natural);
+      bool operator>(Natural);
+      bool operator<=(Natural);
+      bool operator>=(Natural);
     };
 
     class Object {
     public:
-      bool operator==(Object);
-      bool operator!=(Object);
+      bool operator==(void*);
+      bool operator!=(void*);
     };
     
     class Set {
     public:
       Set(...);
+      bool operator==(Set);
+      bool operator!=(Set);
+      bool operator-=(Set);
+      bool operator+=(Set);
     };
 
     class State {      
@@ -44,6 +68,8 @@ namespace VCC
       State();
       State(const volatile State&);
       State(const State&);
+      bool operator==(State);
+      bool operator!=(State);
     };
 
     template <class From, class To> class Map {
