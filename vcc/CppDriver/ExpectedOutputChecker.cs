@@ -32,7 +32,7 @@ namespace Microsoft.Research.Vcc
       }
 
       var expectedDetails = ErrorDetails.Parse(expected[idx]);
-      if (expectedDetails == null || !expectedDetails.IsMatch(error.Details, false, false))
+      if (expectedDetails == null || !expectedDetails.IsMatch(error.Details, false, false, false))
       {
         mismatchesFound++;
         if (firstMismatchFoundAt < 0)

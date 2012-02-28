@@ -25,11 +25,11 @@ namespace Microsoft.Research.Vcc
     public int ErrorNumber { get; private set; }
     public string Message { get; private set; }
 
-    public bool IsMatch(ErrorDetails other, bool compareMessage, bool compareColumn)
+    public bool IsMatch(ErrorDetails other, bool compareMessage, bool compareLine, bool compareColumn)
     {
       return this.IsWarning == other.IsWarning
           && this.ErrorNumber == other.ErrorNumber
-          && this.Line == other.Line
+          && (!compareLine || this.Line == other.Line)
           && (!compareColumn || this.Column == other.Column)
           && (!compareMessage || this.Message == other.Message);
     }
