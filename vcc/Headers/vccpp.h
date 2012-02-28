@@ -122,6 +122,7 @@ namespace VCC
     template<class T> bool Fresh(T)                     { return true; };
     template<class T> void HavocOthers(T)               { };
     template<class T> bool In(T, Set)                   { return true; }; 
+    template<class T> bool In0(T, Set)                  { return true; }; 
     template<class T> bool Inv(T)                       { return true; };
     template<class T> T Labeled(const char*, T t)       { return t; };
     template<class T> Claim Makeclaim(T, bool)          { };
@@ -130,6 +131,7 @@ namespace VCC
     template<class T> bool Mutable(T)                   { return true; };
     template<class T> bool Notshared(T)                 { return true; };
     State Now()                                         { State s; return s; };
+    template<class T> bool Objectroot(T)                { return true; };
     template<class T> T Old(T)                          { T t; return t; };
     template<class T> bool Onunwrap(T, bool)            { return true; };
     bool Programentrypoint()                            { return true; };
