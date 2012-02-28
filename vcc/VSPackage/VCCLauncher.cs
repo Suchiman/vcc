@@ -145,14 +145,15 @@
             try
             {
                 VCCRunning = true;
-               
-                //string mspdbdllPath = Path.Combine(Path.GetDirectoryName(clPath), "..\\..\\Common7\\IDE");
-                //Environment.SetEnvironmentVariable("Path", Environment.GetEnvironmentVariable("Path") + ";" + mspdbdllPath);
 
+                // Get CL path //TODO generic clpath
                 string cl11Path = Path.Combine(Environment.CurrentDirectory, "..\\..\\..\\..\\..\\..\\..\\Ext\\VS11\\cl.exe");
-                bool result = Microsoft.Research.Vcc.VccppMain.ProcessFile(filename, cl11Path, null); //TODO generic clpath & vccargs
 
-                //TODO
+                // TODO vccargs
+
+                bool result = Microsoft.Research.Vcc.VccppMain.ProcessFile(filename, cl11Path, null, false);
+
+                //TODO real exitcode
                 int exitCode = result ? 0 : 1;
                 vccProcess_Exited(exitCode);
 
