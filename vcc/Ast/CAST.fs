@@ -214,7 +214,7 @@ module Microsoft.Research.Vcc.CAST
       Type:Type;
       Parent:TypeDecl;
       Offset:FieldOffset;
-      CustomAttr:list<CustomAttr>;
+      mutable CustomAttr:list<CustomAttr>;
       UniqueId:Unique;
     }
     
