@@ -459,6 +459,8 @@ namespace Microsoft.Research.Vcc
 
     let normalizeBlocks self = 
 
+      // remove empty blocks and blocks with just a single statement
+
       let rec loop acc = function
         | [] -> List.rev acc
         | stmt :: stmts ->
@@ -471,6 +473,33 @@ namespace Microsoft.Research.Vcc
       | Block(ec, stmts, bc) -> Some(Block(ec, loop [] stmts, bc))
       | _ -> None
     
+    // ============================================================================================================    
+
+    let rewriteFieldAttributes decls =
+
+      // pick up special annotation fields like VCCBackingMember and turn them into attributes on the following
+      // fields
+
+      let rewriteFieldAttributes' tok fields = 
+        let rec loop attrs acc = function
+          | [] ->
+            if not (List.isEmpty attrs) then helper.Oops(tok, "extra attributes at end of type")
+            List.rev acc
+          | {Name = StartsWith "VCCBackingMember" } : Field :: fields ->
+            loop (VccAttr(AttrBackingMember, "true")::attrs) acc fields
+          | fld :: fields ->
+            fld.CustomAttr <- attrs @ fld.CustomAttr
+            loop [] (fld::acc) fields
+        loop [] [] fields
+
+      for d in decls do
+        match d with 
+          | Top.TypeDecl(td) ->
+            td.Fields <- rewriteFieldAttributes' td.Token td.Fields
+          | _ -> ()
+
+      decls
+
     // ============================================================================================================    
 
     let rewriteGhost decls = 
@@ -601,6 +630,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-errors", TransHelper.Expr reportErrors)
     helper.AddTransformer ("cpp-blocks", TransHelper.Expr normalizeBlocks)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
+    helper.AddTransformer ("cpp-field-attributes", TransHelper.Decl rewriteFieldAttributes)
     helper.AddTransformer ("cpp-ghost", TransHelper.Decl rewriteGhost)
     helper.AddTransformer ("cpp-rewrite-casts", TransHelper.Expr rewriteCasts)
     helper.AddTransformer ("cpp-quantifiers", TransHelper.Decl rewriteQuantifiers)
