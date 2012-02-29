@@ -140,6 +140,7 @@ namespace VCC
     bool Programentrypoint()                            { return true; };
     template<class T> int Span(T)                       { return 0; };
     template<class T> bool Threadlocal(T)               { return true; };
+    template<class T> bool Threadlocalarray(T, int)     { return true; };
     template<class T> bool Unchanged(T)                 { return true; };
     Set Union(Set s, Set)                               { return s; };
     void* Universe()                                    { return 0; };
