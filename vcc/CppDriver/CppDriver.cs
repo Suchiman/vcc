@@ -104,73 +104,77 @@ namespace Microsoft.Research.Vcc.Cpp
 
     public bool Verify(FSharpList<CAST.Top> decls, string reference)
     {
-      var errorReporter = new VerificationErrorReporter();
-      var checker = string.IsNullOrEmpty(reference) ? null : new ExpectedOutputChecker(reference);
+      try {
 
-      if (checker != null)
-      {
-        this.env.ErrorReportedEvent += checker.ErrorReported;
-        errorReporter.ErrorReported += checker.ErrorReported;
-        errorReporter.VerificationFinished += checker.VerificationFinished;
-      }
+        var errorReporter = new VerificationErrorReporter();
+        var checker = string.IsNullOrEmpty(reference) ? null : new ExpectedOutputChecker(reference);
 
-      var program = TranslateToBoogie(decls);
-      if (program == null) return false;
-
-      var prelude = PreparePrelude();
-      if (prelude.TopLevelDeclarations.Count == 0) return false;
-
-      var verifierInput = new Program();
-      verifierInput.TopLevelDeclarations.AddRange(prelude.TopLevelDeclarations);
-      verifierInput.TopLevelDeclarations.AddRange(program.TopLevelDeclarations);
-
-      InstallBoogieOptions();
-
-      // prepare for verification
-      if (verifierInput.Resolve(this.env) > 0) return false;
-      if (verifierInput.Typecheck(this.env) > 0) return false;
-      AbstractInterpretation.RunAbstractInterpretation(verifierInput);
-      LambdaHelper.ExpandLambdas(verifierInput);
-
-      // verify all implementation functions
-
-      foreach (var decl in verifierInput.TopLevelDeclarations)
-      {
-        var impl = decl as Implementation;
-        if (impl != null)
-        {
-          var vcGen = new VCGen(verifierInput, null, false);
-          errorReporter.StartFunction(impl.Name);
-          vcGen.VerifyImplementation(impl, program, errorReporter);
-          errorReporter.EndFunction();
-          vcGen.Close();
-        }
-      }
-
-      if (checker != null)
-      {
-        errorReporter.VerificationFinished -= checker.VerificationFinished;
-        errorReporter.ErrorReported -= checker.ErrorReported;
-        this.env.ErrorReportedEvent -= checker.ErrorReported;
-
-        checker.CompleteChecking();
-
-        if (checker.Mismatches > 0)
-        {
-          Console.WriteLine("\n\n*** Found output mismatch. ***\n");
-          Console.WriteLine("*** Expected (line {0}): ***", checker.FirstMismatchFoundAt);
-          Console.WriteLine(checker.FirstMismatchExpected);
-          Console.WriteLine("*** Received: ***");
-          Console.WriteLine(checker.FirstMismatchReceived);
-          Console.WriteLine("*** End of mismatch. ***\n\n");
-
-          return false;
+        if (checker != null) {
+          this.env.ErrorReportedEvent += checker.ErrorReported;
+          errorReporter.ErrorReported += checker.ErrorReported;
+          errorReporter.VerificationFinished += checker.VerificationFinished;
         }
 
-        return true;
-      }
+        var program = TranslateToBoogie(decls);
+        if (program == null) return false;
 
-      return !errorReporter.AnyErrorReported;
+        var prelude = PreparePrelude();
+        if (prelude.TopLevelDeclarations.Count == 0) return false;
+
+        var verifierInput = new Program();
+        verifierInput.TopLevelDeclarations.AddRange(prelude.TopLevelDeclarations);
+        verifierInput.TopLevelDeclarations.AddRange(program.TopLevelDeclarations);
+
+        InstallBoogieOptions();
+
+        // prepare for verification
+        if (verifierInput.Resolve(this.env) > 0) return false;
+        if (verifierInput.Typecheck(this.env) > 0) return false;
+        AbstractInterpretation.RunAbstractInterpretation(verifierInput);
+        LambdaHelper.ExpandLambdas(verifierInput);
+
+        // verify all implementation functions
+
+        foreach (var decl in verifierInput.TopLevelDeclarations) {
+          var impl = decl as Implementation;
+          if (impl != null) {
+            var vcGen = new VCGen(verifierInput, null, false);
+            errorReporter.StartFunction(impl.Name);
+            vcGen.VerifyImplementation(impl, program, errorReporter);
+            errorReporter.EndFunction();
+            vcGen.Close();
+          }
+        }
+
+        if (checker != null) {
+          errorReporter.VerificationFinished -= checker.VerificationFinished;
+          errorReporter.ErrorReported -= checker.ErrorReported;
+          this.env.ErrorReportedEvent -= checker.ErrorReported;
+
+          checker.CompleteChecking();
+
+          if (checker.Mismatches > 0) {
+            Console.WriteLine("\n\n*** Found output mismatch. ***\n");
+            Console.WriteLine("*** Expected (line {0}): ***", checker.FirstMismatchFoundAt);
+            Console.WriteLine(checker.FirstMismatchExpected);
+            Console.WriteLine("*** Received: ***");
+            Console.WriteLine(checker.FirstMismatchReceived);
+            Console.WriteLine("*** End of mismatch. ***\n\n");
+
+            return false;
+          }
+
+          return true;
+        }
+
+        return !errorReporter.AnyErrorReported;
+      } catch (Exception e)
+      {
+        Console.WriteLine("*** Exception occurred during verification ***\n");
+        Console.WriteLine(e.ToString());
+        Console.WriteLine();
+        throw;
+      }
     }
   }
 }
