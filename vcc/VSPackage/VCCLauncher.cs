@@ -1,9 +1,7 @@
 ﻿namespace Microsoft.Research.Vcc.VSPackage
 {
     using System;
-    using System.Diagnostics;
     using System.IO;
-    using System.Management;
     using System.Reflection;
     using System.Text.RegularExpressions;
     using System.Threading;
@@ -153,6 +151,8 @@
                 int exitCode = VccppMain.ProcessFile(filename, cl11Path, null, false);
                 vccProcess_Exited(exitCode);
 
+                VccppMain.VccppEvent += new EventHandler<VccppEventArgs>(vccProcess_OutputDataReceived);
+
                 //// When the process was started, remember the cmdlinearguments
                 VSPackagePackage.LastArguments = vccargs;
                 VSPackagePackage.LastFilename = filename;
@@ -243,17 +243,15 @@
             }
         }
 
-        private static void vccProcess_OutputDataReceived(object sender, DataReceivedEventArgs e)
+        private static void vccProcess_OutputDataReceived(object sender, VccppEventArgs e)
         {
-            //TODO
-
             //// Write Output from VCC to Verification Outputpane
-            if (e != null && e.Data != null)
+            if (e != null && !String.IsNullOrEmpty(e.Message))
             {
-                VSIntegration.WriteToPane(e.Data);
+                VSIntegration.WriteToPane(e.Message);
 
                 Match match;
-                if ((match = VCCErrorRegEx.Match(e.Data)).Success)
+                if ((match = VCCErrorRegEx.Match(e.Message)).Success)
                 {
                     //// Add error to error list
                     VSIntegration.AddErrorToErrorList(
@@ -262,7 +260,7 @@
                       Int32.Parse(match.Groups["line"].Value),
                       Microsoft.VisualStudio.Shell.TaskErrorCategory.Error);
                 }
-                else if ((match = VCCWarningRegEx.Match(e.Data)).Success)
+                else if ((match = VCCWarningRegEx.Match(e.Message)).Success)
                 {
                     //// Add warning to error list
                     VSIntegration.AddErrorToErrorList(
