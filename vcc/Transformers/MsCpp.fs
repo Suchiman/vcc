@@ -90,28 +90,39 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
-    let rewriteCasts self = function
+    let rewriteCasts self = 
 
       // perform some normalization on literals and casts
+      // remove the 'implicit' marker on cast where we find them to be safe at compile time
 
-      | IntLiteral(ec, i) when ec.Type = Type.Bool -> Some(BoolLiteral(ec, i.IsOne))
-      | IntLiteral(ec, i) when ec.Type._IsPtr -> Some(Macro(ec, "null", []))
-      | Macro(_, "implicit_cast", [Cast(ec, cs, IntLiteral(_, n))]) 
-      | Cast(ec, cs, IntLiteral(_, n)) when TransUtil.intInRange ec.Type n ->
-          Some(self (IntLiteral(ec, n)))
-      | Macro(_, "implicit_cast", [Cast(cc, cs, Macro(ec, "ite", [cond; _then; _else]))]) ->
-        let cond' = self cond
-        let _then' = self (Macro(cc, "implicit_cast", [Cast(cc, cs, _then)]))
-        let _else' = self (Macro(cc, "implicit_cast", [Cast(cc, cs, _else)]))       
-        Some(Macro({ec with Type = cc.Type}, "ite", [cond'; _then'; _else']))
-      | _ -> None
+      let rec icil t = function // _i_nteger _c_onversion _i_s _l_ossless
+        | IntLiteral(_, n) -> TransUtil.intInRange t n
+        | Macro(_, "implicit_cast", [Cast(ec, _, e)])
+        | Cast(ec, _, e) -> Type.ConversionIsLossless(ec.Type, t) || icil t e
+        | Prim(_, Op(("+"|"~"), _), [e0]) -> icil t e0
+        | Prim(_, Op(("+"|"-"|"*"|"|"|"&"|"^"),_), [e0; e1]) -> icil t e0 && icil t e1
+        | Prim(_, Op(("/"|"%"|"<<"|">>"), _), [e0; _]) -> icil t e0
+        | Macro(_, "ite", [_; _then; _else]) -> icil t _then && icil t _else
+        | expr -> Type.ConversionIsLossless(expr.Type, t)
+
+      function
+        | IntLiteral(ec, i) when ec.Type = Type.Bool -> Some(BoolLiteral(ec, i.IsOne))
+        | IntLiteral(ec, i) when ec.Type._IsPtr -> Some(Macro(ec, "null", []))
+        | Macro(ic, "implicit_cast", [Cast(ec, cs, e)]) when ec.Type._IsInteger ->
+          let e' = self e
+          if icil ec.Type e' then 
+            Some(Cast(ec, cs, e')) 
+          else 
+            Some(Macro(ic, "implicit_cast", [Cast(ec, cs, e')]))
+
+        | _ -> None
 
     // ============================================================================================================    
 
-    let rewriteExtraMacros self = 
+    let rewriteAssignOps self = 
 
-      // TODO: handle situations where the location incremented involves a func call, which should not be duplicated
-      // this is also wrong in CCI at the moment 
+      // rewrite '+=' and '++' like operations
+    
       let handlePrePostIncrDecr e op isPost =
         let (init, tmp) = cache helper "incdec" e VarKind.Local
         let calc = Expr.Prim(e.Common, Op(op, CheckedStatus.Checked), [tmp; IntLiteral(e.Common, one)])
@@ -124,14 +135,7 @@ namespace Microsoft.Research.Vcc
 
       function
 
-        | Macro(ec, "init", [arr; Macro(_, "array_init", args)]) ->         
-          let assignIdx idx (arg:Expr) = 
-            Expr.Macro({ec with Type = Type.Void}, "=", [Expr.Deref({arr.Common with Type = arg.Type}, Index(arr.Common, arr, mkInt idx)); arg])
-          Some(Expr.MkBlock(List.mapi assignIdx (List.map self args)))
-
-        | Macro(ec, "init", [lhs; rhs]) -> Some(Macro(ec, "=", [self lhs; self rhs]))
-        
-        | Macro(_, incrOp, [e; IntLiteral(_, _one)]) when _one.IsOne && incrOpTable.ContainsKey incrOp -> 
+        | Macro(_, incrOp, [e; _]) when incrOpTable.ContainsKey incrOp -> 
           let (op, isPost) = Map.find incrOp incrOpTable
           Some(handlePrePostIncrDecr (self e) op isPost)
         
@@ -139,6 +143,23 @@ namespace Microsoft.Research.Vcc
           let (op, isChecked) = Map.find assignOp assignOpTable
           Some(handleAssignOp ec (Op(op, if isChecked then Checked else Unchecked)) (self e0) (self e1))
 
+        | _ -> None
+
+    // ============================================================================================================    
+
+    let rewriteExtraMacros self = 
+
+      // TODO: handle situations where the location incremented involves a func call, which should not be duplicated
+      // this is also wrong in CCI at the moment 
+      function
+
+        | Macro(ec, "init", [arr; Macro(_, "array_init", args)]) ->         
+          let assignIdx idx (arg:Expr) = 
+            Expr.Macro({ec with Type = Type.Void}, "=", [Expr.Deref({arr.Common with Type = arg.Type}, Index(arr.Common, arr, mkInt idx)); arg])
+          Some(Expr.MkBlock(List.mapi assignIdx (List.map self args)))
+
+        | Macro(ec, "init", [lhs; rhs]) -> Some(Macro(ec, "=", [self lhs; self rhs]))
+        
         | Macro(ec, "dot", [e0; UserData(_, field)]) ->
           match field with
             | :? Field as f -> 
@@ -632,6 +653,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
     helper.AddTransformer ("cpp-field-attributes", TransHelper.Decl rewriteFieldAttributes)
     helper.AddTransformer ("cpp-ghost", TransHelper.Decl rewriteGhost)
+    helper.AddTransformer ("cpp-assign-ops", TransHelper.Expr rewriteAssignOps)
     helper.AddTransformer ("cpp-rewrite-casts", TransHelper.Expr rewriteCasts)
     helper.AddTransformer ("cpp-quantifiers", TransHelper.Decl rewriteQuantifiers)
     helper.AddTransformer ("cpp-stack-arrays", TransHelper.Decl handleStackArrays)
