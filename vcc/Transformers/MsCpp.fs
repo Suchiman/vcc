@@ -271,6 +271,31 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let specialArgumentHandling decls = 
+
+      let filterArguments args = 
+        let hasVarArgs = ref false
+        let rec loop acc = function
+          | [] -> List.rev acc
+          | (arg : Variable) :: args when arg.Type = Type.Void -> loop acc args
+          | arg :: args when arg.Name = "..." -> hasVarArgs := true; loop acc args
+          | arg :: args -> loop (arg::acc) args
+        let args' = loop [] args
+        (args', !hasVarArgs)
+
+     
+      for d in decls do
+        match d with
+          | Top.FunctionDecl(fn) -> 
+            let (args, hasVarArgs) = filterArguments fn.Parameters  
+            fn.Parameters <- args
+            if hasVarArgs then fn.Flags <- fn.Flags ||| Flags.AcceptsExtraArguments
+            
+          | _ -> ()
+
+      decls
+
+    // ============================================================================================================    
 
     let collectContracts decls =
 
@@ -413,7 +438,7 @@ namespace Microsoft.Research.Vcc
           | Some(expr) -> 
             helper.Oops(expr.Common.Token, "unexpected closure constructor structure when processing quantifiers")
             f2a
-          | _ -> die()
+          | None -> f2a
 
       let makeArgsQuantifierBound args = 
         let v2v = new Dict<_,_>()
@@ -666,6 +691,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
     helper.AddTransformer ("cpp-errors", TransHelper.Expr reportErrors)
+    helper.AddTransformer ("cpp-special-args", TransHelper.Decl specialArgumentHandling)
     helper.AddTransformer ("cpp-blocks", TransHelper.Expr normalizeBlocks)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
     helper.AddTransformer ("cpp-field-attributes", TransHelper.Decl rewriteFieldAttributes)
