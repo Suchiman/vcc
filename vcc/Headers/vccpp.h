@@ -102,6 +102,7 @@ namespace VCC
     
     // object state
     template<class T> bool Activeclaim(T)               { return true; };
+    template<class T1, class T2> bool Addreq(T1, T2)    { return true; };
     template<class T> void Always(T, bool)              { };
     template<class T> T* Alloc()                        { return 0; };
     template<class T1, class T2> bool Approves(T1, T2)  { return true; };
