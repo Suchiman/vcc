@@ -93,7 +93,19 @@ namespace Microsoft.Research.Vcc
     let rewriteCasts self = 
 
       // perform some normalization on literals and casts
-      // remove the 'implicit' marker on cast where we find them to be safe at compile time
+      // remove the 'implicit' marker on cast where we find them to be safe at compile time.
+
+      let bfcil (t:Type) = function // _b_it_f_ield _c_onversion _i_s _l_ossless
+        | { Offset = BitField(_,_,sSize) } as field ->
+          let tIsSigned = t.IsSignedInteger
+          let tSize = t.SizeOf * 8
+          let sIsSigned = field.Type.IsSignedInteger
+          if (tIsSigned = sIsSigned) then
+            sSize <= tSize
+          else if tIsSigned then
+            sSize < tSize
+          else false
+        | _ -> die()
 
       let rec icil t = function // _i_nteger _c_onversion _i_s _l_ossless
         | IntLiteral(_, n) -> TransUtil.intInRange t n
@@ -103,6 +115,11 @@ namespace Microsoft.Research.Vcc
         | Prim(_, Op(("+"|"-"|"*"|"|"|"&"|"^"),_), [e0; e1]) -> icil t e0 && icil t e1
         | Prim(_, Op(("/"|"%"|"<<"|">>"), _), [e0; _]) -> icil t e0
         | Macro(_, "ite", [_; _then; _else]) -> icil t _then && icil t _else
+        | Macro(_, "dot",  [_; UserData(_, field)]) -> 
+          match field with
+            | :? Field as f when f.IsBitField -> bfcil t f
+            | _ -> die()
+        | Deref(_, Dot(_,_, f)) when f.IsBitField -> bfcil t f
         | expr -> Type.ConversionIsLossless(expr.Type, t)
 
       function

@@ -237,6 +237,11 @@ module Microsoft.Research.Vcc.CAST
 
     member this.IsStatic = this.Flags.HasFlag(Flags.Static)
 
+    member this.IsBitField = 
+      match this.Offset with
+        | FieldOffset.BitField _ -> true
+        | _ -> false
+
     member this.ByteOffset =
       match this.Offset with
         | FieldOffset.Normal n -> n
