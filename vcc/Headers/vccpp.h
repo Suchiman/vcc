@@ -148,6 +148,7 @@ namespace VCC
     template<class T> bool Valid(T)                     { return true; };
     template<class T> T Whenclaimed(T t)                { return t; };
     template<class T> bool Wrapped(T)                   { return true; };
+    template<class T> bool Wrapped0(T)                  { return true; };
     
     template<class T> Set Owns(T)                       { Set s; return s; };
     template<class T> Object Owner(T)                   { Object o; return o; };
