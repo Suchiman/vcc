@@ -76,6 +76,7 @@ namespace VCC
     public:
       To& operator[](From);
       To& operator[](From) volatile;
+      bool operator==(Map<From,To>);
     };
 
     // assert/assume
@@ -101,58 +102,59 @@ namespace VCC
     void VolatileOwns();
     
     // object state
-    template<class T> bool Activeclaim(T)               { return true; };
-    template<class T1, class T2> bool Addreq(T1, T2)    { return true; };
-    template<class T> void Always(T, bool)              { };
-    template<class T> T* Alloc()                        { return 0; };
-    template<class T1, class T2> bool Approves(T1, T2)  { return true; };
-    template<class T> T Array(T t, int)                 { return t; };
-    template<class T> T Arrayrange(T t, int)            { return t; };
-    template<class T> T At(State, T t)                  { return t; };
-    template<class T> void Atomic(T, ...)               { };
-    template<class T> void BumpVolatileVersion(T)       { };
-    bool Claims(Claim, bool)                            { return true; };
-    template<class T> int Claimcount(T)                 { return 0; };
-    template<class T> bool Claimsobject(Claim, T)       { return true; };
-    template<class T> bool Closed(T)                    { return true; };
-    template<class T1, class T2> bool Depends(T1, T2)   { return true; }
-    template<class T> void Destroyclaim(Claim, T)       { };
-    Set Diff(Set s, Set)                                { return s; };
-    template<class T> Set Domain(T)                     { return 0; };
-    template<class T> T Extent(T t)                     { return t; };
-    template<class T> bool Extentmutable(T t)           { return true; };
-    template<class T> bool Fresh(T)                     { return true; };
-    template<class T> void HavocOthers(T)               { };
-    template<class T> bool In(T, Set)                   { return true; }; 
-    template<class T> bool In0(T, Set)                  { return true; }; 
-    template<class T> bool Inv(T)                       { return true; };
-    template<class T, class V> bool Is(V)               { return true; };
-    template<class T> T Labeled(const char*, T t)       { return t; };
-    template<class T> Claim Makeclaim(T, bool)          { };
-    template<class T> bool Mallocroot(T)                { return true; }
-    template<class T> bool Mine(T, ...)                 { return true; };
-    template<class T> bool Mutable(T)                   { return true; };
-    template<class T> bool Mutablearray(T, int)         { return true; };
-    template<class T> bool Notshared(T)                 { return true; };
-    State Now()                                         { State s; return s; };
-    template<class T> bool Objectroot(T)                { return true; };
-    template<class T> T Old(T)                          { T t; return t; };
-    template<class T> bool Onunwrap(T, bool)            { return true; };
-    bool Programentrypoint()                            { return true; };
-    template<class T> int Span(T)                       { return 0; };
-    template<class T> bool Threadlocal(T)               { return true; };
-    template<class T> bool Threadlocalarray(T, int)     { return true; };
-    template<class T> bool Unchanged(T)                 { return true; };
-    Set Union(Set s, Set)                               { return s; };
-    void* Universe()                                    { return 0; };
-    template<class T> void Unwrapping(T, ...)           { };
-    template<class T> bool Valid(T)                     { return true; };
-    template<class T> T Whenclaimed(T t)                { return t; };
-    template<class T> bool Wrapped(T)                   { return true; };
-    template<class T> bool Wrapped0(T)                  { return true; };
+    template<class T> bool Activeclaim(T)                         { return true; };
+    template<class T1, class T2> bool Addreq(T1, T2)              { return true; };
+    template<class T> void Always(T, bool)                        { };
+    template<class T> T* Alloc()                                  { return 0; };
+    template<class T1, class T2> bool Approves(T1, T2)            { return true; };
+    template<class T> T Array(T t, int)                           { return t; };
+    template<class T> T Arrayrange(T t, int)                      { return t; };
+    template<class T> T At(State, T t)                            { return t; };
+    template<class T> void Atomic(T, ...)                         { };
+    template<class T> void BumpVolatileVersion(T)                 { };
+    bool Claims(Claim, bool)                                      { return true; };
+    template<class T> int Claimcount(T)                           { return 0; };
+    template<class T> bool Claimsobject(Claim, T)                 { return true; };
+    template<class T> bool Closed(T)                              { return true; };
+    template<class T1, class T2> bool Depends(T1, T2)             { return true; }
+    template<class T> void Destroyclaim(Claim, T)                 { };
+    Set Diff(Set s, Set)                                          { return s; };
+    template<class T> Set Domain(T)                               { return 0; };
+    template<class T> T Extent(T t)                               { return t; };
+    template<class T> bool Extentmutable(T t)                     { return true; };
+    template<class T> bool Fresh(T)                               { return true; };
+    template<class T> void HavocOthers(T)                         { };
+    template<class T> bool In(T, Set)                             { return true; }; 
+    template<class T> bool In0(T, Set)                            { return true; }; 
+    template<class T> bool Inv(T)                                 { return true; };
+    template<class T, class V> bool Is(V)                         { return true; };    
+    template<class T> T Labeled(const char*, T t)                 { return t; };
+    template<class T1, class T2, class L> Map<T1, T2> Lambda(L)   { Map<T1, T2> m; return m; };
+    template<class T> Claim Makeclaim(T, bool)                    { };
+    template<class T> bool Mallocroot(T)                          { return true; }
+    template<class T> bool Mine(T, ...)                           { return true; };
+    template<class T> bool Mutable(T)                             { return true; };
+    template<class T> bool Mutablearray(T, int)                   { return true; };
+    template<class T> bool Notshared(T)                           { return true; };
+    State Now()                                                   { State s; return s; };
+    template<class T> bool Objectroot(T)                          { return true; };
+    template<class T> T Old(T)                                    { T t; return t; };
+    template<class T> bool Onunwrap(T, bool)                      { return true; };
+    bool Programentrypoint()                                      { return true; };
+    template<class T> int Span(T)                                 { return 0; };
+    template<class T> bool Threadlocal(T)                         { return true; };
+    template<class T> bool Threadlocalarray(T, int)               { return true; };
+    template<class T> bool Unchanged(T)                           { return true; };
+    Set Union(Set s, Set)                                         { return s; };
+    void* Universe()                                              { return 0; };
+    template<class T> void Unwrapping(T, ...)                     { };
+    template<class T> bool Valid(T)                               { return true; };
+    template<class T> T Whenclaimed(T t)                          { return t; };
+    template<class T> bool Wrapped(T)                             { return true; };
+    template<class T> bool Wrapped0(T)                            { return true; };
     
-    template<class T> Set Owns(T)                       { Set s; return s; };
-    template<class T> Object Owner(T)                   { Object o; return o; };
+    template<class T> Set Owns(T)                                 { Set s; return s; };
+    template<class T> Object Owner(T)                             { Object o; return o; };
    
     template <typename T> class Ghost
     {
