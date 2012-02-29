@@ -150,11 +150,7 @@
                 string cl11Path = Path.Combine(Environment.CurrentDirectory, "..\\..\\..\\..\\..\\..\\..\\Ext\\VS11\\cl.exe");
 
                 // TODO vccargs
-
-                bool result = Microsoft.Research.Vcc.VccppMain.ProcessFile(filename, cl11Path, null, false);
-
-                //TODO real exitcode
-                int exitCode = result ? 0 : 1;
+                int exitCode = VccppMain.ProcessFile(filename, cl11Path, null, false);
                 vccProcess_Exited(exitCode);
 
                 //// When the process was started, remember the cmdlinearguments
