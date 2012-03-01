@@ -198,9 +198,13 @@ namespace Microsoft.Research.Vcc
           match cs with
             | Checked -> 
               if not (Type.ConversionIsLossless(expr.Type, ec.Type)) then
-                helper.Error(ec.Token, 37, "Cannot implicitly convert type '" + expr.Type.ToString() + "' to '" + ec.Type.ToString() + "'")
+                helper.Error(ec.Token, 37, "Cannot implicitly convert expression '" + expr.Token.Value + "' of type '" + expr.Type.ToString() + "' to '" + ec.Type.ToString() + "'")
             | _ -> ()
           Some(self cast)
+
+        | Macro(ec, "do", [contract; body; cond]) ->
+          Some(Macro(ec, "doUntil", [contract; body; Expr.Prim(cond.Common, Op("!", Processed), [cond])]))
+
         | _ -> None
   
     // ============================================================================================================    
@@ -352,6 +356,22 @@ namespace Microsoft.Research.Vcc
           Some(Macro(ec, "for", [ Macro(lec, "loop_contract", invs' @ loopContract); init; cond; incr; body']))
         | Macro(ec, "for", _) -> 
           helper.Oops(ec.Token, "unexpected for loop structure")
+          None
+        | Macro(ec, "do", [ Macro(lec, "loop_contract", loopContract); Block(bec, stmts, None); cond]) ->
+          let (bc, invs) = findContracts stmts
+          let body' = Block(bec, stmts |> removeContracts |> List.map self, None)
+          let invs' = List.map Expr.MkAssert invs
+          Some(Macro(ec, "do", [Macro(lec, "loop_contract", invs' @ loopContract); body'; cond]))
+        | Macro(ec, "do", _) -> 
+          helper.Oops(ec.Token, "unexpected do-while loop structure")
+          None
+        | Macro(ec, "while", [ Macro(lec, "loop_contract", loopContract); cond; Block(bec, stmts, None)]) ->
+          let (bc, invs) = findContracts stmts
+          let body' = Block(bec, stmts |> removeContracts |> List.map self, None)
+          let invs' = List.map Expr.MkAssert invs
+          Some(Macro(ec, "while", [Macro(lec, "loop_contract", invs' @ loopContract); cond; body']))
+        | Macro(ec, "while", _) -> 
+          helper.Oops(ec.Token, "unexpected while loop structure")
           None
         | Block(ec, stmts, None) ->
           let (bc, invs) = findContracts stmts
