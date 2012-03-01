@@ -102,21 +102,43 @@ namespace Microsoft.Research.Vcc.Cpp
       return true;
     }
 
+    private static bool CompleteOutputCheck(ExpectedOutputChecker checker)
+    {
+      checker.CompleteChecking();
+
+      if (checker.Mismatches > 0) {
+        Console.WriteLine("\n\n*** Found output mismatch. ***\n");
+        Console.WriteLine("*** Expected (line {0}): ***", checker.FirstMismatchFoundAt);
+        Console.WriteLine(checker.FirstMismatchExpected);
+        Console.WriteLine("*** Received: ***");
+        Console.WriteLine(checker.FirstMismatchReceived);
+        Console.WriteLine("*** End of mismatch. ***\n\n");
+
+        return false;
+      }
+
+      return true;
+    }
+
     public bool Verify(FSharpList<CAST.Top> decls, string reference)
     {
+      var errorReporter = new VerificationErrorReporter();
+      var checker = string.IsNullOrEmpty(reference) ? null : new ExpectedOutputChecker(reference);
+
+      if (checker != null) {
+        this.env.ErrorReportedEvent += checker.ErrorReported;
+        errorReporter.ErrorReported += checker.ErrorReported;
+        errorReporter.VerificationFinished += checker.VerificationFinished;
+      }
+
       try {
 
-        var errorReporter = new VerificationErrorReporter();
-        var checker = string.IsNullOrEmpty(reference) ? null : new ExpectedOutputChecker(reference);
-
-        if (checker != null) {
-          this.env.ErrorReportedEvent += checker.ErrorReported;
-          errorReporter.ErrorReported += checker.ErrorReported;
-          errorReporter.VerificationFinished += checker.VerificationFinished;
-        }
-
         var program = TranslateToBoogie(decls);
-        if (program == null) return false;
+        if (program == null)
+        {
+          if (checker != null) return CompleteOutputCheck(checker);
+          return false;
+        }
 
         var prelude = PreparePrelude();
         if (prelude.TopLevelDeclarations.Count == 0) return false;
@@ -146,34 +168,23 @@ namespace Microsoft.Research.Vcc.Cpp
           }
         }
 
-        if (checker != null) {
-          errorReporter.VerificationFinished -= checker.VerificationFinished;
-          errorReporter.ErrorReported -= checker.ErrorReported;
-          this.env.ErrorReportedEvent -= checker.ErrorReported;
-
-          checker.CompleteChecking();
-
-          if (checker.Mismatches > 0) {
-            Console.WriteLine("\n\n*** Found output mismatch. ***\n");
-            Console.WriteLine("*** Expected (line {0}): ***", checker.FirstMismatchFoundAt);
-            Console.WriteLine(checker.FirstMismatchExpected);
-            Console.WriteLine("*** Received: ***");
-            Console.WriteLine(checker.FirstMismatchReceived);
-            Console.WriteLine("*** End of mismatch. ***\n\n");
-
-            return false;
-          }
-
-          return true;
-        }
+        if (checker != null) return CompleteOutputCheck(checker);
 
         return !errorReporter.AnyErrorReported;
-      } catch (Exception e)
-      {
+
+      } catch (Exception e) {
         Console.WriteLine("*** Exception occurred during verification ***\n");
         Console.WriteLine(e.ToString());
         Console.WriteLine();
         throw;
+      } finally
+      {
+        if (checker != null)
+        {
+          errorReporter.VerificationFinished -= checker.VerificationFinished;
+          errorReporter.ErrorReported -= checker.ErrorReported;
+          this.env.ErrorReportedEvent -= checker.ErrorReported;
+        }
       }
     }
   }
