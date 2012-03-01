@@ -147,11 +147,12 @@
                 // Get CL path //TODO generic clpath
                 string cl11Path = Path.Combine(Environment.CurrentDirectory, "..\\..\\..\\..\\..\\..\\..\\Ext\\VS11\\cl.exe");
 
+                // Subscribe to message events
+                VccppMain.VccppEvent += new EventHandler<VccppEventArgs>(vccProcess_OutputDataReceived);
+
                 // TODO vccargs
                 int exitCode = VccppMain.ProcessFile(filename, cl11Path, null, false);
                 vccProcess_Exited(exitCode);
-
-                VccppMain.VccppEvent += new EventHandler<VccppEventArgs>(vccProcess_OutputDataReceived);
 
                 //// When the process was started, remember the cmdlinearguments
                 VSPackagePackage.LastArguments = vccargs;
