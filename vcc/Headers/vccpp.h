@@ -110,6 +110,7 @@ namespace VCC
     template<class T1, class T2> bool Approves(T1, T2)            { return true; };
     template<class T> T Array(T t, int)                           { return t; };
     template<class T> Set Arrayrange(T t, size_t)                 { return 0; };
+    template<class T> bool Arraysdisjoint(T, size_t, T, size_t)   { return true; };
     template<class T> T At(State, T t)                            { return t; };
     template<class T> void Atomic(T, ...)                         { };
     template<class T> void BumpVolatileVersion(T)                 { };
