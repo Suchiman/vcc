@@ -204,6 +204,7 @@ namespace VCC
     }
 
     // special variables
+    bool Equivalence;
     bool Implies;
 
     // templates for quantifiers
