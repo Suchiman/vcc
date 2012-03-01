@@ -313,22 +313,23 @@ namespace Microsoft.Research.Vcc
 
       let findContracts stmts =
 
-        let findContracts' (bc:BlockContract) = function
-          | Call(ec, {FriendlyName = StartsWith "VCC::Requires"}, [], [arg]) ->  { bc with Requires = arg :: bc.Requires }
-          | Call(ec, {FriendlyName = StartsWith "VCC::Ensures"}, [], [arg]) ->   { bc with Ensures = arg :: bc.Ensures }
-          | Call(ec, {FriendlyName = StartsWith "VCC::Reads"}, [], args) ->      { bc with Reads = args @ bc.Reads }
-          | Call(ec, {FriendlyName = StartsWith "VCC::Writes"}, [], args) ->     { bc with Writes = args @ bc.Writes }
-          | Call(ec, {FriendlyName = StartsWith "VCC::Decreases"}, [], args) ->  { bc with Decreases = args @ bc.Decreases }
-          | Call(ec, {FriendlyName = StartsWith "VCC::Pure"}, [], []) ->         { bc with IsPureBlock = true }
-          | _ -> bc
+        let findContracts' (bc:BlockContract, invs) = function
+          | Call(ec, {FriendlyName = StartsWith "VCC::Requires"}, [], [arg]) ->  { bc with Requires = arg :: bc.Requires }, invs
+          | Call(ec, {FriendlyName = StartsWith "VCC::Ensures"}, [], [arg]) ->   { bc with Ensures = arg :: bc.Ensures }, invs
+          | Call(ec, {FriendlyName = StartsWith "VCC::Reads"}, [], args) ->      { bc with Reads = args @ bc.Reads }, invs
+          | Call(ec, {FriendlyName = StartsWith "VCC::Writes"}, [], args) ->     { bc with Writes = args @ bc.Writes }, invs
+          | Call(ec, {FriendlyName = StartsWith "VCC::Decreases"}, [], args) ->  { bc with Decreases = args @ bc.Decreases }, invs
+          | Call(ec, {FriendlyName = StartsWith "VCC::Pure"}, [], []) ->         { bc with IsPureBlock = true }, invs
+          | Call(ec, {FriendlyName = StartsWith "VCC::Invariant"}, [], [arg]) -> bc, (arg :: invs)
+          | _ -> bc, invs
 
-        let found = List.fold findContracts' BlockContract.Empty stmts
+        let (found, invs) = List.fold findContracts' (BlockContract.Empty, []) stmts
         { Requires = List.rev found.Requires
           Ensures = List.rev found.Ensures
           Reads = List.rev found.Reads
           Writes = List.rev found.Writes
           Decreases = List.rev found.Decreases
-          IsPureBlock = found.IsPureBlock }
+          IsPureBlock = found.IsPureBlock }, List.rev invs
 
       let removeContracts = 
         let isNoContract = function
@@ -338,13 +339,23 @@ namespace Microsoft.Research.Vcc
           | Call(ec, {FriendlyName = StartsWith "VCC::Writes"}, [], _)
           | Call(ec, {FriendlyName = StartsWith "VCC::Decreases"}, [], _) 
           | Call(ec, {FriendlyName = StartsWith "VCC::Pure"}, [], [])
+          | Call(ec, {FriendlyName = StartsWith "VCC::Invariant"}, [], [_])
             ->  false
           | _ -> true
         List.filter isNoContract
 
       let pullOutContracts self = function
+        | Macro(ec, "for", [ Macro(lec, "loop_contract", loopContract); init; cond; incr; Block(bec, stmts, None) ]) ->
+          let (bc, invs) = findContracts stmts
+          let body' = Block(bec, stmts |> removeContracts |> List.map self, None)
+          let invs' = List.map Expr.MkAssert invs
+          Some(Macro(ec, "for", [ Macro(lec, "loop_contract", invs' @ loopContract); init; cond; incr; body']))
+        | Macro(ec, "for", _) -> 
+          helper.Oops(ec.Token, "unexpected for loop structure")
+          None
         | Block(ec, stmts, None) ->
-          let bc = findContracts stmts
+          let (bc, invs) = findContracts stmts
+          if not (List.isEmpty invs) then helper.Oops(invs.Head.Token, "invariant outside of loop")
           if bc.IsEmpty then None else Some(Block(ec, stmts |> removeContracts |> List.map self, Some bc))
         | _ -> None
 
@@ -361,7 +372,7 @@ namespace Microsoft.Research.Vcc
                 fn.Variants <- bc.Decreases
                 fn.CustomAttr <- (if bc.IsPureBlock then [VccAttr(AttrIsPure, "")] else []) @ fn.CustomAttr
                 fn.Body <- Some(Block(ec, stmts, None))
-              | _ -> ()
+              | _ -> fn.Body <- Some body'
           | _ -> ()
 
       decls
