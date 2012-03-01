@@ -139,6 +139,7 @@ namespace VCC
     template<class T> bool Mine(T, ...)                           { return true; };
     template<class T> bool Mutable(T)                             { return true; };
     template<class T> bool Mutablearray(T, int)                   { return true; };
+    template<class T> bool Nonprimitiveptr(T)                     { return true; };
     template<class T> bool Notshared(T)                           { return true; };
     State Now()                                                   { State s; return s; };
     template<class T> bool Objectroot(T)                          { return true; };
