@@ -131,7 +131,8 @@ namespace VCC
     template<class T> T Labeled(const char*, T t)                 { return t; };
     template<class T1, class T2, class L> Map<T1, T2> Lambda(L)   { Map<T1, T2> m; return m; };
     template<class T> Claim Makeclaim(T, bool)                    { };
-    template<class T> bool Mallocroot(T)                          { return true; }
+    template<class T> bool Mallocroot(T)                          { return true; };
+    template<class T> bool Matchulong(T)                          { return true; };
     template<class T> bool Mine(T, ...)                           { return true; };
     template<class T> bool Mutable(T)                             { return true; };
     template<class T> bool Mutablearray(T, int)                   { return true; };
