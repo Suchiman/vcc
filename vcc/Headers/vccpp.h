@@ -92,6 +92,7 @@ namespace VCC
     void Invariant(bool);
     void Pure();
     void Requires(bool);
+    template<class T> void ContractFor(T) { };
     template<class T> void Reads(T, ...)  { };
     template<class T> T Result()          { T t; return t; };
     template<class T> void Returns(T)     { };
