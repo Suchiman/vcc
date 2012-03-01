@@ -19,25 +19,34 @@ namespace Microsoft.Research.Vcc
   // ============================================================================================================    
 
   let specialFunctionMap = Map.ofList [
-                                                    "VCC::Activeclaim",   "_vcc_active_claim"
-                                                    "VCC::Claimcount",    "_vcc_ref_cnt"
-                                                    "VCC::Claims",        "_vcc_claims"
-                                                    "VCC::Closed",        "_vcc_closed"
-                                                    "VCC::Extent",        "_vcc_extent"
-                                                    "VCC::Fresh",         "_vcc_is_fresh"
-                                                    "VCC::Mallocroot",    "_vcc_is_malloc_root"
-                                                    "VCC::Mutable",       "_vcc_mutable"
-                                                    "VCC::Owner",         "_vcc_owner"
-                                                    "VCC::Owns",          "_vcc_owns"
-                                                    "VCC::Span",          "_vcc_span"
-                                                    "VCC::Threadlocal",   "_vcc_thread_local2"
-                                                    "VCC::Valid",         "_vcc_typed2"
-                                                    "VCC::Wrapped",       "_vcc_wrapped"
+                                                    "VCC::Activeclaim",         "_vcc_active_claim"
+                                                    "VCC::Approves",            "_vcc_approves"
+                                                    "VCC::Array",               "_vcc_as_array"
+                                                    "VCC::Arrayrange",          "_vcc_array_range"
+                                                    "VCC::Claimcount",          "_vcc_ref_cnt"
+                                                    "VCC::Claims",              "_vcc_claims"
+                                                    "VCC::Closed",              "_vcc_closed"
+                                                    "VCC::Depends",             "_vcc_depends"
+                                                    "VCC::Extent",              "_vcc_extent"
+                                                    "VCC::Extentmutable",       "_vcc_extent_mutable"
+                                                    "VCC::Fresh",               "_vcc_is_fresh"
+                                                    "VCC::Mallocroot",          "_vcc_is_malloc_root"
+                                                    "VCC::Mutable",             "_vcc_mutable"
+                                                    "VCC::Mutablearray",        "_vcc_mutable_array"
+                                                    "VCC::Notshared",           "_vcc_not_shared"
+                                                    "VCC::Objectroot",          "_vcc_object_root"
+                                                    "VCC::Owner",               "_vcc_owner"
+                                                    "VCC::Owns",                "_vcc_owns"
+                                                    "VCC::Programentrypoint",   "_vcc_program_entry_point"
+                                                    "VCC::Span",                "_vcc_span"
+                                                    "VCC::Threadlocal",         "_vcc_thread_local2"
+                                                    "VCC::Valid",               "_vcc_typed2"
+                                                    "VCC::Wrapped",             "_vcc_wrapped"
                                       ]
 
   let specialFunctionWithContractMap = Map.ofList [
-                                                    "VCC::Unwrap",        "_vcc_unwrap"
-                                                    "VCC::Wrap",          "_vcc_wrap"
+                                                    "VCC::Unwrap",              "_vcc_unwrap"
+                                                    "VCC::Wrap",                "_vcc_wrap"
                                                   ]
 
   let incrOpTable = Map.ofList [

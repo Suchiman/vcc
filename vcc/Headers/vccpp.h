@@ -120,7 +120,7 @@ namespace VCC
     template<class T> void Destroyclaim(Claim, T)                 { };
     Set Diff(Set s, Set)                                          { return s; };
     template<class T> Set Domain(T)                               { return 0; };
-    template<class T> T Extent(T t)                               { return t; };
+    template<class T> Set Extent(T t)                             { return 0; };
     template<class T> bool Extentmutable(T t)                     { return true; };
     template<class T> bool Fresh(T)                               { return true; };
     template<class T> void HavocOthers(T)                         { };
