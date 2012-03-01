@@ -159,7 +159,7 @@ namespace Microsoft.Research.Vcc.Cpp
 
     private void ReportOutcomeAssertFailed(IToken assertTok, string kind, string comment)
     {
-      var errnoAndMsg = GetErrorNumber(assertTok.val, 8000);
+      var errnoAndMsg = GetErrorNumber(assertTok.val, 9500);
       ReportError(assertTok, errnoAndMsg.Item1, "{0}{2} '{1}' did not verify.", kind, errnoAndMsg.Item2, comment);
       ReportAllRelated(assertTok);
     }

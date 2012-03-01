@@ -310,6 +310,7 @@ namespace Microsoft.Research.Vcc
           | Call(ec, {FriendlyName = StartsWith "VCC::Reads"}, [], args) ->      { bc with Reads = args @ bc.Reads }
           | Call(ec, {FriendlyName = StartsWith "VCC::Writes"}, [], args) ->     { bc with Writes = args @ bc.Writes }
           | Call(ec, {FriendlyName = StartsWith "VCC::Decreases"}, [], args) ->  { bc with Decreases = args @ bc.Decreases }
+          | Call(ec, {FriendlyName = StartsWith "VCC::Pure"}, [], []) ->         { bc with IsPureBlock = true }
           | _ -> bc
 
         let found = List.fold findContracts' BlockContract.Empty stmts
@@ -326,7 +327,9 @@ namespace Microsoft.Research.Vcc
           | Call(ec, {FriendlyName = StartsWith "VCC::Ensures"}, [], [_])          
           | Call(ec, {FriendlyName = StartsWith "VCC::Reads"}, [], _) 
           | Call(ec, {FriendlyName = StartsWith "VCC::Writes"}, [], _)
-          | Call(ec, {FriendlyName = StartsWith "VCC::Decreases"}, [], _) ->  false
+          | Call(ec, {FriendlyName = StartsWith "VCC::Decreases"}, [], _) 
+          | Call(ec, {FriendlyName = StartsWith "VCC::Pure"}, [], [])
+            ->  false
           | _ -> true
         List.filter isNoContract
 
@@ -347,6 +350,7 @@ namespace Microsoft.Research.Vcc
                 fn.Reads <- bc.Reads
                 fn.Writes <- bc.Writes
                 fn.Variants <- bc.Decreases
+                fn.CustomAttr <- (if bc.IsPureBlock then [VccAttr(AttrIsPure, "")] else []) @ fn.CustomAttr
                 fn.Body <- Some(Block(ec, stmts, None))
               | _ -> ()
           | _ -> ()
