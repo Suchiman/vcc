@@ -80,8 +80,8 @@ namespace VCC
     };
 
     // assert/assume
-    void Assert(bool);
-    void Assume(bool);
+    bool Assert(bool);
+    bool Assume(bool);
 
     // method contracts
     void Admissibility();
