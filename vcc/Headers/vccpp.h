@@ -124,6 +124,7 @@ namespace VCC
     template<class T> Set Extent(T t)                             { return 0; };
     template<class T> bool Extentmutable(T t)                     { return true; };
     template<class T> bool Fresh(T)                               { return true; };
+    bool Fullcontext()                                            { return true; };
     template<class T> void HavocOthers(T)                         { };
     template<class T> bool In(T, Set)                             { return true; }; 
     template<class T> bool In0(T, Set)                            { return true; }; 
