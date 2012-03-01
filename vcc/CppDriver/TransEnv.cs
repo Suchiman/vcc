@@ -31,7 +31,7 @@ namespace Microsoft.Research.Vcc.Cpp
         temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.Filename, false, tok.Line, tok.Column, code, msg)));
       }
 
-      Console.WriteLine("{0}({1},{2}): error {3}: {4}", tok.Filename, tok.Line, tok.Column, code, msg);
+      Console.WriteLine("{0}({1},{2}): error VC{3:0000}: {4}", tok.Filename, tok.Line, tok.Column, code, msg);
     }
 
     public override void Oops(Token tok, string msg)
@@ -59,7 +59,7 @@ namespace Microsoft.Research.Vcc.Cpp
         temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.Filename, true, tok.Line, tok.Column, code, msg)));
       }
 
-      Console.WriteLine("{0}({1},{2}): warning {3}: {4}", tok.Filename, tok.Line, tok.Column, code, msg);
+      Console.WriteLine("{0}({1},{2}): warning VC{3:0000}: {4}", tok.Filename, tok.Line, tok.Column, code, msg);
     }
 
     public void Error(IToken tok, string msg)
