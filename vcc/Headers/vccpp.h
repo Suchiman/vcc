@@ -23,16 +23,8 @@ void free(void*, size_t);
 namespace VCC
 {
     // types
-    template <typename T> class Ghost
-    {
-    private:
-      T _t_member_;
-    public:
-      Ghost(T t);
-      Ghost(const Ghost<T> &g);
-      operator T() const;
-    };
-
+    template<class T> class Ghost;
+    
     class Claim {
     public:
       Claim();
@@ -41,43 +33,65 @@ namespace VCC
       Claim operator=(const Ghost<Claim>&);
       Claim operator=(const volatile Claim&);
       bool operator==(Claim);
+      bool operator==(Ghost<Claim>);
       bool operator!=(Claim);
+      bool operator!=(Ghost<Claim>);
     };
 
     class Integer {
     public:
       bool operator==(Integer);
+      bool operator==(Ghost<Integer>);
       bool operator!=(Integer);
+      bool operator!=(Ghost<Integer>);
       bool operator<(Integer);
+      bool operator<(Ghost<Integer>);
       bool operator>(Integer);
+      bool operator>(Ghost<Integer>);
       bool operator<=(Integer);
+      bool operator<=(Ghost<Integer>);
       bool operator>=(Integer);
+      bool operator>=(Ghost<Integer>);
     };
 
     class Natural {
     public:
       bool operator==(Natural);
+      bool operator==(Ghost<Natural>);
       bool operator!=(Natural);
+      bool operator!=(Ghost<Natural>);
       bool operator<(Natural);
+      bool operator<(Ghost<Natural>);
       bool operator>(Natural);
+      bool operator>(Ghost<Natural>);
       bool operator<=(Natural);
+      bool operator<=(Ghost<Natural>);
       bool operator>=(Natural);
+      bool operator>=(Ghost<Natural>);
     };
 
     class Object {
     public:
       bool operator==(void*);
+      bool operator==(Ghost<Object>);
+      bool operator==(Ghost<Claim>);
       bool operator!=(void*);
-      Object operator=(void*);
+      bool operator!=(Ghost<Object>);
+      bool operator!=(Ghost<Claim>);
+      Object operator=(void*);      
     };
     
     class Set {
     public:
       Set(...);
       bool operator==(Set);
+      bool operator==(Ghost<Set>);
       bool operator!=(Set);
+      bool operator!=(Ghost<Set>);
       bool operator-=(Set);
+      bool operator-=(Ghost<Set>);
       bool operator+=(Set);
+      bool operator+=(Ghost<Set>);
     };
 
     class State {      
@@ -86,7 +100,9 @@ namespace VCC
       State(const volatile State&);
       State(const State&);
       bool operator==(State);
+      bool operator==(Ghost<State>);
       bool operator!=(State);
+      bool operator!=(Ghost<State>);
     };
 
     template <class From, class To> class Map {
@@ -94,7 +110,22 @@ namespace VCC
       To& operator[](From);
       To& operator[](From) volatile;
       bool operator==(Map<From,To>);
+      bool operator==(Ghost<Map<From,To>>);
+      bool operator!=(Map<From,To>);
+      bool operator!=(Ghost<Map<From,To>>);
       volatile Map<From, To> operator=(const Map<From, To>&) volatile;
+    };
+
+    template <typename T> class Ghost
+    {
+    private:
+      T _t_member_;
+    public:
+      Ghost(T t);
+      Ghost(const Ghost<T> &);
+      Ghost(const Ghost<Object> &);
+      operator T() const;
+      bool operator==(T);
     };
 
     // assert/assume
