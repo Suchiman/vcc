@@ -93,10 +93,10 @@ namespace VCC
     void Pure();
     void Requires(bool);
     template<class T> void ContractFor(T) { };
-    template<class T> void Reads(T, ...)  { };
+    void Reads(...);
     template<class T> T Result()          { T t; return t; };
     template<class T> void Returns(T)     { };
-    template<class T> void Writes(T, ...) { };
+    void Writes(...);
 
     // data contracts
     void DynamicOwns();
@@ -112,7 +112,7 @@ namespace VCC
     template<class T> Set Arrayrange(T t, size_t)                 { return 0; };
     template<class T> bool Arraysdisjoint(T, size_t, T, size_t)   { return true; };
     template<class T> T At(State, T t)                            { return t; };
-    template<class T> void Atomic(T, ...)                         { };
+    void Atomic(...);
     template<class T> void BumpVolatileVersion(T)                 { };
     bool Claims(Claim, bool)                                      { return true; };
     template<class T> int Claimcount(T)                           { return 0; };
@@ -136,7 +136,7 @@ namespace VCC
     template<class T> Claim Makeclaim(T, bool)                    { };
     template<class T> bool Mallocroot(T)                          { return true; };
     template<class T> bool Matchulong(T)                          { return true; };
-    template<class T> bool Mine(T, ...)                           { return true; };
+    bool Mine(...);
     template<class T> bool Mutable(T)                             { return true; };
     template<class T> bool Mutablearray(T, int)                   { return true; };
     template<class T> bool Nonprimitiveptr(T)                     { return true; };
@@ -152,7 +152,7 @@ namespace VCC
     template<class T> bool Unchanged(T)                           { return true; };
     Set Union(Set s, Set)                                         { return s; };
     void* Universe()                                              { return 0; };
-    template<class T> void Unwrapping(T, ...)                     { };
+    void Unwrapping(...);
     template<class T> bool Valid(T)                               { return true; };
     template<class T> T Whenclaimed(T t)                          { return t; };
     template<class T> bool Wrapped(T)                             { return true; };
