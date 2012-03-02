@@ -1462,7 +1462,7 @@ module Microsoft.Research.Vcc.CAST
           | Skip _ -> wr "skip;\r\n"
           | Ref (_, v) -> wr (v.Name)
           | Prim (_, op, args) -> doArgs (op.ToString()) args
-          | Expr.Call (_, fn, tArgs, args) -> doArgsAndTArgsb b  fe (fun (t:Type) -> t.WriteTo b) fn.Name args tArgs
+          | Expr.Call (_, fn, tArgs, args) -> doArgsAndTArgsb b  fe (fun (t:Type) -> t.WriteTo b) fn.FriendlyName args tArgs
           | BoolLiteral (_, v) -> wr (if v then "true" else "false")
           | IntLiteral (_, l) -> wr (l.ToString())
           | Deref (_, e) -> wr "*("; fe e; wr ")"
