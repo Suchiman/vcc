@@ -19,11 +19,24 @@
 namespace VCC
 {
     // types
+    template <typename T> class Ghost
+    {
+    private:
+      T _t_member_;
+
+    public:
+      Ghost(T t);
+      Ghost(const Ghost<T> &g);
+      operator T() const;
+    };
+
     class Claim {
     public:
       Claim();
-      Claim(const volatile Claim&);
       Claim(const Claim&);
+      Claim(const volatile Claim&);
+      Claim operator=(const Ghost<Claim>&);
+      Claim operator=(const volatile Claim&);
       bool operator==(Claim);
       bool operator!=(Claim);
     };
@@ -161,17 +174,6 @@ namespace VCC
     template<class T> Set Owns(T);
     template<class T> Object Owner(T);
    
-    template <typename T> class Ghost
-    {
-    private:
-      T _t_member_;
-
-    public:
-      Ghost(T t);
-      Ghost(const Ghost<T> &g);
-      operator T() const;
-    };
-    
     template <typename T> class GhostOut
     {
     private:
