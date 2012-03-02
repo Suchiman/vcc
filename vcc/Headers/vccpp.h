@@ -65,6 +65,7 @@ namespace VCC
     public:
       bool operator==(void*);
       bool operator!=(void*);
+      Object operator=(void*);
     };
     
     class Set {
@@ -122,7 +123,7 @@ namespace VCC
     template<class T> void Always(T, bool);
     template<class T> T* Alloc();
     template<class T1, class T2> bool Approves(T1, T2);
-    template<class T> T Array(T t, int);
+    template<class T> T Array(T t, size_t);
     template<class T> Set Arrayrange(T t, size_t);
     template<class T> bool Arraysdisjoint(T, size_t, T, size_t);
     template<class T> T At(State, T t);
