@@ -453,6 +453,7 @@ namespace Microsoft.Research.Vcc
           | VarKind.QuantBound
           | VarKind.SpecParameter
           | VarKind.OutParameter
+          | VarKind.Static
           | VarKind.Parameter -> () 
       | Expr.Quant (_, qd) ->
         for v in qd.Variables do

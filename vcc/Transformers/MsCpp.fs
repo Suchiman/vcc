@@ -148,6 +148,9 @@ namespace Microsoft.Research.Vcc
     let rewriteAssignOps self = 
 
       // rewrite '+=' and '++' like operations
+      
+      // TODO: handle situations where the location incremented involves a func call, which should not be duplicated
+      // this is also wrong in CCI at the moment 
     
       let handlePrePostIncrDecr e op isPost =
         let (init, tmp) = cache helper "incdec" e VarKind.Local
@@ -175,14 +178,14 @@ namespace Microsoft.Research.Vcc
 
     let rewriteExtraMacros self = 
 
-      // TODO: handle situations where the location incremented involves a func call, which should not be duplicated
-      // this is also wrong in CCI at the moment 
       function
 
-        | Macro(ec, "init", [arr; Macro(_, "array_init", args)]) ->         
+        | Macro(ec, "init", [arr; Macro(_, "array_init", Skip(_) :: args)]) ->         
           let assignIdx idx (arg:Expr) = 
             Expr.Macro({ec with Type = Type.Void}, "=", [Expr.Deref({arr.Common with Type = arg.Type}, Index(arr.Common, arr, mkInt idx)); arg])
           Some(Expr.MkBlock(List.mapi assignIdx (List.map self args)))
+
+        | Macro(ec, "init", [_; Skip(_)]) -> Some(Skip(ec))
 
         | Macro(ec, "init", [lhs; rhs]) -> Some(Macro(ec, "=", [self lhs; self rhs]))
         
@@ -722,6 +725,16 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let rewriteGlobalsInitialization = 
+      
+      let removeSkipInit = function
+        | Top.Global(v, Some(Skip(_))) -> Top.Global(v, None)
+        | t -> t
+
+      List.map removeSkipInit
+
+    // ============================================================================================================    
+
     let removeSpecialDecls decls =
 
       let filterSpecialDecls = function
@@ -736,6 +749,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
     helper.AddTransformer ("cpp-errors", TransHelper.Expr reportErrors)
+    helper.AddTransformer ("cpp-globals-init", TransHelper.Decl rewriteGlobalsInitialization)
     helper.AddTransformer ("cpp-special-args", TransHelper.Decl specialArgumentHandling)
     helper.AddTransformer ("cpp-blocks", TransHelper.Expr normalizeBlocks)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)

@@ -120,8 +120,13 @@ namespace Microsoft.Research.Vcc.Cpp
       return true;
     }
 
-    public bool Verify(FSharpList<CAST.Top> decls, string reference)
+    public bool Verify(FSharpList<CAST.Top> decls, string reference, bool dumpAstBeforeTransformations = false)
     {
+
+      if (dumpAstBeforeTransformations) {
+        TransUtil.dumpDecls("AST after Conversion", false, decls);
+      }
+
       var errorReporter = new VerificationErrorReporter();
       var checker = string.IsNullOrEmpty(reference) ? null : new ExpectedOutputChecker(reference);
 

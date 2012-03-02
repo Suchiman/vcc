@@ -99,6 +99,7 @@ module Microsoft.Research.Vcc.CAST
     | OutParameter
     | Local
     | SpecLocal
+    | Static
     | Global
     | ConstGlobal
     | SpecGlobal
