@@ -84,11 +84,6 @@ namespace Microsoft.Research.Vcc.Cpp
       }
     }
 
-    private void ReportError(IToken tok, string fmt, params object[] args)
-    {
-      ReportError(tok, 0, fmt, args);
-    }
-
     private void ReportError(IToken tok, int errno, string fmt, params object[] args)
     {
       var msg = String.Format(fmt, args);
@@ -174,7 +169,7 @@ namespace Microsoft.Research.Vcc.Cpp
 
       string reqMsg = reqTok.val;
 
-      ReportError(callTok, "Call '{0}' did not verify{1}.", RemoveWhiteSpace(callTok.val), comment);
+      ReportError(callTok, 9502, "Call '{0}' did not verify{1}.", RemoveWhiteSpace(callTok.val), comment);
       ReportRelated(reqTok, "Precondition: '{0}'.", reqMsg);
       ReportAllRelated(reqTok);      
     }
@@ -185,7 +180,7 @@ namespace Microsoft.Research.Vcc.Cpp
       if (retTok.line == 0) retTok = ensTok;
       if (ensTok.line == 0) ensTok = retTok;
 
-      ReportError(retTok, "Post condition{0} '{1}' did not verify.", comment, msg);
+      ReportError(retTok, 9501, "Post condition{0} '{1}' did not verify.", comment, msg);
       ReportRelated(ensTok, "Location of post condition.");
       ReportAllRelated(ensTok);
     }
@@ -202,7 +197,7 @@ namespace Microsoft.Research.Vcc.Cpp
 
     private void ReportRelated(IToken tok, string fmt, params string[] args)
     {
-      ReportError(tok, "(related information) " + fmt, args);
+      ReportError(tok, 9599, "(related information) " + fmt, args);
     }
 
     public static string RemoveWhiteSpace(string str)
