@@ -578,6 +578,7 @@ namespace Microsoft.Research.Vcc
       function
       | Block(ec, [Block(_, _, _) as block], None) -> Some(self block)
       | Block(ec, stmts, bc) -> Some(Block(ec, loop [] stmts, bc))
+      | Return(ec, Some(Skip(_))) -> Some(Return(ec, None))
       | _ -> None
     
     // ============================================================================================================    
