@@ -236,9 +236,6 @@ namespace Microsoft.Research.Vcc
             | _ -> ()
           Some(self cast)
 
-        | Macro(ec, "do", [contract; body; cond]) ->
-          Some(Macro(ec, "doUntil", [contract; body; Expr.Prim(cond.Common, Op("!", Processed), [cond])]))
-
         | _ -> None
   
     // ============================================================================================================    
@@ -268,6 +265,7 @@ namespace Microsoft.Research.Vcc
     let insertBoolConversion self = 
 
       // insert conversion to bool where this is expected later
+      // turn "do" (while) into "doUntil"
 
       let toBool (expr:Expr) = 
         match expr.Type with
@@ -277,6 +275,16 @@ namespace Microsoft.Research.Vcc
       function 
         | Prim(ec, (Op(("!"|"||"|"&&"), _) as op), args) ->
           Some(Prim(ec, op, args |> List.map self |> List.map toBool))
+        | Macro(ec, "=", [lhs; rhs]) when lhs.Type = Type.Bool -> 
+          Some(Macro(ec, "=", [self lhs; toBool rhs]))
+        | Macro(ec, "for", [contr; init; cond; incr; body]) ->
+          Some(Macro(ec, "for", [self contr; self init; toBool cond; self incr; self body]))
+        | Macro(ec, "while", [contr; cond; body]) ->
+          Some(Macro(ec, "while", [self contr; toBool cond; self body]))
+        | Macro(ec, "do", [contr; body; cond]) ->
+          Some(Macro(ec, "doUntil", [self contr; self body; Prim({cond.Common with Type = Type.Bool}, Op("!", Processed), [toBool cond])]))
+        | If(ec, tc, cond, _then, _else) ->
+          Some(If(ec, Option.map self tc, toBool cond, self _then, self _else))
         | _ -> None
           
     // ============================================================================================================    
