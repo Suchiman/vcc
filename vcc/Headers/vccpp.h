@@ -14,6 +14,10 @@
 
 #define _(...) /* nothing */
 
+#else
+
+void free(void*, size_t);
+
 #endif 
 
 namespace VCC
@@ -23,7 +27,6 @@ namespace VCC
     {
     private:
       T _t_member_;
-
     public:
       Ghost(T t);
       Ghost(const Ghost<T> &g);
