@@ -50,6 +50,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Programentrypoint",   "_vcc_program_entry_point"
                                                     "VCC::Span",                "_vcc_span"
                                                     "VCC::Threadlocal",         "_vcc_thread_local2"
+                                                    "VCC::Threadlocalarray",    "_vcc_is_thread_local_array"
                                                     "VCC::Valid",               "_vcc_typed2"
                                                     "VCC::Wrapped",             "_vcc_wrapped"
                                       ]
