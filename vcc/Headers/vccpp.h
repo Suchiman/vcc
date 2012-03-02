@@ -90,6 +90,7 @@ namespace VCC
       To& operator[](From);
       To& operator[](From) volatile;
       bool operator==(Map<From,To>);
+      volatile Map<From, To> operator=(const Map<From, To>&) volatile;
     };
 
     // assert/assume
