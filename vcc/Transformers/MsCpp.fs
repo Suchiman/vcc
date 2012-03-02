@@ -18,6 +18,16 @@ namespace Microsoft.Research.Vcc
 
   // ============================================================================================================    
 
+  let functionsReturningsClassValues = Set.ofList [
+                                                    "VCC::Arrayrange"
+                                                    "VCC::Extent"
+                                                    "VCC::Domain"
+                                                    "VCC::Makeclaim"
+                                                    "VCC::Now"
+                                                    "VCC::Union"
+                                                    "VCC::Universe"
+                                                  ]
+
   let specialFunctionMap = Map.ofList [
                                                     "VCC::Activeclaim",         "_vcc_active_claim"
                                                     "VCC::Approves",            "_vcc_approves"
@@ -68,6 +78,16 @@ namespace Microsoft.Research.Vcc
                                     "<<=", ("<<", false)
                                     ">>=", (">>", false)
                                   ]
+
+
+  let specialTypesMap = Map.ofList  [
+                                      "VCC::Claim",     Type.Claim
+                                      "VCC::Integer",   Type.MathInteger MathIntKind.Signed
+                                      "VCC::Natural",   Type.MathInteger MathIntKind.Unsigned
+                                      "VCC::Object",    Type.ObjectT
+                                      "VCC::Set",       Type.PtrSet
+                                      "VCC::State",     Type.MathState
+                                    ] 
 
   let sanitizeFullName (fullName : string) =
     let s = new System.Text.StringBuilder(fullName)
@@ -174,6 +194,17 @@ namespace Microsoft.Research.Vcc
 
         | _ -> None
 
+    // ============================================================================================================    
+
+    let removeObjectCopyOperations self = function
+
+      // For some VCC-builtin functions, the C++ compiler will introduce extra object copy operations
+      // which we do not need and get rid of here
+
+      | Macro(_, "implicit_cast", [Cast(_, _, Deref(ec, Call(_, fn, [], args)))]) 
+        when Set.contains (nongeneric fn.FriendlyName) functionsReturningsClassValues ->
+        Some(Call(ec, fn, [], List.map self args))
+      | _ -> None
     // ============================================================================================================    
 
     let rewriteExtraMacros self = 
@@ -725,8 +756,27 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let rewriteSpecialTypes decls = 
+
+      // turn types from the VCC:: namespace into their CAST counterparts
+
+      let typeSubst = function
+        | Type.Ref(td) when Map.containsKey td.Name specialTypesMap ->
+          Some(Map.find td.Name specialTypesMap)
+        | Type.Ref(td) when td.Name.StartsWith("VCC::Map") ->
+          Some(Type.Bogus) // TODO: handle map type
+        | _ -> None
+
+      // TODO: handle return values, parameter types, field types
+
+      decls |> mapExpressions (fun _ (e:Expr) -> e.SubstType(typeSubst, new Dict<_,_>()))
+
+    // ============================================================================================================    
+
     let rewriteGlobalsInitialization = 
       
+      // rewrite Global(v, Some(skip)) to Global(v, None))
+
       let removeSkipInit = function
         | Top.Global(v, Some(Skip(_))) -> Top.Global(v, None)
         | t -> t
@@ -738,6 +788,7 @@ namespace Microsoft.Research.Vcc
     let removeSpecialDecls decls =
 
       let filterSpecialDecls = function
+        | Top.TypeDecl({Name = StartsWith "VCC::"}) -> false
         | Top.FunctionDecl({FriendlyName = StartsWith "VCC::"}) -> false
         | Top.Global({Name = StartsWith "VCC::"}, _) -> false
         | _ -> true
@@ -751,6 +802,8 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-errors", TransHelper.Expr reportErrors)
     helper.AddTransformer ("cpp-globals-init", TransHelper.Decl rewriteGlobalsInitialization)
     helper.AddTransformer ("cpp-special-args", TransHelper.Decl specialArgumentHandling)
+    helper.AddTransformer ("cpp-special-types", TransHelper.Decl rewriteSpecialTypes)
+    helper.AddTransformer ("cpp-remove-object-copying", TransHelper.Expr removeObjectCopyOperations)
     helper.AddTransformer ("cpp-blocks", TransHelper.Expr normalizeBlocks)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
     helper.AddTransformer ("cpp-field-attributes", TransHelper.Decl rewriteFieldAttributes)
