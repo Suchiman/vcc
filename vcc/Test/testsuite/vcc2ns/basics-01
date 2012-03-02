@@ -1,0 +1,10 @@
+`/omitrw
+
+#include <vcc.h>
+
+void foo(int *a) {
+	int b = *a;
+}
+`
+Verification of foo succeeded.
+`
