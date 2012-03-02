@@ -354,8 +354,10 @@ namespace Microsoft.Research.Vcc
 
     let collectContracts decls =
 
-      // move contracts from list of statements to the surrounding block or function
-      
+      // 1) move contracts from list of statements to the surrounding block or function
+      // 2) and move contracts from contract functions to their target functions
+
+      // Step 1
 
       let findContracts stmts =
 
@@ -437,7 +439,48 @@ namespace Microsoft.Research.Vcc
               | _ -> fn.Body <- Some body'
           | _ -> ()
 
-      decls
+      // Step 2)
+
+      let (|IsOobContractFor|_|) = function
+        | Block(_, Call(ec, { FriendlyName = StartsWith "VCC::ContractFor" }, [], fptr) :: _, _) -> 
+          match fptr with
+            | [Cast(_, _, Call(_, fn, _, _))] -> Some(fn)
+            | _ -> 
+              helper.Oops(ec.Token, "unexpected function reference structure in VCC::ContractFor")
+              None
+        | _ -> None
+
+      let oobContracts = new Dict<Function,Function>()
+
+      for d in decls do
+        match d with
+          | Top.FunctionDecl({Body = Some (IsOobContractFor fn)} as fnContr) -> 
+            match oobContracts.TryGetValue(fn) with
+              | true, fn' -> helper.Error(fnContr.Token, 9802, "multiple out-of-band contracts for '" + fn.FriendlyName + "'", Some(fn'.Token))
+              | false, _ -> oobContracts.Add(fn, fnContr)
+          | _ -> ()
+
+      for d in decls do
+        match d with
+          | Top.FunctionDecl(fn) -> 
+            match oobContracts.TryGetValue(fn) with
+              | true, fnContr ->
+                let notEmpty l = not (List.isEmpty l)
+                if notEmpty fn.CustomAttr || notEmpty fn.Reads || notEmpty fn.Writes || notEmpty fn.Requires || notEmpty fn.Ensures || notEmpty fn.Variants then
+                  helper.Error(fn.Token, 9803, "function '" + fn.FriendlyName + "' cannot have both contracts and out-of-band contracts", Some(fnContr.Token))
+                else
+                  fn.Reads <- fnContr.Reads
+                  fn.Writes <- fnContr.Writes
+                  fn.Requires <- fnContr.Requires
+                  fn.Ensures <- fnContr.Ensures
+                  fn.Variants <- fnContr.Variants
+                  fn.CustomAttr <- fnContr.CustomAttr
+              | false, _ -> ()
+          | _ -> ()
+
+      // the contract functions will later be filtered out by name, no need to filter here
+
+      decls 
 
     // ============================================================================================================    
 
