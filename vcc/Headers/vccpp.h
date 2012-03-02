@@ -92,10 +92,10 @@ namespace VCC
     void Invariant(bool);
     void Pure();
     void Requires(bool);
-    template<class T> void ContractFor(T) { };
+    template<class T> void ContractFor(T);
     void Reads(...);
-    template<class T> T Result()          { T t; return t; };
-    template<class T> void Returns(T)     { };
+    template<class T> T Result();
+    template<class T> void Returns(T);
     void Writes(...);
 
     // data contracts
@@ -103,63 +103,63 @@ namespace VCC
     void VolatileOwns();
     
     // object state
-    template<class T> bool Activeclaim(T)                         { return true; };
-    template<class T1, class T2> bool Addreq(T1, T2)              { return true; };
-    template<class T> void Always(T, bool)                        { };
-    template<class T> T* Alloc()                                  { return 0; };
-    template<class T1, class T2> bool Approves(T1, T2)            { return true; };
-    template<class T> T Array(T t, int)                           { return t; };
-    template<class T> Set Arrayrange(T t, size_t)                 { return 0; };
-    template<class T> bool Arraysdisjoint(T, size_t, T, size_t)   { return true; };
-    template<class T> T At(State, T t)                            { return t; };
+    template<class T> bool Activeclaim(T);
+    template<class T1, class T2> bool Addreq(T1, T2);
+    template<class T> void Always(T, bool);
+    template<class T> T* Alloc();
+    template<class T1, class T2> bool Approves(T1, T2);
+    template<class T> T Array(T t, int);
+    template<class T> Set Arrayrange(T t, size_t);
+    template<class T> bool Arraysdisjoint(T, size_t, T, size_t);
+    template<class T> T At(State, T t);
     void Atomic(...);
-    template<class T> void BumpVolatileVersion(T)                 { };
-    bool Claims(Claim, bool)                                      { return true; };
-    template<class T> int Claimcount(T)                           { return 0; };
-    template<class T> bool Claimsobject(Claim, T)                 { return true; };
-    template<class T> bool Closed(T)                              { return true; };
-    template<class T1, class T2> bool Depends(T1, T2)             { return true; }
-    template<class T> void Destroyclaim(Claim, T)                 { };
-    Set Diff(Set s, Set)                                          { return s; };
-    template<class T> Set Domain(T)                               { return 0; };
-    template<class T> Set Extent(T t)                             { return 0; };
-    template<class T> bool Extentmutable(T t)                     { return true; };
-    template<class T> bool Fresh(T)                               { return true; };
-    bool Fullcontext()                                            { return true; };
-    template<class T> void HavocOthers(T)                         { };
-    template<class T> bool In(T, Set)                             { return true; }; 
-    template<class T> bool In0(T, Set)                            { return true; }; 
-    template<class T> bool Inv(T)                                 { return true; };
-    template<class T, class V> bool Is(V)                         { return true; };    
-    template<class T> T Labeled(const char*, T t)                 { return t; };
-    template<class T1, class T2, class L> Map<T1, T2> Lambda(L)   { Map<T1, T2> m; return m; };
-    template<class T> Claim Makeclaim(T, bool)                    { };
-    template<class T> bool Mallocroot(T)                          { return true; };
-    template<class T> bool Matchulong(T)                          { return true; };
+    template<class T> void BumpVolatileVersion(T);
+    bool Claims(Claim, bool);
+    template<class T> int Claimcount(T);
+    template<class T> bool Claimsobject(Claim, T);
+    template<class T> bool Closed(T);
+    template<class T1, class T2> bool Depends(T1, T2);
+    template<class T> void Destroyclaim(Claim, T);
+    Set Diff(Set s, Set);
+    template<class T> Set Domain(T);
+    template<class T> Set Extent(T t);
+    template<class T> bool Extentmutable(T t);
+    template<class T> bool Fresh(T);
+    bool Fullcontext();
+    template<class T> void HavocOthers(T);
+    template<class T> bool In(T, Set);
+    template<class T> bool In0(T, Set);
+    template<class T> bool Inv(T);
+    template<class T, class V> bool Is(V);
+    template<class T> T Labeled(const char*, T t);
+    template<class T1, class T2, class L> Map<T1, T2> Lambda(L);
+    template<class T> Claim Makeclaim(T, bool);
+    template<class T> bool Mallocroot(T);
+    template<class T> bool Matchulong(T);
     bool Mine(...);
-    template<class T> bool Mutable(T)                             { return true; };
-    template<class T> bool Mutablearray(T, int)                   { return true; };
-    template<class T> bool Nonprimitiveptr(T)                     { return true; };
-    template<class T> bool Notshared(T)                           { return true; };
-    State Now()                                                   { State s; return s; };
-    template<class T> bool Objectroot(T)                          { return true; };
-    template<class T> T Old(T)                                    { T t; return t; };
-    template<class T> bool Onunwrap(T, bool)                      { return true; };
-    bool Programentrypoint()                                      { return true; };
-    template<class T> int Span(T)                                 { return 0; };
-    template<class T> bool Threadlocal(T)                         { return true; };
-    template<class T> bool Threadlocalarray(T, int)               { return true; };
-    template<class T> bool Unchanged(T)                           { return true; };
-    Set Union(Set s, Set)                                         { return s; };
-    void* Universe()                                              { return 0; };
+    template<class T> bool Mutable(T);
+    template<class T> bool Mutablearray(T, int);
+    template<class T> bool Nonprimitiveptr(T);
+    template<class T> bool Notshared(T);
+    State Now();
+    template<class T> bool Objectroot(T);
+    template<class T> T Old(T);
+    template<class T> bool Onunwrap(T, bool);
+    bool Programentrypoint();
+    template<class T> int Span(T);
+    template<class T> bool Threadlocal(T);
+    template<class T> bool Threadlocalarray(T, int);
+    template<class T> bool Unchanged(T);
+    Set Union(Set s, Set);
+    Set Universe();
     void Unwrapping(...);
-    template<class T> bool Valid(T)                               { return true; };
-    template<class T> T Whenclaimed(T t)                          { return t; };
-    template<class T> bool Wrapped(T)                             { return true; };
-    template<class T> bool Wrapped0(T)                            { return true; };
+    template<class T> bool Valid(T);
+    template<class T> T Whenclaimed(T t);
+    template<class T> bool Wrapped(T);
+    template<class T> bool Wrapped0(T);
     
-    template<class T> Set Owns(T)                                 { Set s; return s; };
-    template<class T> Object Owner(T)                             { Object o; return o; };
+    template<class T> Set Owns(T);
+    template<class T> Object Owner(T);
    
     template <typename T> class Ghost
     {
@@ -211,14 +211,7 @@ namespace VCC
     bool Implies;
 
     // templates for quantifiers
-    template<class T> bool ForAll(T)  { return true; };
-    template<class T> bool Exists(T)  { return true; };
+    template<class T> bool ForAll(T);
+    template<class T> bool Exists(T);
     void Trigger(...);
-
-    // helper function to ensure that we find certain functions in the AST
-    void asthelper() 
-    {
-      VCC::Wrap(0);
-      VCC::Unwrap(0);
-    }
 }
