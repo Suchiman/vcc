@@ -222,9 +222,16 @@ namespace Microsoft.Research.Vcc
       // For some VCC-builtin functions, the C++ compiler will introduce extra object copy operations
       // which we do not need and get rid of here
 
+      // also, when passing structs, extra temporary variables are introduced, which we als remove here
+
       | Macro(_, "implicit_cast", [Cast(_, _, Deref(ec, Call(_, fn, [], args)))]) 
         when Set.contains (nongeneric fn.FriendlyName) functionsReturningsClassValues ->
         Some(Call(ec, fn, [], List.map self args))
+
+      | Macro(_, "comma", [Macro(_, "=", [Ref(_, v); expr]); Ref(_, v')]) when v.Name = v'.Name ->
+        // TODO: compare variable directly and not by name once the AST convertor re-uses variables for ALLOTEMPS
+        Some(self expr)
+
       | _ -> None
 
     // ============================================================================================================    
