@@ -164,7 +164,7 @@ namespace VCC
     void Atomic(...);
     template<class T> void BumpVolatileVersion(T);
     bool Claims(Claim, bool);
-    template<class T> int Claimcount(T);
+    template<class T> unsigned int Claimcount(T);
     template<class T> bool Claimsobject(Claim, T);
     template<class T> bool Closed(T);
     template<class T1, class T2> bool Depends(T1, T2);
@@ -184,10 +184,9 @@ namespace VCC
     template<class T1, class T2, class L> Map<T1, T2> Lambda(L);
     template<class T> Claim Makeclaim(T, bool);
     template<class T> bool Mallocroot(T);
-    template<class T> bool Matchulong(T);
     bool Mine(...);
     template<class T> bool Mutable(T);
-    template<class T> bool Mutablearray(T, int);
+    template<class T> bool Mutablearray(T, size_t);
     template<class T> bool Nonprimitiveptr(T);
     template<class T> bool Notshared(T);
     State Now();
@@ -197,7 +196,7 @@ namespace VCC
     bool Programentrypoint();
     template<class T> int Span(T);
     template<class T> bool Threadlocal(T);
-    template<class T> bool Threadlocalarray(T, int);
+    template<class T> bool Threadlocalarray(T, size_t);
     template<class T> bool Unchanged(T);
     Set Union(Set s, Set);
     Set Universe();
@@ -232,6 +231,18 @@ namespace VCC
     
     template <typename T> Ghost<T> CreateGhost(T);
     template <typename T> GhostOut<T> CreateGhostOut(T);
+
+    // matching helper functions
+
+    bool Matchulong(unsigned __int64) {
+      _(pure)
+      _(ensures \result<bool> == true)
+    };
+
+    bool Matchlong(__int64) {
+      _(pure)
+      _(ensures \result<bool> == true)
+    };
 
     // statements
     template<class T> void Wrap(T o)

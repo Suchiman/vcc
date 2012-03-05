@@ -57,6 +57,8 @@ namespace Microsoft.Research.Vcc
                                       ]
 
   let specialFunctionWithContractMap = Map.ofList [
+                                                    "VCC::Matchlong",           "_vcc_match_long"
+                                                    "VCC::Matchulong",          "_vcc_match_ulong"
                                                     "VCC::Unwrap",              "_vcc_unwrap"
                                                     "VCC::Wrap",                "_vcc_wrap"
                                                   ]
