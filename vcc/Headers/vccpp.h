@@ -94,6 +94,10 @@ namespace VCC
       bool operator+=(Ghost<Set>);
     };
 
+    class Objset: public Set
+    {
+    };
+
     class State {      
     public:
       State();
@@ -127,7 +131,7 @@ namespace VCC
       operator T() const;
       bool operator==(T);
     };
-
+        
     // assert/assume
     void Assert(bool);
     void Assume(bool);
@@ -169,7 +173,8 @@ namespace VCC
     template<class T> bool Closed(T);
     template<class T1, class T2> bool Depends(T1, T2);
     template<class T> void Destroyclaim(Claim, T);
-    Set Diff(Set s, Set);
+    Set Diff(Set, Set);
+    bool Disjoint(Set, Set);
     template<class T> Set Domain(T);
     template<class T> Set Extent(T);
     template<class T> bool Extentmutable(T);
