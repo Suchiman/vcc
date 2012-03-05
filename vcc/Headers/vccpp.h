@@ -171,16 +171,17 @@ namespace VCC
     template<class T> void Destroyclaim(Claim, T);
     Set Diff(Set s, Set);
     template<class T> Set Domain(T);
-    template<class T> Set Extent(T t);
-    template<class T> bool Extentmutable(T t);
+    template<class T> Set Extent(T);
+    template<class T> bool Extentmutable(T);
     template<class T> bool Fresh(T);
     bool Fullcontext();
     template<class T> void HavocOthers(T);
     template<class T> bool In(T, Set);
     template<class T> bool In0(T, Set);
+    Set Inter(Set, Set);
     template<class T> bool Inv(T);
     template<class T, class V> bool Is(V);
-    template<class T> T Labeled(const char*, T t);
+    template<class T> T Labeled(const char*, T);
     template<class T1, class T2, class L> Map<T1, T2> Lambda(L);
     template<class T> Claim Makeclaim(T, bool);
     template<class T> bool Mallocroot(T);
@@ -198,11 +199,11 @@ namespace VCC
     template<class T> bool Threadlocal(T);
     template<class T> bool Threadlocalarray(T, size_t);
     template<class T> bool Unchanged(T);
-    Set Union(Set s, Set);
+    Set Union(Set, Set);
     Set Universe();
     void Unwrapping(...);
     template<class T> bool Valid(T);
-    template<class T> T Whenclaimed(T t);
+    template<class T> T Whenclaimed(T);
     template<class T> bool Wrapped(T);
     template<class T> bool Wrapped0(T);
     
