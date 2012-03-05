@@ -312,7 +312,7 @@ namespace Microsoft.Research.Vcc
         match d with
           | Top.TypeDecl td ->
             for f in td.Fields do
-              if f.Name = "" || f.Name.StartsWith "#" then
+              if f.Name = "" || f.Name.StartsWith "#" || f.Name.Contains "<unnamed-tag>" then
                 match f.Type with
                   | Type.Ref td' ->
                     td'.IsNestedAnon <- true
