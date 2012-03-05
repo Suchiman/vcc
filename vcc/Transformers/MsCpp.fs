@@ -42,7 +42,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Fresh",               "_vcc_is_fresh"
                                                     "VCC::Mallocroot",          "_vcc_is_malloc_root"
                                                     "VCC::Mutable",             "_vcc_mutable"
-                                                    "VCC::Mutablearray",        "_vcc_mutable_array"
+                                                    "VCC::Mutablearray",        "_vcc_is_mutable_array"
                                                     "VCC::Notshared",           "_vcc_not_shared"
                                                     "VCC::Objectroot",          "_vcc_object_root"
                                                     "VCC::Owner",               "_vcc_owner"
@@ -157,7 +157,7 @@ namespace Microsoft.Research.Vcc
 
       function
         | IntLiteral(ec, i) when ec.Type = Type.Bool -> Some(BoolLiteral(ec, i.IsOne))
-        | IntLiteral(ec, i) when ec.Type._IsPtr -> Some(Macro(ec, "null", []))
+        | IntLiteral(ec, i) when ec.Type._IsPtr && i.IsZero -> Some(Macro(ec, "null", []))
         | Macro(ic, "implicit_cast", [Cast(ec, cs, e)]) when ec.Type._IsInteger ->
           let e' = self e
           if icil ec.Type e' then 
@@ -176,7 +176,7 @@ namespace Microsoft.Research.Vcc
       // TODO: handle situations where the location incremented involves a func call, which should not be duplicated
       // this is also wrong in CCI at the moment 
     
-      let handlePrePostIncrDecr (e:Expr) op isPost =
+      let handlePrePostIncrDecr (e:Expr) op isPost t =
         let (init, tmp) = 
           if isPost then
             let tmp = getTmp helper "incdec" e.Type VarKind.Local
@@ -184,7 +184,7 @@ namespace Microsoft.Research.Vcc
           else 
             [], [e]
         
-        let calc = Expr.Prim(e.Common, Op(op, CheckedStatus.Checked), tmp @ [IntLiteral(e.Common, one)])
+        let calc = Expr.Prim(e.Common, Op(op, CheckedStatus.Checked), tmp @ [IntLiteral({e.Common with Type = t}, one)])
         let assign = Macro(e.Common, "=", [e; calc])
         Expr.MkBlock(init @ [assign] @ tmp) 
 
@@ -194,9 +194,9 @@ namespace Microsoft.Research.Vcc
 
       function
 
-        | Macro(_, incrOp, [e; _]) when incrOpTable.ContainsKey incrOp -> 
+        | Macro(_, incrOp, [e; arg]) when incrOpTable.ContainsKey incrOp -> 
           let (op, isPost) = Map.find incrOp incrOpTable
-          Some(handlePrePostIncrDecr (self e) op isPost)
+          Some(handlePrePostIncrDecr (self e) op isPost arg.Type)
         
         | Macro(ec, assignOp, [e0; e1]) when assignOpTable.ContainsKey assignOp ->
           let (op, isChecked) = Map.find assignOp assignOpTable
