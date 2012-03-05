@@ -272,6 +272,8 @@ namespace Microsoft.Research.Vcc
             | _ -> ()
           Some(self cast)
 
+        | Macro(ec, "comma", args) -> Some(Macro(ec, "fake_block", List.map self args))
+
         | _ -> None
   
     // ============================================================================================================    
