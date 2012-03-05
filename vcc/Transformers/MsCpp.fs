@@ -176,11 +176,17 @@ namespace Microsoft.Research.Vcc
       // TODO: handle situations where the location incremented involves a func call, which should not be duplicated
       // this is also wrong in CCI at the moment 
     
-      let handlePrePostIncrDecr e op isPost =
-        let (init, tmp) = cache helper "incdec" e VarKind.Local
-        let calc = Expr.Prim(e.Common, Op(op, CheckedStatus.Checked), [tmp; IntLiteral(e.Common, one)])
+      let handlePrePostIncrDecr (e:Expr) op isPost =
+        let (init, tmp) = 
+          if isPost then
+            let tmp = getTmp helper "incdec" e.Type VarKind.Local
+            [VarDecl(voidBogusEC(), tmp, []); Macro(voidBogusEC(), "=", [mkRef tmp; e])], [mkRef tmp]
+          else 
+            [], [e]
+        
+        let calc = Expr.Prim(e.Common, Op(op, CheckedStatus.Checked), tmp @ [IntLiteral(e.Common, one)])
         let assign = Macro(e.Common, "=", [e; calc])
-        if isPost then Expr.MkBlock(init @ [assign]) else Expr.MkBlock(init @ [assign; tmp])
+        Expr.MkBlock(init @ [assign] @ tmp) 
 
       let handleAssignOp ec op (e0:Expr) e1 =
         let calc = Expr.Prim(e0.Common, op, [e0; e1])
