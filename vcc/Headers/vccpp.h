@@ -158,6 +158,7 @@ namespace VCC
     
     // object state
     template<class T> bool Activeclaim(T);
+    template<class T> int Addr(T);
     template<class T1, class T2> bool Addreq(T1, T2);
     template<class T> void Always(T, bool);
     template<class T> T* Alloc();
@@ -167,6 +168,7 @@ namespace VCC
     template<class T> bool Arraysdisjoint(T, size_t, T, size_t);
     template<class T> T At(State, T t);
     void Atomic(...);
+    template<class T> void Blobify(T);    
     template<class T> void BumpVolatileVersion(T);
     bool Claims(Claim, bool);
     template<class T> unsigned int Claimcount(T);
@@ -181,6 +183,7 @@ namespace VCC
     template<class T> bool Extentmutable(T);
     template<class T> bool Fresh(T);
     bool Fullcontext();
+    template<class T> Set Fullextent(T);
     template<class T> void HavocOthers(T);
     template<class T> bool In(T, Set);
     template<class T> bool In0(T, Set);
@@ -204,6 +207,7 @@ namespace VCC
     template<class T> int Span(T);
     template<class T> bool Threadlocal(T);
     template<class T> bool Threadlocalarray(T, size_t);
+    void Unblobify();
     template<class T> bool Unchanged(T);
     Set Union(Set, Set);
     Set Universe();
