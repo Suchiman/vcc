@@ -13,64 +13,64 @@ using VC;
 
 namespace Microsoft.Research.Vcc.Cpp
 {
-  public class CppDriver
-  {
-    private readonly TransEnv env;
-
-    static CppDriver()
+    public class CppDriver
     {
-      // reference these so they get copied to the output directory
-      #pragma warning disable 168
-      var y = new Boogie.SMTLib.Factory();
-      #pragma warning restore 168
-    }
+        private readonly TransEnv env;
 
-    public CppDriver(string[] pipeOperations)
-    {
-      env = new TransEnv(pipeOperations);
-      CAST.PointerSizeInBytes.Value = env.PointerSizeInBytes;
-      Transformers.init(env);
-      Transformers.processPipeOptions(env);   
-    }
+        static CppDriver()
+        {
+            // reference these so they get copied to the output directory
+#pragma warning disable 168
+            var y = new Boogie.SMTLib.Factory();
+#pragma warning restore 168
+        }
 
-    private Program PreparePrelude()
-    {
-      string preludePath = PathHelper.PreludePath("Vcc3Prelude.bpl");
+        public CppDriver(string[] pipeOperations)
+        {
+            env = new TransEnv(pipeOperations);
+            CAST.PointerSizeInBytes.Value = env.PointerSizeInBytes;
+            Transformers.init(env);
+            Transformers.processPipeOptions(env);
+        }
 
-      if (preludePath == null)
-      {
-        env.Oops(Token.NoToken, "Could not locate Vcc3Prelude.bpl.");
-        return new Program();
-      }
+        private Program PreparePrelude()
+        {
+            string preludePath = PathHelper.PreludePath("Vcc3Prelude.bpl");
 
-      Program prelude;
-      int errorCount = Parser.Parse(preludePath, new List<string>(), out prelude);
-      if (prelude == null || errorCount > 0)
-      {
-        env.Oops(Token.NoToken, "There were errors parsing Vcc3Prelude.bpl.");
-        return new Program();
-      }
-      
-      return prelude;
-    }
+            if (preludePath == null)
+            {
+                env.Oops(Token.NoToken, "Could not locate Vcc3Prelude.bpl.");
+                return new Program();
+            }
 
-    private Program TranslateToBoogie(FSharpList<CAST.Top> decls)
-    {
-      // process declarations 
-      var tdecls = env.ApplyTransformers(decls);
-      if (!env.ShouldContinue) return null;
+            Program prelude;
+            int errorCount = Parser.Parse(preludePath, new List<string>(), out prelude);
+            if (prelude == null || errorCount > 0)
+            {
+                env.Oops(Token.NoToken, "There were errors parsing Vcc3Prelude.bpl.");
+                return new Program();
+            }
 
-      // Translate to Boogie AST
-      var boogieDecls = Translator.translate(null, env, PreparePrelude, tdecls);
-      if (!env.ShouldContinue) return null;
+            return prelude;
+        }
 
-      // Translate to BoogiePL
-      return BoogieAST.trProgram(boogieDecls);
-    }
+        private Program TranslateToBoogie(FSharpList<CAST.Top> decls)
+        {
+            // process declarations 
+            var tdecls = env.ApplyTransformers(decls);
+            if (!env.ShouldContinue) return null;
 
-    private static void InstallBoogieOptions()
-    {
-      var options = new[]
+            // Translate to Boogie AST
+            var boogieDecls = Translator.translate(null, env, PreparePrelude, tdecls);
+            if (!env.ShouldContinue) return null;
+
+            // Translate to BoogiePL
+            return BoogieAST.trProgram(boogieDecls);
+        }
+
+        private static void InstallBoogieOptions()
+        {
+            var options = new[]
                       {
                         "/errorLimit:10",
                         "/typeEncoding:m",
@@ -83,114 +83,129 @@ namespace Microsoft.Research.Vcc.Cpp
                         "/z3opt:CASE_SPLIT=5"
                       };
 
-      var clo = new CommandLineOptions();
-      clo.Parse(options);
-      CommandLineOptions.Install(clo);
-    }
+            var clo = new CommandLineOptions();
+            clo.Parse(options);
+            CommandLineOptions.Install(clo);
+        }
 
-    public bool WriteToBpl(FSharpList<CAST.Top> decls, string outputFileName)
-    {
-      var program = TranslateToBoogie(decls);
-      if (program == null) return false;
-
-      // write Boogie
-      CommandLineOptions.Install(new CommandLineOptions());
-      using (var writer = new TokenTextWriter(outputFileName)) {
-        program.Emit(writer);
-      }
-
-      return true;
-    }
-
-    private static bool CompleteOutputCheck(ExpectedOutputChecker checker)
-    {
-      checker.CompleteChecking();
-
-      if (checker.Mismatches > 0) {
-        Console.WriteLine("\n\n*** Found output mismatch. ***\n");
-        Console.WriteLine("*** Expected (line {0}): ***", checker.FirstMismatchFoundAt);
-        Console.WriteLine(checker.FirstMismatchExpected);
-        Console.WriteLine("*** Received: ***");
-        Console.WriteLine(checker.FirstMismatchReceived);
-        Console.WriteLine("*** End of mismatch. ***\n\n");
-
-        return false;
-      }
-
-      return true;
-    }
-
-    public bool Verify(FSharpList<CAST.Top> decls, string reference, bool dumpAstBeforeTransformations = false)
-    {
-
-      if (dumpAstBeforeTransformations) {
-        TransUtil.dumpDecls("AST after Conversion", false, decls);
-      }
-
-      var errorReporter = new VerificationErrorReporter();
-      var checker = string.IsNullOrEmpty(reference) ? null : new ExpectedOutputChecker(reference);
-
-      if (checker != null) {
-        this.env.ErrorReportedEvent += checker.ErrorReported;
-        errorReporter.ErrorReported += checker.ErrorReported;
-        errorReporter.VerificationFinished += checker.VerificationFinished;
-      }
-
-      try {
-
-        var program = TranslateToBoogie(decls);
-        if (program == null)
+        public bool WriteToBpl(FSharpList<CAST.Top> decls, string outputFileName)
         {
-          if (checker != null) return CompleteOutputCheck(checker);
-          return false;
+            var program = TranslateToBoogie(decls);
+            if (program == null) return false;
+
+            // write Boogie
+            CommandLineOptions.Install(new CommandLineOptions());
+            using (var writer = new TokenTextWriter(outputFileName))
+            {
+                program.Emit(writer);
+            }
+
+            return true;
         }
 
-        var prelude = PreparePrelude();
-        if (prelude.TopLevelDeclarations.Count == 0) return false;
-
-        var verifierInput = new Program();
-        verifierInput.TopLevelDeclarations.AddRange(prelude.TopLevelDeclarations);
-        verifierInput.TopLevelDeclarations.AddRange(program.TopLevelDeclarations);
-
-        InstallBoogieOptions();
-
-        // prepare for verification
-        if (verifierInput.Resolve(this.env) > 0) return false;
-        if (verifierInput.Typecheck(this.env) > 0) return false;
-        AbstractInterpretation.RunAbstractInterpretation(verifierInput);
-        LambdaHelper.ExpandLambdas(verifierInput);
-
-        // verify all implementation functions
-
-        foreach (var decl in verifierInput.TopLevelDeclarations) {
-          var impl = decl as Implementation;
-          if (impl != null) {
-            var vcGen = new VCGen(verifierInput, null, false);
-            errorReporter.StartFunction(impl.Name);
-            vcGen.VerifyImplementation(impl, program, errorReporter);
-            errorReporter.EndFunction();
-            vcGen.Close();
-          }
-        }
-
-        if (checker != null) return CompleteOutputCheck(checker);
-
-        return !errorReporter.AnyErrorReported;
-
-      } catch (Exception e) {
-        Console.WriteLine("*** Exception occurred during verification ***\n");
-        Console.WriteLine(e.ToString());
-        Console.WriteLine();
-        throw;
-      } finally
-      {
-        if (checker != null)
+        private static bool CompleteOutputCheck(ExpectedOutputChecker checker)
         {
-          errorReporter.VerificationFinished -= checker.VerificationFinished;
-          errorReporter.ErrorReported -= checker.ErrorReported;
-          this.env.ErrorReportedEvent -= checker.ErrorReported;
+            checker.CompleteChecking();
+
+            if (checker.Mismatches > 0)
+            {
+                Console.WriteLine("\n\n*** Found output mismatch. ***\n");
+                Console.WriteLine("*** Expected (line {0}): ***", checker.FirstMismatchFoundAt);
+                Console.WriteLine(checker.FirstMismatchExpected);
+                Console.WriteLine("*** Received: ***");
+                Console.WriteLine(checker.FirstMismatchReceived);
+                Console.WriteLine("*** End of mismatch. ***\n\n");
+
+                return false;
+            }
+
+            return true;
         }
-      }
+
+        public bool Verify(FSharpList<CAST.Top> decls, string reference, string vccArgs, bool dumpAstBeforeTransformations = false)
+        {
+            if (!String.IsNullOrEmpty(vccArgs))
+            {
+                // TODO: use vccArgs
+                Console.WriteLine("VCC Arguments: " + vccArgs);
+            }
+
+            if (dumpAstBeforeTransformations)
+            {
+                TransUtil.dumpDecls("AST after Conversion", false, decls);
+            }
+
+            var errorReporter = new VerificationErrorReporter();
+            var checker = string.IsNullOrEmpty(reference) ? null : new ExpectedOutputChecker(reference);
+
+            if (checker != null)
+            {
+                this.env.ErrorReportedEvent += checker.ErrorReported;
+                errorReporter.ErrorReported += checker.ErrorReported;
+                errorReporter.VerificationFinished += checker.VerificationFinished;
+            }
+
+            try
+            {
+
+                var program = TranslateToBoogie(decls);
+                if (program == null)
+                {
+                    if (checker != null) return CompleteOutputCheck(checker);
+                    return false;
+                }
+
+                var prelude = PreparePrelude();
+                if (prelude.TopLevelDeclarations.Count == 0) return false;
+
+                var verifierInput = new Program();
+                verifierInput.TopLevelDeclarations.AddRange(prelude.TopLevelDeclarations);
+                verifierInput.TopLevelDeclarations.AddRange(program.TopLevelDeclarations);
+
+                InstallBoogieOptions();
+
+                // prepare for verification
+                if (verifierInput.Resolve(this.env) > 0) return false;
+                if (verifierInput.Typecheck(this.env) > 0) return false;
+                AbstractInterpretation.RunAbstractInterpretation(verifierInput);
+                LambdaHelper.ExpandLambdas(verifierInput);
+
+                // verify all implementation functions
+
+                foreach (var decl in verifierInput.TopLevelDeclarations)
+                {
+                    var impl = decl as Implementation;
+                    if (impl != null)
+                    {
+                        var vcGen = new VCGen(verifierInput, null, false);
+                        errorReporter.StartFunction(impl.Name);
+                        vcGen.VerifyImplementation(impl, program, errorReporter);
+                        errorReporter.EndFunction();
+                        vcGen.Close();
+                    }
+                }
+
+                if (checker != null) return CompleteOutputCheck(checker);
+
+                return !errorReporter.AnyErrorReported;
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("*** Exception occurred during verification ***\n");
+                Console.WriteLine(e.ToString());
+                Console.WriteLine();
+                throw;
+            }
+            finally
+            {
+                if (checker != null)
+                {
+                    errorReporter.VerificationFinished -= checker.VerificationFinished;
+                    errorReporter.ErrorReported -= checker.ErrorReported;
+                    this.env.ErrorReportedEvent -= checker.ErrorReported;
+                }
+            }
+        }
     }
-  }
 }
