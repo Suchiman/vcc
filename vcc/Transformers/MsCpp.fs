@@ -227,6 +227,22 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let addDeclarationsForParameters decls = 
+
+      // later processing requires that parameters are also declared at the beginning of a methods body
+      // add these declarations
+
+      for d in decls do
+        match d with
+          | Top.FunctionDecl({Body = Some (Block(ec, stmts, bc))} as fn) ->
+            let toDecl (v:Variable) = VarDecl(voidBogusEC(), v, [])
+            fn.Body <- Some(Block(ec, (List.map toDecl fn.Parameters) @ stmts, bc))
+          | _ -> ()
+      
+      decls
+
+    // ============================================================================================================    
+
     let rewriteExtraMacros self = 
 
       function
@@ -903,5 +919,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-rewrite-ops", TransHelper.Expr rewriteExtraOps)
     helper.AddTransformer ("cpp-sanitize-names", TransHelper.Decl sanitizeNames)
     helper.AddTransformer ("cpp-remove-decls", TransHelper.Decl removeSpecialDecls)
+    helper.AddTransformer ("cpp-declare-parameters", TransHelper.Decl addDeclarationsForParameters)
 
     helper.AddTransformer ("cpp-end", TransHelper.DoNothing)
