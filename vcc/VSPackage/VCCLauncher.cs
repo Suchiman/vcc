@@ -151,7 +151,7 @@
                 VccppMain.VccppEvent += new EventHandler<VccppEventArgs>(vccProcess_OutputDataReceived);
 
                 // TODO vccargs
-                int exitCode = VccppMain.ProcessFile(filename, cl11Path, null, null, false);
+                int exitCode = VccppMain.ProcessFile(filename, cl11Path, null, false);
                 vccProcess_Exited(exitCode);
 
                 //// When the process was started, remember the cmdlinearguments
