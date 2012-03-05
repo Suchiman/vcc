@@ -51,6 +51,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Span",                "_vcc_span"
                                                     "VCC::Threadlocal",         "_vcc_thread_local2"
                                                     "VCC::Threadlocalarray",    "_vcc_is_thread_local_array"
+                                                    "VCC::Universe",            "_vcc_set_universe"
                                                     "VCC::Valid",               "_vcc_typed2"
                                                     "VCC::Wrapped",             "_vcc_wrapped"
                                       ]
@@ -399,25 +400,16 @@ namespace Microsoft.Research.Vcc
           let body' = Block(bec, stmts |> removeContracts |> List.map self, None)
           let invs' = List.map Expr.MkAssert invs
           Some(Macro(ec, "for", [ Macro(lec, "loop_contract", invs' @ loopContract); init; cond; incr; body']))
-        | Macro(ec, "for", _) -> 
-          helper.Oops(ec.Token, "unexpected for loop structure")
-          None
         | Macro(ec, "do", [ Macro(lec, "loop_contract", loopContract); Block(bec, stmts, None); cond]) ->
           let (bc, invs) = findContracts stmts
           let body' = Block(bec, stmts |> removeContracts |> List.map self, None)
           let invs' = List.map Expr.MkAssert invs
           Some(Macro(ec, "do", [Macro(lec, "loop_contract", invs' @ loopContract); body'; cond]))
-        | Macro(ec, "do", _) -> 
-          helper.Oops(ec.Token, "unexpected do-while loop structure")
-          None
         | Macro(ec, "while", [ Macro(lec, "loop_contract", loopContract); cond; Block(bec, stmts, None)]) ->
           let (bc, invs) = findContracts stmts
           let body' = Block(bec, stmts |> removeContracts |> List.map self, None)
           let invs' = List.map Expr.MkAssert invs
           Some(Macro(ec, "while", [Macro(lec, "loop_contract", invs' @ loopContract); cond; body']))
-        | Macro(ec, "while", _) -> 
-          helper.Oops(ec.Token, "unexpected while loop structure")
-          None
         | Block(ec, stmts, None) ->
           let (bc, invs) = findContracts stmts
           if not (List.isEmpty invs) then helper.Oops(invs.Head.Token, "invariant outside of loop")
@@ -799,6 +791,23 @@ namespace Microsoft.Research.Vcc
       
     // ============================================================================================================    
 
+    let checkAstStructure decls =
+
+      let checkLoopStructure self = function
+        | Macro(ec, "for", [ Macro(lec, "loop_contract", loopContract); init; cond; incr; Block(bec, stmts, None) ]) -> true
+        | Macro(ec, "for", _) -> helper.Oops(ec.Token, "unexpected for loop structure"); false
+        | Macro(ec, "do", [ Macro(lec, "loop_contract", loopContract); Block(bec, stmts, None); cond]) -> true
+        | Macro(ec, "do", _) -> helper.Oops(ec.Token, "unexpected do-while loop structure"); false
+        | Macro(ec, "while", [ Macro(lec, "loop_contract", loopContract); cond; Block(bec, stmts, None)]) -> true
+        | Macro(ec, "while", _) -> helper.Oops(ec.Token, "unexpected while loop structure"); false
+        | _ -> true
+
+      decls |> deepVisitExpressions checkLoopStructure
+
+      decls
+
+    // ============================================================================================================    
+
     let sanitizeNames decls =
       for d in decls do
         match d with 
@@ -851,6 +860,7 @@ namespace Microsoft.Research.Vcc
 
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
+    helper.AddTransformer ("cpp-check-ast-structure", TransHelper.Decl checkAstStructure)
     helper.AddTransformer ("cpp-errors", TransHelper.Expr reportErrors)
     helper.AddTransformer ("cpp-globals-init", TransHelper.Decl rewriteGlobalsInitialization)
     helper.AddTransformer ("cpp-special-args", TransHelper.Decl specialArgumentHandling)
