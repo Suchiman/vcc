@@ -710,7 +710,7 @@ namespace Microsoft.Research.Vcc
             if not (List.isEmpty attrs) then helper.Oops(tok, "extra attributes at end of type")
             List.rev acc
           | {Name = StartsWith "VCCBackingMember" } : Field :: fields ->
-            loop (VccAttr(AttrBackingMember, "true")::attrs) acc fields
+            loop (VccAttr(AttrBackingMember, "")::attrs) acc fields
           | fld :: fields ->
             fld.CustomAttr <- attrs @ fld.CustomAttr
             loop [] (fld::acc) fields
