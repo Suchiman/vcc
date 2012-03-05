@@ -299,6 +299,8 @@ namespace Microsoft.Research.Vcc
           Some(Macro(ec, "doUntil", [self contr; self body; Prim({cond.Common with Type = Type.Bool}, Op("!", Processed), [toBool cond])]))
         | If(ec, tc, cond, _then, _else) ->
           Some(If(ec, Option.map self tc, toBool cond, self _then, self _else))
+        | Macro(ec, "ite", [cond; _then; _else]) ->
+          Some(Macro(ec, "ite", [toBool cond; self _then; self _else]))
         | _ -> None
           
     // ============================================================================================================    
