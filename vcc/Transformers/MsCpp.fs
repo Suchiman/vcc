@@ -198,6 +198,15 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let rewritePtrArithmetic self = function
+      | Prim(ec, Op((("+"|"-") as op), cs), [ptr; e1]) when ptr.Type.IsPtr && e1.Type._IsInteger ->       
+        let rhs = Prim(e1.Common, Op("*", Checked), [self e1; IntLiteral(e1.Common, new bigint(ptr.Type.Deref.SizeOf))])
+        let rhs' = if op = "-" then Expr.Prim (rhs.Common, Op("-", Checked), [rhs]) else rhs
+        Some(Macro(ec, "ptr_addition", [self ptr; rhs']))
+      | _ -> None
+        
+    // ============================================================================================================    
+
     let removeObjectCopyOperations self = function
 
       // For some VCC-builtin functions, the C++ compiler will introduce extra object copy operations
@@ -207,6 +216,7 @@ namespace Microsoft.Research.Vcc
         when Set.contains (nongeneric fn.FriendlyName) functionsReturningsClassValues ->
         Some(Call(ec, fn, [], List.map self args))
       | _ -> None
+
     // ============================================================================================================    
 
     let rewriteExtraMacros self = 
@@ -872,6 +882,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-ghost", TransHelper.Decl rewriteGhost)
     helper.AddTransformer ("cpp-assign-ops", TransHelper.Expr rewriteAssignOps)
     helper.AddTransformer ("cpp-rewrite-casts", TransHelper.Expr rewriteCasts)
+    helper.AddTransformer ("cpp-ptr-arithmetic", TransHelper.Expr rewritePtrArithmetic)
     helper.AddTransformer ("cpp-quantifiers", TransHelper.Decl rewriteQuantifiers)
     helper.AddTransformer ("cpp-stack-arrays", TransHelper.Decl handleStackArrays)
     helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
