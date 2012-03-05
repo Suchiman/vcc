@@ -72,6 +72,7 @@ namespace VCC
 
     class Object {
     public:
+      Object(void*);
       bool operator==(void*);
       bool operator==(Ghost<Object>);
       bool operator==(Ghost<Claim>);
