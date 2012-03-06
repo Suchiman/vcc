@@ -154,6 +154,15 @@ namespace VCC
            
     template <typename T> class GhostOut: public Ghost<T>
     {
+    private:
+      T _t_member_;
+    public:
+      GhostOut(T t);
+      GhostOut(const GhostOut<T> &);
+      GhostOut(const GhostOut<Object> &);
+      operator T() const;
+      operator GhostOut<Object>() const;
+      bool operator==(T);
     };
 
     // assert/assume
