@@ -40,34 +40,52 @@ namespace VCC
 
     class Integer {
     public:
+      Integer();
+      Integer(int);
       bool operator==(Integer);
       bool operator==(Ghost<Integer>);
+      bool operator==(int);
       bool operator!=(Integer);
       bool operator!=(Ghost<Integer>);
+      bool operator!=(int);
       bool operator<(Integer);
       bool operator<(Ghost<Integer>);
+      bool operator<(int);
       bool operator>(Integer);
       bool operator>(Ghost<Integer>);
+      bool operator>(int);
       bool operator<=(Integer);
       bool operator<=(Ghost<Integer>);
+      bool operator<=(int);
       bool operator>=(Integer);
       bool operator>=(Ghost<Integer>);
+      bool operator>=(int);
+      Integer operator-(const Integer&);
+      Integer operator-(int);
+      Integer operator+(const Integer&);
+      Integer operator+(int);
     };
 
     class Natural {
     public:
       bool operator==(Natural);
       bool operator==(Ghost<Natural>);
+      bool operator==(unsigned);
       bool operator!=(Natural);
       bool operator!=(Ghost<Natural>);
+      bool operator!=(unsigned);
       bool operator<(Natural);
       bool operator<(Ghost<Natural>);
+      bool operator<(unsigned);
       bool operator>(Natural);
       bool operator>(Ghost<Natural>);
+      bool operator>(unsigned);
       bool operator<=(Natural);
       bool operator<=(Ghost<Natural>);
+      bool operator<=(unsigned);
       bool operator>=(Natural);
       bool operator>=(Ghost<Natural>);
+      bool operator>=(unsigned);
     };
 
     class Object {
@@ -132,7 +150,11 @@ namespace VCC
       operator T() const;
       bool operator==(T);
     };
-        
+           
+    template <typename T> class GhostOut: public Ghost<T>
+    {
+    };
+
     // assert/assume
     void Assert(bool);
     void Assume(bool);
@@ -223,16 +245,6 @@ namespace VCC
     
     template<class T> Set Owns(T);
     template<class T> Object Owner(T);
-   
-    template <typename T> class GhostOut
-    {
-    private:
-      T _t_member_;
-
-    public:
-      GhostOut(T t);
-      operator T() const;
-    };
     
     template <typename T> class Unchecked 
     {
@@ -241,6 +253,16 @@ namespace VCC
 
     public:
       Unchecked(const T&);
+      operator T() const;
+    };
+
+    template <typename T> class ByClaim
+    {
+    private:
+      T _t_member_;
+
+    public:
+      ByClaim(const Claim&);
       operator T() const;
     };
 
@@ -280,12 +302,12 @@ namespace VCC
     };
 
     // statements
-    template<class T> void Wrap(T o)
+    template<class T> void Wrap(T o, ...)
     {
       VCC::Writes(o); // TODO: also writes o->\owns
     }
 
-    template<class T> void Unwrap(T o)
+    template<class T> void Unwrap(T o, ...)
     {
       VCC::Writes(o);
     }
