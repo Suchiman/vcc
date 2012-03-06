@@ -158,6 +158,7 @@ namespace VCC
     
     // object state
     template<class T> bool Activeclaim(T);
+    template<class T> T Activemember(T);
     template<class T> int Addr(T);
     template<class T1, class T2> bool Addreq(T1, T2);
     template<class T> void Always(T, bool);
@@ -174,12 +175,15 @@ namespace VCC
     template<class T> unsigned int Claimcount(T);
     template<class T> bool Claimsobject(Claim, T);
     template<class T> bool Closed(T);
+    template<class T> bool Deepeq(T, T);
     template<class T1, class T2> bool Depends(T1, T2);
     template<class T> void Destroyclaim(Claim, T);
     Set Diff(Set, Set);
     bool Disjoint(Set, Set);
     template<class T> Set Domain(T);
+    template<class T> T Embedding(T);
     template<class T> Set Extent(T);
+    template<class T> bool Extentfresh(T);
     template<class T> bool Extentmutable(T);
     template<class T> bool Fresh(T);
     bool Fullcontext();
@@ -247,6 +251,16 @@ namespace VCC
 
     public:
       Retype(const T&);
+      operator T() const;
+    };
+
+    template <typename T> class Precise
+    {
+    private:
+      T _t_member_;
+
+    public:
+      Precise(const T&);
       operator T() const;
     };
     
