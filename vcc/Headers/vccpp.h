@@ -148,6 +148,7 @@ namespace VCC
       Ghost(const Ghost<T> &);
       Ghost(const Ghost<Object> &);
       operator T() const;
+      operator Ghost<Object>() const;
       bool operator==(T);
     };
            
