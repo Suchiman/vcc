@@ -239,6 +239,16 @@ namespace VCC
       Unchecked(const T&);
       operator T() const;
     };
+
+    template <typename T> class Retype 
+    {
+    private:
+      T _t_member_;
+
+    public:
+      Retype(const T&);
+      operator T() const;
+    };
     
     template <typename T> Ghost<T> CreateGhost(T);
     template <typename T> GhostOut<T> CreateGhostOut(T);
