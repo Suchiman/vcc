@@ -12,14 +12,10 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <Name>VccSyntaxCoverter</Name>
     <TargetFrameworkProfile />
-    <SccProjectName>
-    </SccProjectName>
-    <SccProvider>
-    </SccProvider>
-    <SccAuxPath>
-    </SccAuxPath>
-    <SccLocalPath>
-    </SccLocalPath>
+    <SccProjectName>SAK</SccProjectName>
+    <SccProvider>SAK</SccProvider>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -78,6 +74,13 @@
       <AssemblyName>FSharp.PowerPack.dll</AssemblyName>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\VCCPPUtils\VCCPPUtils.vcxproj">
+      <Name>VCCPPUtils</Name>
+      <Project>{0fe21cca-be19-453c-bc25-bdbf05ecec9b}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.

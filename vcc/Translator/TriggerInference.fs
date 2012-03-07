@@ -155,7 +155,7 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
 
   let rec matchExpr (sub : Map<_,_>) (a, b) = 
     if helper.Options.DumpTriggers >= 10 then
-      Console.WriteLine ("  (((")
+      Utils.Log("  (((")
     let res =
       match a, b with
         | B.Expr.FunctionCall ("$mem", [s1; p1]), B.Expr.FunctionCall ("$mem", [s2; p2]) when matchExpr sub (s1, s2) = None -> 
@@ -178,7 +178,7 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
           Some (sub.Add (i1, e2))
         | e1, e2 -> if e1 = e2 then Some sub else None
     if helper.Options.DumpTriggers >= 10 then
-      Console.WriteLine ("  unify: {0} / {1} ?= {2} -> {3} )))", a, substToString (Some sub), b, substToString res)
+      Utils.Log(System.String.Format("  unify: {0} / {1} ?= {2} -> {3} )))", a, substToString (Some sub), b, substToString res))
     res
   and matchExprs sub e1 e2 = 
     let rec aux s = function
@@ -276,18 +276,18 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
     let willLoop tr =
       let isHigh = function
         | Some m ->
-          if helper.Options.DumpTriggers >= 10 then Console.WriteLine ("check subst: " + substToString (Some m))
+          if helper.Options.DumpTriggers >= 10 then Utils.Log("check subst: " + substToString (Some m))
           Map.exists (fun _ -> function B.Expr.Ref _ -> false | e -> hasFreeVars e) m
         | None -> false
       Seq.exists (fun (t, _, _) -> isHigh (matchExpr Map.empty (tr, t))) candidates
       
     body.Map (getSubterms 1) |> ignore
     if dbg then
-      Console.WriteLine ("infer: {0}", quantTok.Value)
-      Console.WriteLine ("  BPL: {0}", body.ToString())
+      Utils.Log(System.String.Format("infer: {0}", quantTok.Value))
+      Utils.Log(System.String.Format("  BPL: {0}", body.ToString()))
     for (tr, vs, q) in candidates do
       if List.forall vs.ContainsKey quantVars then
-        if dbg then Console.WriteLine ("  cand: {0} q:{1}", tr, q)
+        if dbg then Utils.Log(System.String.Format("  cand: {0} q:{1}", tr, q))
         if willLoop tr then ()
         elif q >= 0 then
           resTrig.Add (q, [tr])
@@ -305,7 +305,7 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
         else
           let checkCandidate cur (tr, (vs:Dict<_,_>), q) =
             let addedVars = Seq.filter (fun v -> not (coveredVars.ContainsKey v)) vs.Keys |> Seq.length
-            if dbg then Console.WriteLine ("  check multi: {0} q:{1} v:{2}", tr, q, addedVars)
+            if dbg then Utils.Log(System.String.Format("  check multi: {0} q:{1} v:{2}", tr, q, addedVars))
             if addedVars > 0 then
               match cur with
                 | None -> Some (tr, q, addedVars, vs)
@@ -316,7 +316,7 @@ type TriggerInference(helper:Helper.Env, bodies:Lazy<list<ToBoogieAST.Function>>
             | Some (tr, q, av, vs) ->
               if q <= strigQual then ()
               else
-                if dbg then Console.WriteLine ("add multi: {0} q:{1} v:{2}", tr, q, av)
+                if dbg then Utils.Log(System.String.Format("add multi: {0} q:{1} v:{2}", tr, q, av))
                 for k in vs.Keys do coveredVars.[k] <- true
                 loop (tr :: mtrig)
             | None -> ()

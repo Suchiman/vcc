@@ -192,7 +192,7 @@ module Termination =
   let turnIntoPureExpression (helper:TransHelper.TransEnv) topType (expr:Expr) =
     let rec aux (ctx:PureTrCtx) bindings (exprs:list<Expr>) =
       let expr, cont = exprs.Head, exprs.Tail
-      //System.Console.WriteLine ("doing (cont={0}) e: {1}/{2}", cont.Length, expr, expr.GetType())
+      //Utils.Log(System.String.Format("doing (cont={0}) e: {1}/{2}", cont.Length, expr, expr.GetType()))
 
       let recExpr e = aux { ctx with InStmt = false } bindings [e]
       let self = aux ctx bindings

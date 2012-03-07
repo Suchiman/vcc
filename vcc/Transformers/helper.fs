@@ -362,6 +362,6 @@ namespace Microsoft.Research.Vcc
               | ExprCtx _ -> "Expr"
               | Decl _ -> "decl"
               | DoNothing -> "mark"
-          System.Console.WriteLine ("{3:000.000}s {0} {1} {2}", kind, (if t.Enabled then "          " else "(disabled)"), t.Name, 
-                                    double (lookupWithDefault times 0L t.Name) / 10000000.0)
+          Utils.Log(System.String.Format("{3:000.000}s {0} {1} {2}", kind, (if t.Enabled then "          " else "(disabled)"), t.Name, 
+                                    double (lookupWithDefault times 0L t.Name) / 10000000.0))
                                     

@@ -33,10 +33,10 @@ namespace Microsoft.Research.Vcc
     let BFalse = BoolLiteral false
     
     let warn (msg:string) =
-      System.Console.WriteLine ("VC Optimizer Warning: {0}", msg)
+      Utils.Log(System.String.Format("VC Optimizer Warning: {0}", msg))
     
     let info (msg:string) =
-      System.Console.WriteLine ("VC Optimizer Info: {0}", msg)
+      Utils.Log(System.String.Format("VC Optimizer Info: {0}", msg))
     
     // -----------------------------------------------------------------------------------
     // simple types 

@@ -1,4 +1,5 @@
-﻿open Microsoft.Research.Vcc.SyntaxConverter
+﻿open Microsoft.Research.Vcc
+open Microsoft.Research.Vcc.SyntaxConverter
 open Microsoft.Research.Vcc.SyntaxConverter.Ast
 
 let go filename = 
@@ -20,7 +21,7 @@ let go filename =
     outf.Write (outs)
     outf.Close()
   with SyntaxError (p, s) ->
-    System.Console.WriteLine ("{0}:{1}: {2}", filename, p, s)
+    Utils.Log(System.String.Format ("{0}:{1}: {2}", filename, p, s))
     
 let main() =
   Rules.init()

@@ -13,14 +13,10 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
-    <SccProjectName>
-    </SccProjectName>
-    <SccLocalPath>
-    </SccLocalPath>
-    <SccAuxPath>
-    </SccAuxPath>
-    <SccProvider>
-    </SccProvider>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -104,6 +100,10 @@
     <Compile Include="VerificationFinishedEventArgs.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\VCCPPUtils\VCCPPUtils.vcxproj">
+      <Project>{0FE21CCA-BE19-453C-BC25-BDBF05ECEC9B}</Project>
+      <Name>VCCPPUtils</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Ast\Ast.fsproj">
       <Project>{C5203B00-B561-48F9-B56D-C4477A27EA01}</Project>
       <Name>Ast</Name>
