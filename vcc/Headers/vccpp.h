@@ -230,7 +230,6 @@ namespace VCC
     template<class T> int Span(T);
     template<class T> bool Threadlocal(T);
     template<class T> bool Threadlocalarray(T, size_t);
-    void Unblobify();
     template<class T> bool Unchanged(T);
     Set Union(Set, Set);
     template<class T> bool Unionactive(T);
@@ -250,9 +249,17 @@ namespace VCC
     {
     private:
       T _t_member_;
-
     public:
       Unchecked(const T&);
+      operator T() const;
+    };
+
+    template <typename T> class Unblobify
+    {
+    private:
+      T _t_member_;
+    public:
+      Unblobify(const T&);
       operator T() const;
     };
 
@@ -260,7 +267,6 @@ namespace VCC
     {
     private:
       T _t_member_;
-
     public:
       ByClaim(const Claim&);
       operator T() const;
@@ -270,7 +276,6 @@ namespace VCC
     {
     private:
       T _t_member_;
-
     public:
       Retype(const T&);
       operator T() const;
@@ -280,7 +285,6 @@ namespace VCC
     {
     private:
       T _t_member_;
-
     public:
       Precise(const T&);
       operator T() const;
