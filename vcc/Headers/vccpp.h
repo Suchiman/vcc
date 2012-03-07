@@ -42,50 +42,28 @@ namespace VCC
     public:
       Integer();
       Integer(int);
-      bool operator==(Integer);
       bool operator==(Ghost<Integer>);
-      bool operator==(int);
-      bool operator!=(Integer);
       bool operator!=(Ghost<Integer>);
-      bool operator!=(int);
-      bool operator<(Integer);
       bool operator<(Ghost<Integer>);
-      bool operator<(int);
-      bool operator>(Integer);
       bool operator>(Ghost<Integer>);
-      bool operator>(int);
-      bool operator<=(Integer);
       bool operator<=(Ghost<Integer>);
-      bool operator<=(int);
-      bool operator>=(Integer);
       bool operator>=(Ghost<Integer>);
-      bool operator>=(int);
-      Integer operator-(const Integer&);
-      Integer operator-(int);
-      Integer operator+(const Integer&);
-      Integer operator+(int);
+      Integer operator+=(Integer);
+      Integer operator-=(Integer);
+      operator int() const;
     };
 
     class Natural {
     public:
-      bool operator==(Natural);
       bool operator==(Ghost<Natural>);
-      bool operator==(unsigned);
-      bool operator!=(Natural);
       bool operator!=(Ghost<Natural>);
-      bool operator!=(unsigned);
-      bool operator<(Natural);
       bool operator<(Ghost<Natural>);
-      bool operator<(unsigned);
-      bool operator>(Natural);
       bool operator>(Ghost<Natural>);
-      bool operator>(unsigned);
-      bool operator<=(Natural);
       bool operator<=(Ghost<Natural>);
-      bool operator<=(unsigned);
-      bool operator>=(Natural);
       bool operator>=(Ghost<Natural>);
-      bool operator>=(unsigned);
+      Natural operator+=(Natural);
+      Natural operator-=(Natural);
+      operator unsigned() const;
     };
 
     class Object {
