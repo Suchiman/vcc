@@ -234,6 +234,7 @@ namespace VCC
     template<class T> bool Unchanged(T);
     Set Union(Set, Set);
     template<class T> bool Unionactive(T);
+    template<class T> void UnionReinterpret(T);
     Set Universe();
     void Unwrapping(...);
     template<class T> bool Valid(T);
