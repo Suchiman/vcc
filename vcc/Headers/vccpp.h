@@ -104,6 +104,7 @@ namespace VCC
       bool operator==(Ghost<State>);
       bool operator!=(State);
       bool operator!=(Ghost<State>);
+      volatile State operator=(const State&) volatile;
     };
 
     template <class From, class To> class Map {
