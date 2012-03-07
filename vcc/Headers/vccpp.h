@@ -128,6 +128,7 @@ namespace VCC
       operator T() const;
       operator Ghost<Object>() const;
       bool operator==(T);
+      T operator ->();
     };
            
     template <typename T> class GhostOut: public Ghost<T>
@@ -141,6 +142,7 @@ namespace VCC
       operator T() const;
       operator GhostOut<Object>() const;
       bool operator==(T);
+      T operator ->();
     };
 
     // assert/assume
