@@ -213,6 +213,7 @@ namespace VCC
     Set Diff(Set, Set);
     bool Disjoint(Set, Set);
     template<class T> Set Domain(T);
+    template<class T> T Domainroot(T);
     template<class T> T Embedding(T);
     template<class T> Set Extent(T);
     template<class T> bool Extentfresh(T);
@@ -251,6 +252,7 @@ namespace VCC
     template<class T> bool Valid(T);
     template<class T> T Whenclaimed(T);
     template<class T> bool Wrapped(T);
+    template<class T> bool Wrappedwithdeepdomain(T);
     template<class T> bool Wrapped0(T);
     
     template<class T> Set Owns(T);
