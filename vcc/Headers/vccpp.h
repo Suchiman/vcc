@@ -207,6 +207,7 @@ namespace VCC
     template<class T> unsigned int Claimcount(T);
     template<class T> bool Claimsobject(Claim, T);
     template<class T> bool Closed(T);
+    template<class T> void Decreases(T);
     template<class T> bool Deepeq(T, T);
     template<class T1, class T2> bool Depends(T1, T2);
     template<class T> void Destroyclaim(Claim, T);
@@ -224,6 +225,7 @@ namespace VCC
     template<class T> void HavocOthers(T);
     template<class T> bool In(T, Set);
     template<class T> bool In0(T, Set);
+    template<class T> void Increases(T);
     Set Inter(Set, Set);
     template<class T> bool Inv(T);
     template<class T, class V> bool Is(V);
@@ -231,6 +233,7 @@ namespace VCC
     template<class T1, class T2, class L> Map<T1, T2> Lambda(L);
     template<class T> Claim Makeclaim(T, bool);
     template<class T> bool Mallocroot(T);
+    Object Me();
     bool Mine(...);
     template<class T> bool Mutable(T);
     template<class T> bool Mutablearray(T, size_t);
@@ -247,6 +250,7 @@ namespace VCC
     void Unblobify();
     template<class T> bool Unchanged(T);
     Set Union(Set, Set);
+    template<class T> bool Unionactive(T);
     Set Universe();
     void Unwrapping(...);
     template<class T> bool Valid(T);
