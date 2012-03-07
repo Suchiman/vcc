@@ -187,6 +187,7 @@ namespace VCC
     template<class T1, class T2> Object Blob(T1, T2);
     template<class T> void Blobify(T);    
     template<class T> void BumpVolatileVersion(T);
+    template<class T> T ByClaim(Claim, T);
     bool Claims(Claim, bool);
     template<class T> unsigned int Claimcount(T);
     template<class T> bool Claimsobject(Claim, T);
@@ -262,15 +263,6 @@ namespace VCC
       T _t_member_;
     public:
       Unblobify(const T&);
-      operator T() const;
-    };
-
-    template <typename T> class ByClaim
-    {
-    private:
-      T _t_member_;
-    public:
-      ByClaim(const Claim&);
       operator T() const;
     };
 
