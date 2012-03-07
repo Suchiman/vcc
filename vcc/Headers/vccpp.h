@@ -182,6 +182,7 @@ namespace VCC
     template<class T> bool Arraysdisjoint(T, size_t, T, size_t);
     template<class T> T At(State, T t);
     void Atomic(...);
+    template<class T> void BeginGhostAtomic(T);
     template<class T> void Blobify(T);    
     template<class T> void BumpVolatileVersion(T);
     bool Claims(Claim, bool);
@@ -197,6 +198,7 @@ namespace VCC
     template<class T> Set Domain(T);
     template<class T> T Domainroot(T);
     template<class T> T Embedding(T);
+    void EndGhostAtomic();
     template<class T> Set Extent(T);
     template<class T> bool Extentfresh(T);
     template<class T> bool Extentmutable(T);
