@@ -230,6 +230,7 @@ namespace VCC
     template<class T> T Old(T);
     template<class T> bool Onunwrap(T, bool);
     bool Programentrypoint();
+    size_t Sizeofobject(Object);
     template<class T> int Span(T);
     template<class T> bool Threadlocal(T);
     template<class T> bool Threadlocalarray(T, size_t);
