@@ -1,4 +1,5 @@
-﻿open Microsoft.Research.Vcc
+﻿open System
+open Microsoft.Research.Vcc
 open Microsoft.Research.Vcc.SyntaxConverter
 open Microsoft.Research.Vcc.SyntaxConverter.Ast
 
@@ -21,13 +22,12 @@ let go filename =
     outf.Write (outs)
     outf.Close()
   with SyntaxError (p, s) ->
-    Utils.Log(System.String.Format ("{0}:{1}: {2}", filename, p, s))
-    
+    Utils.Log(String.Format ("{0}:{1}: {2}", filename, p, s))
+
 let main() =
   Rules.init()
   let args = System.Environment.GetCommandLineArgs()
   for i = 1 to args.Length - 1 do
     go args.[i]
-      
 
 main()
