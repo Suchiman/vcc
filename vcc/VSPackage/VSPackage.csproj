@@ -247,6 +247,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\VCCPPUtils\VCCPPUtils.vcxproj">
+      <Project>{0FE21CCA-BE19-453C-BC25-BDBF05ECEC9B}</Project>
+      <Name>VCCPPUtils</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\..\VCCPP\VCCPP.vcxproj">
       <Project>{C3C2AE10-8ECB-4211-BFF2-4A072EE748DA}</Project>
       <Name>VCCPP</Name>

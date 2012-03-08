@@ -31,7 +31,7 @@ namespace Microsoft.Research.Vcc.Cpp
         temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.Filename, false, tok.Line, tok.Column, code, msg)));
       }
 
-      Console.WriteLine("{0}({1},{2}): error VC{3:0000}: {4}", tok.Filename, tok.Line, tok.Column, code, msg);
+      Utils.Log(String.Format("{0}({1},{2}): error VC{3:0000}: {4}", tok.Filename, tok.Line, tok.Column, code, msg));
     }
 
     public override void Oops(Token tok, string msg)
@@ -43,7 +43,7 @@ namespace Microsoft.Research.Vcc.Cpp
           temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.Filename, false, tok.Line, tok.Column, -1, msg)));
         }
 
-        Console.WriteLine("{0}({1},{2}): oops: {3}", tok.Filename, tok.Line, tok.Column, msg);
+        Utils.Log(String.Format("{0}({1},{2}): oops: {3}", tok.Filename, tok.Line, tok.Column, msg));
       }
     }
 
@@ -59,7 +59,7 @@ namespace Microsoft.Research.Vcc.Cpp
         temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.Filename, true, tok.Line, tok.Column, code, msg)));
       }
 
-      Console.WriteLine("{0}({1},{2}): warning VC{3:0000}: {4}", tok.Filename, tok.Line, tok.Column, code, msg);
+      Utils.Log(String.Format("{0}({1},{2}): warning VC{3:0000}: {4}", tok.Filename, tok.Line, tok.Column, code, msg));
     }
 
     public void Error(IToken tok, string msg)
@@ -70,7 +70,7 @@ namespace Microsoft.Research.Vcc.Cpp
         temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.filename, false, tok.line, tok.col, -2, msg)));
       }
 
-      Console.WriteLine("{0}({1},{2}): Boogie error: {3}", tok.filename, tok.line, tok.col, msg);
+      Utils.Log(String.Format("{0}({1},{2}): Boogie error: {3}", tok.filename, tok.line, tok.col, msg));
     }
   }
 }

@@ -8,6 +8,7 @@
 
 namespace Microsoft.Research.Vcc
 
+  open System
   open System.Diagnostics
   open Microsoft
   open Util
@@ -221,11 +222,11 @@ namespace Microsoft.Research.Vcc
             | [a; b] ->
               match _try_assoc op binaryOps with
                 | Some o -> Microsoft.Boogie.Expr.Binary (o, trExpr a, trExpr b) :> Microsoft.Boogie.Expr
-                | None -> printf "unknown boogie binary op: %s" op; die()
+                | None -> Utils.Log(String.Format("unknown boogie binary op: {0}", op)); die()
             | [a] ->
               match _try_assoc op unaryOps with
                 | Some o -> Microsoft.Boogie.Expr.Unary (noToken, o, trExpr a) :> Microsoft.Boogie.Expr
-                | None -> printf "unknown boogie unary op: %s" op; die()
+                | None -> Utils.Log(String.Format("unknown boogie unary op: {0}", op)); die()
             | _ -> die()
         | BoolLiteral b ->
           Microsoft.Boogie.LiteralExpr (noToken, b) :> Microsoft.Boogie.Expr
@@ -235,7 +236,7 @@ namespace Microsoft.Research.Vcc
           match s with
             | "top" -> Microsoft.Boogie.LiteralExpr (noToken, false) :> Microsoft.Boogie.Expr
             | "bot" -> Microsoft.Boogie.LiteralExpr (noToken, true) :> Microsoft.Boogie.Expr
-            | _ -> printf "unknown security label: %s" s; die()
+            | _ -> Utils.Log(String.Format("unknown security label: {0}", s)); die()
         | BvLiteral (v, sz) ->
           Microsoft.Boogie.LiteralExpr (noToken, Microsoft.Basetypes.BigNum.FromBigInt v, sz) :> Microsoft.Boogie.Expr
         | BvConcat(BvLiteral (_, 0), e)
