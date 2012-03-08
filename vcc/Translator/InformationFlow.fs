@@ -7,6 +7,7 @@
 #light
 
 namespace Microsoft.Research.Vcc
+  open System
   open System.Text
   open Microsoft.Research.Vcc
   open Microsoft.Research.Vcc.Util
@@ -178,7 +179,7 @@ namespace Microsoft.Research.Vcc
                                 (B.Expr.FunctionCall("$set_empty", []))
                                 minusList
           B.Expr.FunctionCall("$set_difference", [B.Expr.FunctionCall("$full_extent", [bPtr]); minus])
-        | _ -> System.Console.WriteLine("Type: {0}", ptr.Type); die()
+        | _ ->Utils.Log(String.Format("Type: {0}", ptr.Type)); die()
 
 // Translating a label expression into a Boogie expression
     let rec secLabelToBoogie trExpr trVar = function

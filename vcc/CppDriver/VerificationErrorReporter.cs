@@ -18,7 +18,7 @@ namespace Microsoft.Research.Vcc.Cpp
       if (!errorReported)
       {
         OnVerificationFinished(currentFunction, "failed");
-        Console.WriteLine("Verification of {0} failed.", this.currentFunction);
+        Utils.Log(String.Format("Verification of {0} failed.", this.currentFunction));
       }
 
       this.ReportCounterexample(ce, reason);
@@ -29,7 +29,7 @@ namespace Microsoft.Research.Vcc.Cpp
     public override void OnOutOfMemory(string reason)
     {
       OnVerificationFinished(currentFunction, "ran out of memory");
-      Console.WriteLine("Verification of {0} ran out of memory: {1}", this.currentFunction, reason);
+      Utils.Log(String.Format("Verification of {0} ran out of memory: {1}", this.currentFunction, reason));
       this.AnyErrorReported = true;
       this.errorReported = true;
     }
@@ -37,7 +37,7 @@ namespace Microsoft.Research.Vcc.Cpp
     public override void OnTimeout(string reason)
     {
       OnVerificationFinished(currentFunction, "timed out");
-      Console.WriteLine("Verification of {0} timed out : {1}", this.currentFunction, reason);
+      Utils.Log(String.Format("Verification of {0} timed out : {1}", this.currentFunction, reason));
       this.AnyErrorReported = true;
       this.errorReported = true;
     }
@@ -46,7 +46,7 @@ namespace Microsoft.Research.Vcc.Cpp
     {
       OnVerificationFinished(currentFunction, "smoke");
 
-      Console.WriteLine("Verification of {0} found unreachable code", this.currentFunction);
+      Utils.Log(String.Format("Verification of {0} found unreachable code", this.currentFunction));
       this.AnyErrorReported = true;
       this.errorReported = true;
     }
@@ -54,7 +54,7 @@ namespace Microsoft.Research.Vcc.Cpp
     public override void OnWarning(string msg)
     {
       OnVerificationFinished(currentFunction, "warning");
-      Console.WriteLine("Verification of {0} gave warning: {1}", this.currentFunction, msg);
+      Utils.Log(String.Format("Verification of {0} gave warning: {1}", this.currentFunction, msg));
     }
 
     public void StartFunction(string functionName)
@@ -67,7 +67,7 @@ namespace Microsoft.Research.Vcc.Cpp
     {
       if (!this.errorReported) {
         OnVerificationFinished(currentFunction, "succeeded");
-        Console.WriteLine("Verification of {0} succeeded.", this.currentFunction);
+        Utils.Log(String.Format("Verification of {0} succeeded.", this.currentFunction));
         return true;
       }
 
@@ -94,7 +94,7 @@ namespace Microsoft.Research.Vcc.Cpp
         temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.filename, false, tok.line, tok.col, errno, msg)));
       }
 
-      Console.WriteLine("{0}({1},{2}): error VC{3:0000}: {4}", tok.filename, tok.line, tok.col, errno, String.Format(fmt, args));
+      Utils.Log(String.Format("{0}({1},{2}): error VC{3:0000}: {4}", tok.filename, tok.line, tok.col, errno, String.Format(fmt, args)));
     }
 
 
