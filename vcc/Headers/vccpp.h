@@ -178,7 +178,8 @@ namespace VCC
     template<class T> void Always(T, bool);
     template<class T> T* Alloc();
     template<class T1, class T2> bool Approves(T1, T2);
-    template<class T> T Array(T t, size_t);
+    template<class T> T Array(T, size_t);
+    template<class T> T Arraymembers(T, size_t);
     template<class T> Set Arrayrange(T t, size_t);
     template<class T> bool Arraysdisjoint(T, size_t, T, size_t);
     template<class T> T At(State, T t);
