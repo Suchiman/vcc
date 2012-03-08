@@ -6,6 +6,7 @@
 
 namespace Microsoft.Research.Vcc
 
+open System
 open Microsoft.Research.Vcc
 open Microsoft.Research.Vcc.Util
 open Microsoft.Research.Vcc.TransUtil
@@ -192,7 +193,7 @@ module Termination =
   let turnIntoPureExpression (helper:TransHelper.TransEnv) topType (expr:Expr) =
     let rec aux (ctx:PureTrCtx) bindings (exprs:list<Expr>) =
       let expr, cont = exprs.Head, exprs.Tail
-      //System.Console.WriteLine ("doing (cont={0}) e: {1}/{2}", cont.Length, expr, expr.GetType())
+      //Utils.Log(String.Format("doing (cont={0}) e: {1}/{2}", cont.Length, expr, expr.GetType()))
 
       let recExpr e = aux { ctx with InStmt = false } bindings [e]
       let self = aux ctx bindings
@@ -346,7 +347,7 @@ module Termination =
             []
           elif fn.DecreasesLevel > currFn.DecreasesLevel then
             helper.GraveWarning (e.Token, 9319, 
-                                 System.String.Format ("calling function '{0}' (level {1}) from lower-level function ('{2}' at level {3})", 
+                                 String.Format ("calling function '{0}' (level {1}) from lower-level function ('{2}' at level {3})", 
                                                        fn.Name, fn.DecreasesLevel, currFn.Name, currFn.DecreasesLevel))
             []
           elif checkTermination helper fn then
