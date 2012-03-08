@@ -228,6 +228,7 @@ namespace VCC
     template<class T> bool Mutablearray(T, size_t);
     template<class T> bool Nested(T);
     template<class T> bool Nonprimitiveptr(T);
+    void NoReadsCheck();
     template<class T> bool Notshared(T);
     State Now();
     template<class T> bool Objectroot(T);
