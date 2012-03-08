@@ -212,6 +212,7 @@ namespace VCC
     template<class T> void HavocOthers(T);
     template<class T> bool In(T, Set);
     template<class T> bool In0(T, Set);
+    template<class T1, class T2> bool Inarray(T1, T2, size_t);
     template<class T> void Increases(T);
     Set Inter(Set, Set);
     template<class T> bool Inv(T);
