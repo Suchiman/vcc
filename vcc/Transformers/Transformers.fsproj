@@ -22,7 +22,8 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\Transformers.XML</DocumentationFile>
-    <OtherFlags>--keyfile:..\Common\InterimKey.snk</OtherFlags>
+    <OtherFlags>
+    </OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,7 +33,8 @@
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\Transformers.XML</DocumentationFile>
-    <OtherFlags>--keyfile:..\Common\InterimKey.snk</OtherFlags>
+    <OtherFlags>
+    </OtherFlags>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
@@ -41,6 +43,11 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\VCCPPUtils\VCCPPUtils.vcxproj">
+      <Name>VCCPPUtils</Name>
+      <Project>{0fe21cca-be19-453c-bc25-bdbf05ecec9b}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Ast\Ast.fsproj">
       <Name>Ast</Name>
       <Project>{c5203b00-b561-48f9-b56d-c4477a27ea01}</Project>
