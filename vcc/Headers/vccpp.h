@@ -200,6 +200,7 @@ namespace VCC
     bool Disjoint(Set, Set);
     template<class T> Set Domain(T);
     template<class T> T Domainroot(T);
+    template<class T> bool Domainupdatedat(T, Set);
     template<class T> T Embedding(T);
     void EndGhostAtomic();
     template<class T> Set Extent(T);
@@ -217,13 +218,17 @@ namespace VCC
     template<class T, class V> bool Is(V);
     template<class T> T Labeled(const char*, T);
     template<class T1, class T2, class L> Map<T1, T2> Lambda(L);
+    template<class T1, class T2, class T3, class L> Map<T1, Map<T2, T3>> Lambda(L);
+    template<class T1, class T2, class T3, class T4, class L> Map<T1, Map<T2, Map<T3, T4>>> Lambda(L);
     template<class T> Claim Makeclaim(T, bool);
     template<class T> bool Mallocroot(T);
     Object Me();
     bool Mine(...);
     template<class T> bool Mutable(T);
     template<class T> bool Mutablearray(T, size_t);
+    template<class T> bool Nested(T);
     template<class T> bool Nonprimitiveptr(T);
+    void NoReadsCheck();
     template<class T> bool Notshared(T);
     State Now();
     template<class T> bool Objectroot(T);
@@ -232,6 +237,7 @@ namespace VCC
     bool Programentrypoint();
     size_t Sizeofobject(Object);
     template<class T> int Span(T);
+    bool Starthere();
     template<class T> bool Threadlocal(T);
     template<class T> bool Threadlocalarray(T, size_t);
     template<class T> bool Unchanged(T);
@@ -245,6 +251,7 @@ namespace VCC
     template<class T> bool Wrapped(T);
     template<class T> bool Wrappedwithdeepdomain(T);
     template<class T> bool Wrapped0(T);
+    template<class T> bool Writable(T);
     
     template<class T> Set Owns(T);
     template<class T> Object Owner(T);
