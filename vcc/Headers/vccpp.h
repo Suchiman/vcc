@@ -193,7 +193,7 @@ namespace VCC
     template<class T> unsigned int Claimcount(T);
     template<class T> bool Claimsobject(Claim, T);
     template<class T> bool Closed(T);
-    template<class T> void Decreases(T);
+    template<class T> void Decreases(T, ...);
     template<class T> bool Deepeq(T, T);
     template<class T1, class T2> bool Depends(T1, T2);
     template<class T> void Destroyclaim(Claim, T);
@@ -214,7 +214,7 @@ namespace VCC
     template<class T> bool In(T, Set);
     template<class T> bool In0(T, Set);
     template<class T1, class T2> bool Inarray(T1, T2, size_t);
-    template<class T> void Increases(T);
+    template<class T> void Increases(T, ...);
     Set Inter(Set, Set);
     template<class T> bool Inv(T);
     template<class T, class V> bool Is(V);
