@@ -109,12 +109,12 @@ namespace Microsoft.Research.Vcc.Cpp
 
             if (checker.Mismatches > 0)
             {
-                Console.WriteLine("\n\n*** Found output mismatch. ***\n");
-                Console.WriteLine("*** Expected (line {0}): ***", checker.FirstMismatchFoundAt);
-                Console.WriteLine(checker.FirstMismatchExpected);
-                Console.WriteLine("*** Received: ***");
-                Console.WriteLine(checker.FirstMismatchReceived);
-                Console.WriteLine("*** End of mismatch. ***\n\n");
+                Utils.Log("\n\n*** Found output mismatch. ***\n");
+                Utils.Log("*** Expected (line " + checker.FirstMismatchFoundAt + "): ***");
+                Utils.Log(checker.FirstMismatchExpected);
+                Utils.Log("*** Received: ***");
+                Utils.Log(checker.FirstMismatchReceived);
+                Utils.Log("*** End of mismatch. ***\n\n");
 
                 return false;
             }
@@ -127,7 +127,7 @@ namespace Microsoft.Research.Vcc.Cpp
             if (!String.IsNullOrEmpty(vccArgs))
             {
                 // TODO: use vccArgs
-                Console.WriteLine("VCC Arguments: " + vccArgs);
+                Utils.Log("VCC Arguments: " + vccArgs);
             }
 
             if (dumpAstBeforeTransformations)
@@ -192,9 +192,8 @@ namespace Microsoft.Research.Vcc.Cpp
             }
             catch (Exception e)
             {
-                Console.WriteLine("*** Exception occurred during verification ***\n");
-                Console.WriteLine(e.ToString());
-                Console.WriteLine();
+                Utils.Log("*** Exception occurred during verification ***");
+                Utils.Log(e.ToString());
                 throw;
             }
             finally

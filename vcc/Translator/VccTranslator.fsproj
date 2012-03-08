@@ -30,6 +30,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>3</WarningLevel>
+    <OtherFlags />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -38,6 +39,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>3</WarningLevel>
+    <OtherFlags>--keyfile:..\Common\InterimKey.snk</OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <OtherFlags>--keyfile:..\Common\InterimKey.snk</OtherFlags>
@@ -120,6 +122,11 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\VCCPPUtils\VCCPPUtils.vcxproj">
+      <Name>VCCPPUtils</Name>
+      <Project>{0fe21cca-be19-453c-bc25-bdbf05ecec9b}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Ast\Ast.fsproj">
       <Name>Ast</Name>
       <Project>{c5203b00-b561-48f9-b56d-c4477a27ea01}</Project>
