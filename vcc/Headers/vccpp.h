@@ -236,6 +236,7 @@ namespace VCC
     template<class T> bool Objectroot(T);
     template<class T> T Old(T);
     template<class T> bool Onunwrap(T, bool);
+    template<class T> void RecursiveWith(T);
     bool Programentrypoint();
     size_t Sizeofobject(Object);
     template<class T> int Span(T);
