@@ -217,6 +217,8 @@ namespace VCC
     template<class T, class V> bool Is(V);
     template<class T> T Labeled(const char*, T);
     template<class T1, class T2, class L> Map<T1, T2> Lambda(L);
+    template<class T1, class T2, class T3, class L> Map<T1, Map<T2, T3>> Lambda(L);
+    template<class T1, class T2, class T3, class T4, class L> Map<T1, Map<T2, Map<T3, T4>>> Lambda(L);
     template<class T> Claim Makeclaim(T, bool);
     template<class T> bool Mallocroot(T);
     Object Me();
