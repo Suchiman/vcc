@@ -9,9 +9,9 @@
 namespace Microsoft.Research.Vcc
 
   // TODO: expansion axiom has been changed in boogie, this file needs to be updated
-  
   open System.Diagnostics
   open Microsoft
+  open Microsoft.Research.Vcc
   open Microsoft.Research.Vcc.Util
   open Microsoft.Research.Vcc.BoogieAST
 
@@ -319,11 +319,9 @@ namespace Microsoft.Research.Vcc
               this.Dump "vcopt-post.bpl" decls
             (impl :?> Boogie.Implementation)
           | _ ->
-            System.Console.WriteLine("attempting to dump BPL to vcopt-bug.bpl")
+            Utils.Log ("attempting to dump BPL to vcopt-bug.bpl")
             this.Dump "vcopt-bug.bpl" decls
             failwith "something went wrong"
-          
-
 
     type Function =
       {
