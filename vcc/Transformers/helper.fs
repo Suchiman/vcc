@@ -7,6 +7,7 @@
 #light
 
 namespace Microsoft.Research.Vcc
+  open System
   open Microsoft.Research.Vcc
   open Microsoft.Research.Vcc.Util
 
@@ -30,7 +31,7 @@ namespace Microsoft.Research.Vcc
      member this.Elapsed = handicap + stopwatch.ElapsedMilliseconds
      member this.Name = name
      member this.Display() =
-       System.String.Format("{0,30} {1:0.000}", name, float this.Elapsed / 1000.0)
+       String.Format("{0,30} {1:0.000}", name, float this.Elapsed / 1000.0)
      member this.ShouldReplace (that:Stopwatch) =
        if this = that then true
        else
@@ -362,6 +363,5 @@ namespace Microsoft.Research.Vcc
               | ExprCtx _ -> "Expr"
               | Decl _ -> "decl"
               | DoNothing -> "mark"
-          Utils.Log(System.String.Format("{3:000.000}s {0} {1} {2}", kind, (if t.Enabled then "          " else "(disabled)"), t.Name, 
+          Utils.Log(String.Format("{3:000.000}s {0} {1} {2}", kind, (if t.Enabled then "          " else "(disabled)"), t.Name,
                                     double (lookupWithDefault times 0L t.Name) / 10000000.0))
-                                    

@@ -27,7 +27,8 @@
     <WarningLevel>3</WarningLevel>
     <StartWorkingDirectory>C:\dev\felt\vcc\Test\testsuite\tmp</StartWorkingDirectory>
     <StartArguments>a.c</StartArguments>
-    <OtherFlags>--keyfile:..\..\Common\InterimKey.snk</OtherFlags>
+    <OtherFlags>
+    </OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>

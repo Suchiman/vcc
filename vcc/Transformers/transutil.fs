@@ -589,8 +589,8 @@ namespace Microsoft.Research.Vcc
   let pruneBy (env:TransHelper.TransEnv) funcName decls = env.SwPruning.Run doPruneBy funcName decls
   
   let dumpDecls msg showTypes decls = 
-    printf ">>> %s\r\n" msg
-    for (d:Top) in decls do printf "%s" (d.ToStringWT(showTypes))
+    Utils.Log(msg)//TODO: printf ">>> %s\r\n" msg
+    for (d:Top) in decls do Utils.Log(d.ToStringWT(showTypes))
     decls
 
   let forEachInvariant f decls =
