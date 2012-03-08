@@ -200,6 +200,7 @@ namespace VCC
     bool Disjoint(Set, Set);
     template<class T> Set Domain(T);
     template<class T> T Domainroot(T);
+    template<class T> bool Domainupdatedat(T, Set);
     template<class T> T Embedding(T);
     void EndGhostAtomic();
     template<class T> Set Extent(T);
@@ -225,6 +226,7 @@ namespace VCC
     bool Mine(...);
     template<class T> bool Mutable(T);
     template<class T> bool Mutablearray(T, size_t);
+    template<class T> bool Nested(T);
     template<class T> bool Nonprimitiveptr(T);
     template<class T> bool Notshared(T);
     State Now();
@@ -234,6 +236,7 @@ namespace VCC
     bool Programentrypoint();
     size_t Sizeofobject(Object);
     template<class T> int Span(T);
+    bool Starthere();
     template<class T> bool Threadlocal(T);
     template<class T> bool Threadlocalarray(T, size_t);
     template<class T> bool Unchanged(T);
@@ -247,6 +250,7 @@ namespace VCC
     template<class T> bool Wrapped(T);
     template<class T> bool Wrappedwithdeepdomain(T);
     template<class T> bool Wrapped0(T);
+    template<class T> bool Writable(T);
     
     template<class T> Set Owns(T);
     template<class T> Object Owner(T);
