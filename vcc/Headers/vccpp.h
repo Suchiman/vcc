@@ -240,6 +240,7 @@ namespace VCC
     template<class T> bool Onunwrap(T, bool);
     template<class T> void RecursiveWith(T);
     bool Programentrypoint();
+    template<class T> size_t Size(T);
     size_t Sizeofobject(Object);
     template<class T> int Span(T);
     bool Starthere();
