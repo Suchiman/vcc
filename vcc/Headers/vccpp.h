@@ -218,6 +218,7 @@ namespace VCC
     template<class T> void Increases(T, ...);
     Set Inter(Set, Set);
     template<class T> bool Inv(T);
+    template<class T> bool Inv2s(State, State, T);
     template<class T, class V> bool Is(V);
     template<class T> bool Isarray(T, size_t);
     template<class T> T Labeled(const char*, T);
