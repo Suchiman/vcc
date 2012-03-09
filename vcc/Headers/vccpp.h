@@ -277,6 +277,8 @@ namespace VCC
     public:
       Unchecked(const T&);
       operator T() const;
+      T operator+=(T);
+      T operator-=(T);
     };
 
     template <typename T> class Unblobify
