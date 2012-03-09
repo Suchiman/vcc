@@ -131,7 +131,13 @@ namespace VCC
       bool operator==(T);
       T operator ->();
     };
-           
+      
+    template <typename S, typename T> class Ghost< Map <S, T> >
+    {
+    public:
+      S& operator[](T);
+    };
+
     template <typename T> class GhostOut: public Ghost<T>
     {
     private:
@@ -239,6 +245,7 @@ namespace VCC
     template<class T> bool Objectroot(T);
     template<class T> T Old(T);
     template<class T> bool Onunwrap(T, bool);
+    template<class T> T ReadOnly(T);
     template<class T> void RecursiveWith(T);
     bool Programentrypoint();
     template<class T> size_t Size(T);
