@@ -30,6 +30,8 @@ namespace Microsoft.Research.Vcc
 
   let specialFunctionMap = Map.ofList [
                                                     "VCC::Activeclaim",         "_vcc_active_claim"
+                                                    "VCC::Addr",                "_vcc_addr"
+                                                    "VCC::Addreq",              "_vcc_addr_eq"
                                                     "VCC::Approves",            "_vcc_approves"
                                                     "VCC::Array",               "_vcc_as_array"
                                                     "VCC::Arrayrange",          "_vcc_array_range"

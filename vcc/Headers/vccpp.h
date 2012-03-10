@@ -178,7 +178,7 @@ namespace VCC
     // object state
     template<class T> bool Activeclaim(T);
     template<class T> T Activemember(T);
-    template<class T> int Addr(T);
+    template<class T> Integer Addr(T);
     template<class T1, class T2> bool Addreq(T1, T2);
     template<class T> T* Allocarray(size_t);
     template<class T> void Always(T, bool);
