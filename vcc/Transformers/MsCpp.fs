@@ -118,6 +118,10 @@ namespace Microsoft.Research.Vcc
     let endpos = name.IndexOf('<')
     if endpos = -1 then name else name.Substring(0, endpos)
 
+  let basename (name:string) =
+    let startPos = name.LastIndexOf("::")
+    if startPos = -1 then name else name.Substring(startPos + 2)
+
   let (|SpecialCallTo|_|) name = Map.tryFind (nongeneric name) specialFunctionMap
           
   //============================================================================================================    
@@ -233,6 +237,16 @@ namespace Microsoft.Research.Vcc
       | Macro(_, "comma", [Macro(_, "=", [Ref(_, v); expr]); Ref(_, v')]) when v.Name = v'.Name ->
         // TODO: compare variable directly and not by name once the AST convertor re-uses variables for ALLOTEMPS
         Some(self expr)
+
+      // the following AST structure is generated for ghost parameters passed on as ghost arguments:
+      // and we remove it here
+      //
+      // @&(*(VCC::Ghost<int>::Ghost<int>(@currentobject, @&(n)))) is rewritten into 'n'
+
+      | Macro(_, "&", 
+              [Deref(_,Call(_, {Parent = Some({Name = StartsWith "VCC::Ghost"}); FriendlyName = name}, [], 
+                       [Macro(_, "currentobject", []); Macro(_, "&", [arg])]))]) when (basename name).StartsWith("Ghost") ->
+        Some(arg)
 
       | _ -> None
 
@@ -769,12 +783,12 @@ namespace Microsoft.Research.Vcc
       // ended by a similar declaration of a local with name VCCEndGhost; take everything between two such
       // declarations and make them 'spec'
 
-      let localsMap = new Dict<_,_>()
+      let specVarMap = new Dict<_,_>()
 
       let mkSpec = function
         | VarDecl(ec, ({Kind = Local} as v), attr) ->
           let v' = { v.UniqueCopy() with Kind = SpecLocal }
-          localsMap.Add(v, v')
+          specVarMap.Add(v, v')
           VarDecl(ec, v', attr)
         | expr -> Expr.SpecCode expr
 
@@ -799,15 +813,60 @@ namespace Microsoft.Research.Vcc
 
       let substVars self = function
         | Expr.Ref(ec, v) ->
-          match localsMap.TryGetValue(v) with
+          match specVarMap.TryGetValue(v) with
             | true, v' -> Some(Ref(ec, v'))
             | false, _ -> None
+        | VarDecl(ec, v, attrs) ->
+          match specVarMap.TryGetValue(v) with
+            | true, v' -> Some(VarDecl(ec, v', attrs))
+            | false, _ -> None
         | _ -> None
+
+      // ghost arguments are passed by type Ghost<T> where T is the 'original' type; rewrite them into
+      // spec parameters
+
+      let (|GhostType|_|) = 
+        let getOriginalType (td : TypeDecl) =
+          match td.Fields with 
+            | [{Name = "_t_member_"} as f] -> f.Type
+            | _ -> helper.Oops(td.Token, "unexpected Ghost type structure"); die()
+      
+        function
+          | Type.Ref({Name = StartsWith "VCC::GhostOut"} as td) ->
+            Some(getOriginalType td, true)
+          | Type.Ref({Name = StartsWith "VCC::Ghost"} as td) ->
+            Some(getOriginalType td, false)
+          | _ -> None
+     
+      let ghostToSpecPar = 
+        let ghostToSpecPar' (v:Variable) =
+          match v.Type with
+            | GhostType(originalType, isOut) -> 
+              let v' = { v.UniqueCopy() with Type = originalType; Kind = if isOut then VarKind.OutParameter else VarKind.SpecParameter }
+              specVarMap.Add(v, v')
+              v'
+            | _ -> v
+
+        function 
+          | Top.FunctionDecl(fn) -> fn.Parameters <- List.map ghostToSpecPar' fn.Parameters;
+          | _ -> ()
+        
+      let rewriteGhostParOccurrences self = function
+
+        // remove the wrapper calls to CreateGhost{Out} and the implicit conversions when using the ghost arguments
+
+        | Call(ec, { FriendlyName = StartsWith "VCC::CreateGhost" }, [], [arg]) -> Some(self arg)
+        | Call(ec, { Parent = Some({Name = StartsWith "VCC::Ghost"}); FriendlyName = Contains "::operator "}, [], [Macro(_, "&", [arg])]) ->
+          Some(self arg)
+        | _ -> None
+
+      decls |> List.iter ghostToSpecPar
 
       decls 
       |> List.map collectGhostFields
       |> deepMapExpressions collectGhostStmts 
       |> deepMapExpressions substVars
+      |> deepMapExpressions rewriteGhostParOccurrences
 
     // ============================================================================================================    
 
@@ -849,6 +908,8 @@ namespace Microsoft.Research.Vcc
         | Macro(ec, "do", _) -> helper.Oops(ec.Token, "unexpected do-while loop structure"); false
         | Macro(ec, "while", [ Macro(lec, "loop_contract", loopContract); cond; Block(bec, stmts, None)]) -> true
         | Macro(ec, "while", _) -> helper.Oops(ec.Token, "unexpected while loop structure"); false
+        | Call(ec, { FriendlyName = StartsWith "VCC::CreateGhost" }, [], [_]) -> true
+        | Call(ec, { FriendlyName = StartsWith "VCC::CreateGhost" }, _, _) -> helper.Oops(ec.Token, "unexpected ghost or out argument structure"); false
         | _ -> true
 
       decls |> deepVisitExpressions checkLoopStructure
