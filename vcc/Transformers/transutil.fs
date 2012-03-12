@@ -117,6 +117,11 @@ namespace Microsoft.Research.Vcc
     | [x] -> x
     | x :: xs -> List.fold (boolOp "&&") x xs
       
+  let multiOr = function
+    | [] -> Expr.False
+    | [x] -> x
+    | x ::xs -> List.fold (boolOp "||") x xs
+
   let mapInvariants f decls =
     let fLab = function
       | Macro (c, "labeled_invariant", [lab; i]) -> 
@@ -178,7 +183,38 @@ namespace Microsoft.Research.Vcc
       | Integer k -> Type.IntSuffix k
       | MathInteger Unsigned -> "nat"
       | _ -> failwith "integer type expected"
+
+  let bi32768 = new bigint(32768)
+  let bi65536 = new bigint(65536)
   
+  let private maxu8 =   new bigint( 255)
+  let private mini8 =   new bigint(-128)
+  let private maxi8 =   new bigint( 127)
+  let private maxu16 =  bi65536 - bigint.One
+  let private mini16 =  - bi32768
+  let private maxi16 =  bi32768 - bigint.One
+  let private maxu32 =  bi65536 *bi65536 - bigint.One
+  let private mini32 =  -(bi65536 * bi32768)
+  let private maxi32 =  bi65536 * bi32768 - bigint.One
+  let private maxu64 =  bi65536 * bi65536 * bi65536 * bi65536 - bigint.One
+  let private mini64 =  -(bi65536 * bi65536 * bi65536 * bi32768)
+  let private maxi64 =  bi65536 * bi65536 * bi65536 * bi32768 - bigint.One
+
+  let intInRange (t:Type) (n:bigint) =
+    let zero = bigint.Zero
+    match t with
+      | Integer k ->
+        match k with 
+          | UInt8   ->   zero <= n && n <= maxu8
+          | Int8    ->  mini8 <= n && n <= maxi8
+          | UInt16  ->   zero <= n && n <= maxu16
+          | Int16   -> mini16 <= n && n <= maxi16
+          | UInt32  ->   zero <= n && n <= maxu32
+          | Int32   -> mini32 <= n && n <= maxi32
+          | UInt64  ->   zero <= n && n <= maxu64
+          | Int64   -> mini64 <= n && n <= maxi64
+      | _ -> true
+
   let inRange (helper:TransHelper.TransEnv) ec (expr:Expr) =
     let castToInt expr = expr
     match expr.Type with
@@ -341,7 +377,7 @@ namespace Microsoft.Research.Vcc
       | Ref(_, ({Kind = SpecParameter|OutParameter} as v)) -> specFound := Some("parameter '" + v.Name + "'"); false
       | CallMacro(_, ("_vcc_alloc" | "_vcc_stack_alloc"), _, _) -> false
       | Macro(_, "by_claim", [_; obj; ptr]) -> self obj; self ptr; false
-      | Call(_, ({IsSpec = true} as f), _, _) -> specFound := Some("function '" + f.Name + "'"); false
+      | Call(_, f, _, _) when f.IsSpec -> specFound := Some("function '" + f.Name + "'"); false
       | Call(_, fn, _, args) ->
         let checkNonSpecPar (p : Variable) (e : Expr) =
           if p.Kind <> VarKind.SpecParameter && p.Kind <> VarKind.OutParameter then self e
@@ -381,6 +417,7 @@ namespace Microsoft.Research.Vcc
       | Type.Ref td -> 
         match td.Name with
           | "$$bogus$$"
+          | "$$ellipsis$$"
           | "#Object" -> ()
           | _ ->
             cb.UseTypeDecl td
@@ -416,6 +453,7 @@ namespace Microsoft.Research.Vcc
           | VarKind.QuantBound
           | VarKind.SpecParameter
           | VarKind.OutParameter
+          | VarKind.Static
           | VarKind.Parameter -> () 
       | Expr.Quant (_, qd) ->
         for v in qd.Variables do
@@ -551,8 +589,8 @@ namespace Microsoft.Research.Vcc
   let pruneBy (env:TransHelper.TransEnv) funcName decls = env.SwPruning.Run doPruneBy funcName decls
   
   let dumpDecls msg showTypes decls = 
-    printf ">>> %s\r\n" msg
-    for (d:Top) in decls do printf "%s" (d.ToStringWT(showTypes))
+    Utils.Log(msg)//TODO: printf ">>> %s\r\n" msg
+    for (d:Top) in decls do Utils.Log(d.ToStringWT(showTypes))
     decls
 
   let forEachInvariant f decls =

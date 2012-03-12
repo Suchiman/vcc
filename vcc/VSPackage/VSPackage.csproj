@@ -10,21 +10,26 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Microsoft.Research.Vcc.VSPackage</RootNamespace>
     <AssemblyName>Microsoft.Research.Vcc.VSPackage</AssemblyName>
-    <SignAssembly>True</SignAssembly>
+    <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\common\InterimKey.snk</AssemblyOriginatorKeyFile>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\..\Bin\Debug\i386\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CopyVsixExtensionFiles>False</CopyVsixExtensionFiles>
     <CreateVsixContainer>True</CreateVsixContainer>
     <DeployExtension>False</DeployExtension>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -153,6 +158,7 @@
       <DependentUpon>CustomVerifyForm.cs</DependentUpon>
     </Compile>
     <Compile Include="CompilerSettings.cs" />
+    <Compile Include="NativeMethods.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -186,6 +192,11 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\Boogie\UnivBackPred2.smt2">
+      <Link>UnivBackPred2.smt2</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
@@ -199,6 +210,26 @@
   <ItemGroup>
     <Resource Include="Resources\vcc.ico" />
     <None Include="Build\setVersion.msbuild.xml" />
+    <Content Include="..\..\..\..\..\..\..\Ext\VS11\astio.dll">
+      <Link>astio.dll</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\..\..\..\..\Ext\VS11\msvcp110.dll">
+      <Link>msvcp110.dll</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\..\..\..\..\Ext\VS11\msvcr110.dll">
+      <Link>msvcr110.dll</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Boogie\z3.exe">
+      <Link>z3.exe</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Content Include="Package.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
@@ -216,9 +247,38 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\VCCPPUtils\VCCPPUtils.vcxproj">
+      <Project>{0FE21CCA-BE19-453C-BC25-BDBF05ECEC9B}</Project>
+      <Name>VCCPPUtils</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\VCCPP\VCCPP.vcxproj">
+      <Project>{C3C2AE10-8ECB-4211-BFF2-4A072EE748DA}</Project>
+      <Name>VCCPP</Name>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Ast\Ast.fsproj">
+      <Project>{C5203B00-B561-48F9-B56D-C4477A27EA01}</Project>
+      <Name>Ast</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CppDriver\CppDriver.csproj">
+      <Project>{9E91E491-7791-4872-B937-F9719F15CE43}</Project>
+      <Name>CppDriver</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SyntaxHighlightingParser\SyntaxHighlightingParser.fsproj">
       <Project>{2CEF7032-BCDB-4B3B-BACC-F18EA9CBB25E}</Project>
       <Name>SyntaxHighlightingParser</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Tools\VccSyntaxCoverter\VccSyntaxCoverter.fsproj">
+      <Project>{ADB80DB3-762B-4B3F-ACA9-A99812AF2078}</Project>
+      <Name>VccSyntaxCoverter</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Transformers\Transformers.fsproj">
+      <Project>{F55BA112-7817-4A9F-9250-7CDFECC1F2CE}</Project>
+      <Name>Transformers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Translator\VccTranslator.fsproj">
+      <Project>{CDB01DBB-FD43-40F4-98F0-F5401E8C5919}</Project>
+      <Name>VccTranslator</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>

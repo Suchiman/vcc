@@ -48,7 +48,9 @@ namespace Microsoft.Research.Vcc.VSPackage
     /// <summary>
     ///     here the parameters of the last call of Vcc are stored
     /// </summary>
-    internal static string LastAction { get; set; }
+    internal static string LastArguments { get; set; }
+
+    internal static string LastFilename { get; set; }
 
     /// <summary>
     /// Default constructor of the package.
@@ -62,7 +64,7 @@ namespace Microsoft.Research.Vcc.VSPackage
       Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this));
       if (Instance != null) throw new InvalidOperationException();
       Instance = this;
-      LastAction = "";
+      LastArguments = LastFilename = String.Empty;
     }
 
     #region Commands
@@ -151,8 +153,10 @@ namespace Microsoft.Research.Vcc.VSPackage
     {
       if (OptionPage != null)
       {
-        if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
-        VCCLauncher.LaunchVCC(LastAction);
+          if (VSIntegration.DocumentsSavedCheck(OptionPage))
+          {
+              VCCLauncher.LaunchVCC(LastFilename, LastArguments);
+          }
       }
     }
 
@@ -254,7 +258,7 @@ namespace Microsoft.Research.Vcc.VSPackage
     {
       var cmd = sender as OleMenuCommand;
       if (cmd == null) return;
-      cmd.Enabled = !VCCLauncher.VCCRunning && LastAction != "";
+      cmd.Enabled = !VCCLauncher.VCCRunning && !String.IsNullOrEmpty(LastFilename);
       cmd.Visible = VSIntegration.IsCodeFile;     
     }
 
