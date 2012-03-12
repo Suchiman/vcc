@@ -184,9 +184,9 @@
 
         //// This is set to true, when Verification fails.
         private static readonly Regex VCCErrorRegEx =
-            new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:\s(((error\s(.*?):)\s(?<errormessage>(.*)))|(?<errormessage>\(Location of symbol related to previous error.\)))");
+            new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)(\s)?:\s(((error\s(.*?):)\s(?<errormessage>(.*)))|(?<errormessage>\(Location of symbol related to previous error.\)))");
         private static readonly Regex VCCWarningRegEx =
-            new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)\s:(\swarning\s(.*?):)\s(?<errormessage>(.*))");
+            new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)(\s)?:(\swarning\s(.*?):)\s(?<errormessage>(.*))");
 
         private static void vccProcess_Exited(int exitCode)
         {
