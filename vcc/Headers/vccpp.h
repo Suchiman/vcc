@@ -308,7 +308,9 @@ namespace VCC
       operator T() const;
     };
     
+    template <typename T> Ghost<T> CreateGhost(Ghost<T>);
     template <typename T> Ghost<T> CreateGhost(T);
+    template <typename T> GhostOut<T> CreateGhostOut(GhostOut<T>);
     template <typename T> GhostOut<T> CreateGhostOut(T);
 
     // matching helper functions
