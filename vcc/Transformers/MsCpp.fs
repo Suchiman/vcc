@@ -770,7 +770,7 @@ namespace Microsoft.Research.Vcc
               loop true acc fields
             | { Name = StartsWith "VCCEndGhost" } :: fields ->
               if not inSpec then helper.Oops(td.Token, "unbalanced VCCBeginGhost and VCCEndGhost in type declaration")
-              loop true acc fields
+              loop false acc fields
             | f :: fields ->
               if inSpec && not f.IsStatic then helper.Oops(f.Token, "spec field should have been marked 'static'")
               if inSpec then f.Flags <- (f.Flags ||| Flags.Spec) &&& ~~~ Flags.Static
