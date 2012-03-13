@@ -690,6 +690,11 @@ namespace Microsoft.Research.Vcc
 
       let selfs = List.map self
 
+      let toUnchecked self = function
+        | Cast(ec, Checked, arg) -> Some(Cast(ec, Unchecked, self arg))
+        | Prim(ec, Op(op, Checked), args) -> Some(Prim(ec, Op(op, Unchecked), List.map self args))
+        | _ -> None
+
       function
         | Call(ec, {FriendlyName = "VCC::Assert"}, [], [arg]) -> 
           Some(Assert(ec, self arg, []))
@@ -701,6 +706,8 @@ namespace Microsoft.Research.Vcc
           Some(Old(ec, Macro({ec with Type = Type.MathState}, "prestate", []), self arg))
         | Call(ec, {FriendlyName = SpecialCallTo(tgt)}, [], args)  ->
           Some(Macro(ec, tgt, List.map self args))
+        | Call(ec, {FriendlyName = StartsWith "VCC::Unchecked"}, [], [arg]) ->
+          Some((self arg).SelfMap(toUnchecked))
         | _ -> None
 
     // ============================================================================================================    
