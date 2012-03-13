@@ -68,6 +68,7 @@ namespace VCC
 
     class Object {
     public:
+      Object();
       Object(void*);
       bool operator==(void*);
       bool operator==(Ghost<Object>);
@@ -225,6 +226,7 @@ namespace VCC
     Set Inter(Set, Set);
     template<class T> bool Inv(T);
     template<class T> bool Inv2s(State, State, T);
+    template<class T> bool Inrangephysptr(T);
     template<class T, class V> bool Is(V);
     template<class T> bool Isarray(T, size_t);
     template<class T> T Labeled(const char*, T);
@@ -245,8 +247,10 @@ namespace VCC
     template<class T> bool Objectroot(T);
     template<class T> T Old(T);
     template<class T> bool Onunwrap(T, bool);
+    template<class T> T Precise(T);
     template<class T> T ReadOnly(T);
     template<class T> void RecursiveWith(T);
+    template<class T> T Retype(T);
     bool Programentrypoint();
     template<class T> size_t Size(T);
     size_t Sizeofobject(Object);
@@ -254,7 +258,9 @@ namespace VCC
     bool Starthere();
     template<class T> bool Threadlocal(T);
     template<class T> bool Threadlocalarray(T, size_t);
-    template<class T> bool Unchanged(T);
+    template<class T> T Unblobify(T);
+    template<class T> bool Unchanged(T);    
+    template<class T> T Unchecked(T);
     Set Union(Set, Set);
     template<class T> bool Unionactive(T);
     template<class T> void UnionReinterpret(T);
@@ -269,44 +275,6 @@ namespace VCC
     
     template<class T> Set Owns(T);
     template<class T> Object Owner(T);
-    
-    template <typename T> class Unchecked 
-    {
-    private:
-      T _t_member_;
-    public:
-      Unchecked(const T&);
-      operator T() const;
-      T operator+=(T);
-      T operator-=(T);
-    };
-
-    template <typename T> class Unblobify
-    {
-    private:
-      T _t_member_;
-    public:
-      Unblobify(const T&);
-      operator T() const;
-    };
-
-    template <typename T> class Retype 
-    {
-    private:
-      T _t_member_;
-    public:
-      Retype(const T&);
-      operator T() const;
-    };
-
-    template <typename T> class Precise
-    {
-    private:
-      T _t_member_;
-    public:
-      Precise(const T&);
-      operator T() const;
-    };
     
     template <typename T> Ghost<T> CreateGhost(Ghost<T>);
     template <typename T> Ghost<T> CreateGhost(T);
