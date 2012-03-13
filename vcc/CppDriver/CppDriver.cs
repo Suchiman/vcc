@@ -35,11 +35,12 @@ namespace Microsoft.Research.Vcc.Cpp
 
         private Program PreparePrelude()
         {
-            string preludePath = PathHelper.PreludePath("Vcc3Prelude.bpl");
+            string vcc3pfile = "Vcc3Prelude.bpl";
+            string preludePath = PathHelper.PreludePath(vcc3pfile);
 
             if (preludePath == null)
             {
-                env.Oops(Token.NoToken, "Could not locate Vcc3Prelude.bpl.");
+                env.Oops(Token.NoToken, "Could not locate " + vcc3pfile);
                 return new Program();
             }
 
@@ -47,7 +48,7 @@ namespace Microsoft.Research.Vcc.Cpp
             int errorCount = Parser.Parse(preludePath, new List<string>(), out prelude);
             if (prelude == null || errorCount > 0)
             {
-                env.Oops(Token.NoToken, "There were errors parsing Vcc3Prelude.bpl.");
+                env.Oops(Token.NoToken, "There were errors parsing " + vcc3pfile);
                 return new Program();
             }
 
@@ -84,7 +85,10 @@ namespace Microsoft.Research.Vcc.Cpp
                       };
 
             var clo = new CommandLineOptions();
-            clo.Parse(options);
+            bool parseRes = clo.Parse(options);
+            System.Diagnostics.Debug.Assert(parseRes, "Wrong Boogie parameters.");
+
+            clo.RunningBoogieFromCommandLine = false;
             CommandLineOptions.Install(clo);
         }
 
@@ -94,7 +98,10 @@ namespace Microsoft.Research.Vcc.Cpp
             if (program == null) return false;
 
             // write Boogie
+
+            //TODO: what is this blank commandline options, reuse InstallBoogieOptions()?
             CommandLineOptions.Install(new CommandLineOptions());
+
             using (var writer = new TokenTextWriter(outputFileName))
             {
                 program.Emit(writer);
@@ -147,7 +154,6 @@ namespace Microsoft.Research.Vcc.Cpp
 
             try
             {
-
                 var program = TranslateToBoogie(decls);
                 if (program == null)
                 {
@@ -171,7 +177,6 @@ namespace Microsoft.Research.Vcc.Cpp
                 LambdaHelper.ExpandLambdas(verifierInput);
 
                 // verify all implementation functions
-
                 foreach (var decl in verifierInput.TopLevelDeclarations)
                 {
                     var impl = decl as Implementation;
