@@ -22,6 +22,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Arrayrange"
                                                     "VCC::Extent"
                                                     "VCC::Domain"
+                                                    "VCC::Inter"
                                                     "VCC::Makeclaim"
                                                     "VCC::Now"
                                                     "VCC::Union"
@@ -43,6 +44,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Extent",              "_vcc_extent"
                                                     "VCC::Extentmutable",       "_vcc_extent_mutable"
                                                     "VCC::Fresh",               "_vcc_is_fresh"
+                                                    "VCC::Inter",               "_vcc_set_intersection"
                                                     "VCC::Mallocroot",          "_vcc_is_malloc_root"
                                                     "VCC::Mine",                "_vcc_keeps"
                                                     "VCC::Mutable",             "_vcc_mutable"
@@ -55,6 +57,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Span",                "_vcc_span"
                                                     "VCC::Threadlocal",         "_vcc_thread_local2"
                                                     "VCC::Threadlocalarray",    "_vcc_is_thread_local_array"
+                                                    "VCC::Union",               "_vcc_set_union"
                                                     "VCC::Universe",            "_vcc_set_universe"
                                                     "VCC::Valid",               "_vcc_typed2"
                                                     "VCC::Wrapped",             "_vcc_wrapped"
@@ -123,6 +126,10 @@ namespace Microsoft.Research.Vcc
     if startPos = -1 then name else name.Substring(startPos + 2)
 
   let (|SpecialCallTo|_|) name = Map.tryFind (nongeneric name) specialFunctionMap
+  
+  let (|AddrOf|_|) = function
+    | Macro(ec, "&", [arg]) -> Some(ec, arg)
+    | _ -> None
           
   //============================================================================================================    
 
@@ -173,6 +180,24 @@ namespace Microsoft.Research.Vcc
           else 
             Some(Macro(ic, "implicit_cast", [Cast(ec, cs, e')]))
 
+        | _ -> None
+
+    // ============================================================================================================    
+
+    let rewriteSets self = 
+
+      let (|CreateSet|_|) = function
+        | Deref(_, Macro(_, "comma", [Deref(_, Call(ec, {FriendlyName = "VCC::Set::Set"}, [], (AddrOf(_, Ref(_, v))) :: elems )); AddrOf(_, Ref(_, v'))])) when v.Name = v'.Name ->
+          Some(ec, elems)
+        | Deref(_, Call(ec, {FriendlyName = "VCC::Set::Set"}, [], _ :: elems)) -> Some(ec, elems)
+        | _ -> None
+
+      function
+        | CreateSet(ec, elems)
+        | AddrOf(_, CreateSet(ec, elems)) ->
+          Some(Macro(ec, "set", List.map self elems))
+        | Call(ec, { FriendlyName = "VCC::Set::operator==" }, [], [arg0; arg1]) ->
+          Some(Macro(ec, "_vcc_set_eq", [self arg0; self arg1]))
         | _ -> None
 
     // ============================================================================================================    
@@ -230,6 +255,7 @@ namespace Microsoft.Research.Vcc
 
       // also, when passing structs, extra temporary variables are introduced, which we als remove here
 
+      | Deref(ec, Call(_, fn, [], args))
       | Macro(_, "implicit_cast", [Cast(_, _, Deref(ec, Call(_, fn, [], args)))]) 
         when Set.contains (nongeneric fn.FriendlyName) functionsReturningsClassValues ->
         Some(Call(ec, fn, [], List.map self args))
@@ -245,7 +271,7 @@ namespace Microsoft.Research.Vcc
 
       | Macro(_, "&", 
               [Deref(_,Call(_, {Parent = Some({Name = StartsWith "VCC::Ghost"}); FriendlyName = name}, [], 
-                       [Macro(_, "currentobject", []); Macro(_, "&", [arg])]))]) when (basename name).StartsWith("Ghost") ->
+                       [Macro(_, "currentobject", []); AddrOf(_, arg)]))]) when (basename name).StartsWith("Ghost") ->
         Some(arg)
 
       | _ -> None
@@ -602,7 +628,7 @@ namespace Microsoft.Research.Vcc
 
       let buildArgsToActualsMap args actuals = 
         let f map arg = function
-          | Macro(_, "&", [actual]) -> Map.add arg actual map
+          | AddrOf(_, actual) -> Map.add arg actual map
           | _ -> die()
         List.fold2 f Map.empty args actuals
 
@@ -611,7 +637,7 @@ namespace Microsoft.Research.Vcc
 
         let f2a = new Dict<_,_>()
         let f = function
-          | Macro(_, "=", [Deref(_, Dot(_, Ref(_, {Name = "this"}), f)); Macro(_, "&", [Deref(_, Ref(_, v))])]) ->
+          | Macro(_, "=", [Deref(_, Dot(_, Ref(_, {Name = "this"}), f)); AddrOf(_, Deref(_, Ref(_, v)))]) ->
             f2a.Add(f, (Map.find v argsToActuals))
           | Return(_, None) -> ()
           | expr -> helper.Oops(expr.Common.Token, "unexpected statement in closure constructor")
@@ -863,7 +889,7 @@ namespace Microsoft.Research.Vcc
         // remove the wrapper calls to CreateGhost{Out} and the implicit conversions when using the ghost arguments
 
         | Call(ec, { FriendlyName = StartsWith "VCC::CreateGhost" }, [], [arg]) -> Some(self arg)
-        | Call(ec, { Parent = Some({Name = StartsWith "VCC::Ghost"}); FriendlyName = Contains "::operator "}, [], [Macro(_, "&", [arg])]) ->
+        | Call(ec, { Parent = Some({Name = StartsWith "VCC::Ghost"}); FriendlyName = Contains "::operator "}, [], [AddrOf(_, arg)]) ->
           Some(self arg)
         | _ -> None
 
@@ -925,6 +951,32 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let removeTemps decls =
+
+      // replace expressions of the form  @=(tmp, rhs) by rhs when tmp is never referenced elsewhere
+
+      let singleUseVars = new HashSet<_>()
+      let mutipleUseVars = new HashSet<_>()
+      
+      let findTemps self = function
+        | Ref(_, v) when v.Kind = VarKind.Local ->
+          if not (mutipleUseVars.Contains(v.Name)) then
+            if not (singleUseVars.Add(v.Name)) then
+              singleUseVars.Remove(v.Name) |> ignore
+              mutipleUseVars.Add(v.Name) |> ignore
+          false
+        | _ -> true
+
+      let removeSingleUseTemps self = function
+        | Macro(_, "=", [Ref(_, v); rhs]) when singleUseVars.Contains(v.Name) ->
+          Some(self rhs)
+        | _ -> None
+
+      decls |> deepVisitExpressions findTemps
+      decls |> deepMapExpressions removeSingleUseTemps
+
+    // ============================================================================================================    
+
     let sanitizeNames decls =
       for d in decls do
         match d with 
@@ -979,9 +1031,11 @@ namespace Microsoft.Research.Vcc
 
     helper.AddTransformer ("cpp-check-ast-structure", TransHelper.Decl checkAstStructure)
     helper.AddTransformer ("cpp-errors", TransHelper.Expr reportErrors)
+    helper.AddTransformer ("cpp-remove-temps", TransHelper.Decl removeTemps)
     helper.AddTransformer ("cpp-globals-init", TransHelper.Decl rewriteGlobalsInitialization)
     helper.AddTransformer ("cpp-special-args", TransHelper.Decl specialArgumentHandling)
     helper.AddTransformer ("cpp-special-types", TransHelper.Decl rewriteSpecialTypes)
+    helper.AddTransformer ("cpp-set", TransHelper.Expr rewriteSets)
     helper.AddTransformer ("cpp-remove-object-copying", TransHelper.Expr removeObjectCopyOperations)
     helper.AddTransformer ("cpp-blocks", TransHelper.Expr normalizeBlocks)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
