@@ -34,7 +34,7 @@
                       " VCC.")]
         public string VccExecutableFolder { get; set; }
 
-        private bool dimAnnotations;
+        private bool dimAnnotations = true;
 
         [DisplayName("Dim Code Annotations")]
         [Description("Dim code annotations to visualize difference between implementation and annotation")]
