@@ -285,13 +285,13 @@ namespace VCC
 
     bool Matchulong(unsigned __int64) {
       _(pure)
-      _(ensures \result<bool> == true)
+      _(ensures \result == true)
       return true;
     };
 
     bool Matchlong(__int64) {
       _(pure)
-      _(ensures \result<bool> == true)
+      _(ensures \result == true)
       return true;
     };
 
