@@ -24,6 +24,9 @@ namespace VCC
 {
     // types
     template<class T> class Ghost;
+
+    class Thread {
+    };
     
     class Claim {
     public:
@@ -235,7 +238,7 @@ namespace VCC
     template<class T1, class T2, class T3, class T4, class L> Map<T1, Map<T2, Map<T3, T4>>> Lambda(L);
     template<class T> Claim Makeclaim(T, bool);
     template<class T> bool Mallocroot(T);
-    Object Me();
+    Thread Me();
     bool Mine(...);
     template<class T> bool Mutable(T);
     template<class T> bool Mutablearray(T, size_t);
@@ -252,6 +255,7 @@ namespace VCC
     template<class T> void RecursiveWith(T);
     template<class T> T Retype(T);
     bool Programentrypoint();
+    template<class T> bool Shalloweq(T, T);
     template<class T> size_t Size(T);
     size_t Sizeofobject(Object);
     template<class T> int Span(T);
