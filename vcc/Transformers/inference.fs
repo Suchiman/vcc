@@ -109,9 +109,6 @@ namespace Microsoft.Research.Vcc
         | _ -> None
         
       function
-        | Top.FunctionDecl(fn) as decl when fn.IsPure && fn.Writes <> [] ->
-          helper.Error (fn.Token, 9623, "writes specified on a pure function", None)
-          decl
         | Top.FunctionDecl(fn) as decl ->
            let extraEnsures = ensuresForWrites fn.Writes 
            fn.Ensures <- fn.Ensures @ extraEnsures
@@ -288,6 +285,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("infer-loop_invariants", TransHelper.Expr inferLoopInvariants)
     helper.AddTransformer ("infer-set_in", TransHelper.Decl (inferAny "set_in" inferSetIn))
     helper.AddTransformer ("infer-empty-owns", TransHelper.Decl (inferAny "empty_owns" inferEmptyOwns))
-    helper.AddTransformer ("infer-weak_out_param", TransHelper.Decl (inferAny "weak_out_param" inferWeakOutParam))
+    // disabled as it should not be neeeded for vcc /3:
+    // helper.AddTransformer ("infer-weak_out_param", TransHelper.Decl (inferAny "weak_out_param" inferWeakOutParam))
    
     helper.AddTransformer ("infer-end", TransHelper.DoNothing)
