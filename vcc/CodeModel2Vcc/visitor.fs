@@ -593,6 +593,13 @@ namespace Microsoft.Research.Vcc
                   match instance with
                     | C.Deref (_, inner) when instance.Type = inner.Type -> inner
                     | _ -> instance
+                let instance =
+                  match instance.Type with
+                   | C.Type.ObjectT
+                   | C.Ptr _ -> instance
+                   | t -> C.Expr.Macro ({ instance.Common with Type = C.PhysPtr t }, // TODO: Ptr kind
+                                        "&", [instance])
+
                 exprRes <- C.Expr.Macro({ec with Type = this.DoType def.Type}, v1Fn, [instance])           
               | None ->
 
