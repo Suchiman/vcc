@@ -270,7 +270,7 @@ namespace Microsoft.Research.Vcc
     private static int RunTest(CciErrorHandler errorHandler, string suiteName, string fileNameWithoutExt,
                                string test, VccOptions commandLineOptions, List<string> compilerParameters) {
 
-      VccCommandLineHost.ErrorCount = 0;
+      VccCommandLineHost.ResetErrorCount();
       string fileNameC = fileNameWithoutExt + ".c";
       string fileNameI = fileNameWithoutExt + ".i";
 

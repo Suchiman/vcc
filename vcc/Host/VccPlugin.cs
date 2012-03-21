@@ -343,7 +343,7 @@ namespace Microsoft.Research.Vcc
       }
 
       if (numErrors != 0) {
-        VccCommandLineHost.ErrorCount++;
+        VccCommandLineHost.IncreaseErrorCount();
         if (!parent.options.RunTestSuite) {
           Logger.Instance.Error("attempting to dump BPL to buggy.bpl");
           var filename = "buggy.bpl";
