@@ -3732,6 +3732,23 @@ namespace Microsoft.Research.Vcc {
       return result;
     }
 
+    protected override ITypeDefinitionMember ResolveTypeMember(ITypeDefinition qualifyingType, bool ignoreAccessibility)
+    {
+      // when using the new syntax, \owns, \owner, etc. are defined as fields;
+      // these are supplied via a magic struct \TypeState in vccp.h
+      var typeStateFields = ((VccCompilation)this.Compilation).TypeStateFields;
+      if (typeStateFields != null) {
+        var typeContract = this.Compilation.ContractProvider.GetTypeContractFor(typeStateFields);
+        if (typeContract != null) {
+          foreach (var field in typeContract.ContractFields) {
+            if (field.Name.UniqueKey == this.SimpleName.Name.UniqueKey)
+              return field;
+          }
+        }
+      }
+      return base.ResolveTypeMember(qualifyingType, ignoreAccessibility);
+    }
+
     internal static bool IntegerConversionIsLosslessForBitField(Microsoft.Cci.Ast.FieldDefinition field, ITypeDefinition targetType) {
       if (field != null && field.IsBitField) {
         var exprSigned = TypeHelper.IsSignedPrimitiveInteger(field.Type.ResolvedType);
