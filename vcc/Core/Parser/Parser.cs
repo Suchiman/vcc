@@ -2990,7 +2990,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           SimpleName name = this.ParseSimpleName(followers|Token.Dot);
           if (name.Name.Value == "__this")
             expression = new VccThisReference(name.SourceLocation);
-          else if (this.resultIsAKeyword && name.Name.UniqueKey == this.compilation.NameTable.Result.UniqueKey)
+          else if (this.resultIsAKeyword && name.Name.Value == "\\result")
             expression = new VccReturnValue(name.SourceLocation);
           else
             expression = name;
