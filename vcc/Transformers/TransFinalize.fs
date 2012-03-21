@@ -594,6 +594,28 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let errorForResultWhenThereIsNone decls = 
+
+      let reportErrorForResult = 
+        let reportErrorForResult' _ = function
+          | Result(ec) -> helper.Error(ec.Token, 9746, "Cannot use '\\result' in this context."); false
+          | _ -> true
+
+        List.iter (fun (expr:Expr) -> expr.SelfVisit(reportErrorForResult')) 
+
+      for d in decls do
+        match d with
+          | Top.FunctionDecl(fn) -> 
+            reportErrorForResult fn.Requires            
+            reportErrorForResult fn.Reads
+            reportErrorForResult fn.Writes
+            reportErrorForResult fn.Variants
+            if fn.RetType = Type.Void then reportErrorForResult fn.Ensures            
+          | _ -> ()
+      decls
+                  
+    // ============================================================================================================
+
     helper.AddTransformer ("final-begin", TransHelper.DoNothing)
     
     helper.AddTransformer ("final-range-assumptions", TransHelper.Decl addRangeAssumptions)
@@ -604,6 +626,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-linearize", TransHelper.Decl (ToCoreC.linearizeDecls helper))
     helper.AddTransformer ("final-keeps-warning", TransHelper.Decl (List.map theKeepsWarning))
     helper.AddTransformer ("final-dynamic-owns", TransHelper.Decl errorForMissingDynamicOwns)
+    helper.AddTransformer ("final-error-old", TransHelper.Decl errorForResultWhenThereIsNone)
     helper.AddTransformer ("final-error-old", TransHelper.Decl errorForOldInOneStateContext)
     helper.AddTransformer ("final-error-pure", TransHelper.Decl errorForStateWriteInPureContext)
     helper.AddTransformer ("final-error-when-claimed", TransHelper.Decl errorForWhenClaimedOutsideOfClaim)
