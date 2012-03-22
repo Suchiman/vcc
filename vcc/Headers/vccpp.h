@@ -72,6 +72,8 @@ namespace VCC
     class Object {
     public:
       Object();
+      Object(const Object&);
+      Object(const volatile Object&);
       Object(void*);
       bool operator==(void*);
       bool operator==(Ghost<Object>);
