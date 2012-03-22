@@ -266,6 +266,7 @@ namespace VCC
     template<class T> bool Shalloweq(T, T);
     template<class T> size_t Size(T);
     size_t Sizeofobject(Object);
+    void SkipSmoke();
     template<class T> int Span(T);
     bool Starthere();
     template<class T> bool Threadlocal(T);
