@@ -1,0 +1,23 @@
+#include "vcc.h"
+
+typedef unsigned __int8 UINT8;
+typedef unsigned __int64 UINT64;
+
+typedef union XX
+{
+    struct {
+        UINT8 PteFlags[8];
+    } _(AsStruct);
+
+    UINT64 AsUINT64;
+
+} X, *PX;
+
+
+void foo(PX g)
+    _(requires \union_active(&g->AsStruct))
+{
+}
+`
+Verification of foo succeeded.
+`
