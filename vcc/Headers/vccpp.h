@@ -78,6 +78,7 @@ namespace VCC
       bool operator==(void*);
       bool operator==(Ghost<Object>);
       bool operator==(Ghost<Claim>);
+      bool volatile operator==(void*) volatile;
       bool operator!=(void*);
       bool operator!=(Ghost<Object>);
       bool operator!=(Ghost<Claim>);
