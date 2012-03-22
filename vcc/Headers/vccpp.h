@@ -198,6 +198,7 @@ namespace VCC
     template<class T> T Arraymembers(T, size_t);
     template<class T> Set Arrayrange(T t, size_t);
     template<class T> bool Arraysdisjoint(T, size_t, T, size_t);
+    void AssumeCorrect();
     template<class T> T At(State, T t);
     void Atomic(...);
     template<class T> void BeginGhostAtomic(T);
