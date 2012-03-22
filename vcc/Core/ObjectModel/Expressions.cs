@@ -3200,7 +3200,7 @@ namespace Microsoft.Research.Vcc {
       if (((VccCompilationHelper)this.Helper).CurrentlyResolvingOperator) return false;
       if (targetType.IsEnum) targetType = targetType.UnderlyingType.ResolvedType;
       if (TypeHelper.IsPrimitiveInteger(this.Type.ResolvedType) && TypeHelper.IsPrimitiveInteger(targetType)) {
-        return VccQualifiedName.IntegerConversionIsLosslessForBitField(this.Resolve(true) as Microsoft.Cci.Ast.FieldDefinition, targetType);
+        return VccQualifiedName.IntegerConversionIsLosslessForField(this.Resolve(true) as Microsoft.Cci.Ast.FieldDefinition, targetType);
       }
       return false;
     }
@@ -3749,12 +3749,13 @@ namespace Microsoft.Research.Vcc {
       return base.ResolveTypeMember(qualifyingType, ignoreAccessibility);
     }
 
-    internal static bool IntegerConversionIsLosslessForBitField(Microsoft.Cci.Ast.FieldDefinition field, ITypeDefinition targetType) {
-      if (field != null && field.IsBitField) {
-        var exprSigned = TypeHelper.IsSignedPrimitiveInteger(field.Type.ResolvedType);
+    internal static bool IntegerConversionIsLosslessForField(Microsoft.Cci.Ast.FieldDefinition field, ITypeDefinition targetType) {
+      if (field != null) {
+        var fieldType = field.Type.ResolvedType;
+        var exprSigned = TypeHelper.IsSignedPrimitiveInteger(fieldType);
         var tgtSigned = TypeHelper.IsSignedPrimitiveInteger(targetType);
         var tgtSize = TypeHelper.SizeOfType(targetType) * 8;
-        var exprSize = field.BitLength;
+        var exprSize = field.IsBitField ? field.BitLength : TypeHelper.SizeOfType(fieldType) * 8;
         if (exprSigned == tgtSigned && exprSize <= tgtSize) return true;
         if (tgtSigned && exprSize < tgtSize) return true;
       }
@@ -3765,7 +3766,7 @@ namespace Microsoft.Research.Vcc {
       if (((VccCompilationHelper)this.Helper).CurrentlyResolvingOperator) return false;
       if (targetType.IsEnum) targetType = targetType.UnderlyingType.ResolvedType;
       if (TypeHelper.IsPrimitiveInteger(this.Type.ResolvedType) && TypeHelper.IsPrimitiveInteger(targetType)) {
-        return IntegerConversionIsLosslessForBitField(this.Resolve(true) as Microsoft.Cci.Ast.FieldDefinition, targetType);
+        return IntegerConversionIsLosslessForField(this.Resolve(true) as Microsoft.Cci.Ast.FieldDefinition, targetType);
       }
       return false;
     }
