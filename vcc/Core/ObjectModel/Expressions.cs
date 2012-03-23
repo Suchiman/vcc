@@ -3232,6 +3232,19 @@ namespace Microsoft.Research.Vcc {
           }
         }
       }
+
+      IPointerTypeReference/*?*/ pointerQualifyingType = qualifyingType as IPointerTypeReference;
+      if (pointerQualifyingType != null)
+      {
+        ITypeDefinition type = pointerQualifyingType.TargetType.ResolvedType;
+        foreach (ITypeDefinitionMember member in type.Members)
+        {
+          INestedTypeDefinition nestedType = member as INestedTypeDefinition;
+          IFieldDefinition field = member as IFieldDefinition;
+          if (field != null && VccPointerScopedName.TypeIsNamedMember(field.Type.ResolvedType, this.SimpleName)) return field;
+        }
+      }
+
       return base.ResolveTypeMember(qualifyingType, ignoreAccessibility);
     }
   }
@@ -3274,7 +3287,7 @@ namespace Microsoft.Research.Vcc {
         INestedTypeDefinition nestedType = member as INestedTypeDefinition;
         if (nestedType != null && TypeIsMarkedAsGroup(nestedType.ResolvedType, this.SimpleName)) return nestedType;
         IFieldDefinition field = member as IFieldDefinition;
-        if (field != null && this.TypeIsNamedMember(field.Type.ResolvedType)) return field;
+        if (field != null && TypeIsNamedMember(field.Type.ResolvedType, this.SimpleName)) return field;
       }
       return null;
     }
@@ -3294,14 +3307,14 @@ namespace Microsoft.Research.Vcc {
       return false;
     }
 
-    bool TypeIsNamedMember(ITypeDefinition type) {
+    static internal bool TypeIsNamedMember(ITypeDefinition type, SimpleName name) {
       foreach (ICustomAttribute attr in type.Attributes) {
         if (TypeHelper.GetTypeName(attr.Type) == NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".StringVccAttr") {
           List<IMetadataExpression> args = new List<IMetadataExpression>(attr.Arguments);
           if (args.Count == 2) {
             IMetadataConstant attrStr = args[0] as IMetadataConstant;
-            IMetadataConstant name = args[1] as IMetadataConstant;
-            if (name != null && (string)attrStr.Value == "member_name" && this.NameTable.GetNameFor((string)name.Value) == this.SimpleName.Name)
+            IMetadataConstant memberName = args[1] as IMetadataConstant;
+            if (memberName != null && (string)attrStr.Value == "member_name" && ((string)memberName.Value) == name.Name.Value)
               return true;
           }
         }
@@ -3746,6 +3759,14 @@ namespace Microsoft.Research.Vcc {
           }
         }
       }
+
+      foreach (ITypeDefinitionMember member in qualifyingType.Members)
+      {
+        INestedTypeDefinition nestedType = member as INestedTypeDefinition;
+        IFieldDefinition field = member as IFieldDefinition;
+        if (field != null && VccPointerScopedName.TypeIsNamedMember(field.Type.ResolvedType, this.SimpleName)) return field;
+      }
+
       return base.ResolveTypeMember(qualifyingType, ignoreAccessibility);
     }
 
