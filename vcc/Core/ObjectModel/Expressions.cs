@@ -4994,4 +4994,160 @@ namespace Microsoft.Research.Vcc {
       return new VccTypeExpressionOf(containingBlock, this);
     }
   }
+
+  public class VccPostfixIncrement : PostfixIncrement
+  {
+    public VccPostfixIncrement(TargetExpression target, ISourceLocation sourceLocation)
+      : base(target, sourceLocation)
+    { }
+
+    protected VccPostfixIncrement(BlockStatement containingBlock, VccPostfixIncrement template)
+      : base(containingBlock, template)
+    {
+    }
+
+    protected override IEnumerable<IMethodDefinition> StandardOperators
+    {
+      get
+      {
+        BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
+        yield return dummyMethods.OpInt8;
+        yield return dummyMethods.OpUInt8;
+        yield return dummyMethods.OpInt16;
+        yield return dummyMethods.OpUInt16;
+        yield return dummyMethods.OpInt32;
+        yield return dummyMethods.OpUInt32;
+        yield return dummyMethods.OpInt64;
+        yield return dummyMethods.OpUInt64;
+        yield return dummyMethods.OpFloat32;
+        yield return dummyMethods.OpFloat64;
+        yield return dummyMethods.OpDecimal;
+        ITypeDefinition operandType = this.Operand.Type;
+        if (this.Helper.IsPointerType(operandType))
+          yield return dummyMethods.GetDummyOp(operandType, operandType);
+      }
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock)
+    {
+      return new VccPostfixIncrement(containingBlock, this);
+    }
+  }
+
+  public class VccPostfixDecrement : PostfixDecrement
+  {
+    public VccPostfixDecrement(TargetExpression target, ISourceLocation sourceLocation)
+      : base(target, sourceLocation)
+    { }
+
+    protected VccPostfixDecrement(BlockStatement containingBlock, VccPostfixDecrement template)
+      : base(containingBlock, template)
+    {
+    }
+
+    protected override IEnumerable<IMethodDefinition> StandardOperators
+    {
+      get
+      {
+        BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
+        yield return dummyMethods.OpInt8;
+        yield return dummyMethods.OpUInt8;
+        yield return dummyMethods.OpInt16;
+        yield return dummyMethods.OpUInt16;
+        yield return dummyMethods.OpInt32;
+        yield return dummyMethods.OpUInt32;
+        yield return dummyMethods.OpInt64;
+        yield return dummyMethods.OpUInt64;
+        yield return dummyMethods.OpFloat32;
+        yield return dummyMethods.OpFloat64;
+        yield return dummyMethods.OpDecimal;
+        ITypeDefinition operandType = this.Operand.Type;
+        if (this.Helper.IsPointerType(operandType))
+          yield return dummyMethods.GetDummyOp(operandType, operandType);
+      }
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock)
+    {
+      return new VccPostfixDecrement(containingBlock, this);
+    }
+  }
+
+  public class VccPrefixIncrement : PrefixIncrement
+  {
+    public VccPrefixIncrement(TargetExpression target, ISourceLocation sourceLocation)
+      : base(target, sourceLocation)
+    { }
+
+    protected VccPrefixIncrement(BlockStatement containingBlock, VccPrefixIncrement template)
+      : base(containingBlock, template)
+    {
+    }
+
+    protected override IEnumerable<IMethodDefinition> StandardOperators
+    {
+      get
+      {
+        BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
+        yield return dummyMethods.OpInt8;
+        yield return dummyMethods.OpUInt8;
+        yield return dummyMethods.OpInt16;
+        yield return dummyMethods.OpUInt16;
+        yield return dummyMethods.OpInt32;
+        yield return dummyMethods.OpUInt32;
+        yield return dummyMethods.OpInt64;
+        yield return dummyMethods.OpUInt64;
+        yield return dummyMethods.OpFloat32;
+        yield return dummyMethods.OpFloat64;
+        yield return dummyMethods.OpDecimal;
+        ITypeDefinition operandType = this.Operand.Type;
+        if (this.Helper.IsPointerType(operandType))
+          yield return dummyMethods.GetDummyOp(operandType, operandType);
+      }
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock)
+    {
+      return new VccPrefixIncrement(containingBlock, this);
+    }
+  }
+
+  public class VccPrefixDecrement : PrefixDecrement
+  {
+    public VccPrefixDecrement(TargetExpression target, ISourceLocation sourceLocation)
+      : base(target, sourceLocation)
+    { }
+
+    protected VccPrefixDecrement(BlockStatement containingBlock, VccPrefixDecrement template)
+      : base(containingBlock, template)
+    {
+    }
+
+    protected override IEnumerable<IMethodDefinition> StandardOperators
+    {
+      get
+      {
+        BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
+        yield return dummyMethods.OpInt8;
+        yield return dummyMethods.OpUInt8;
+        yield return dummyMethods.OpInt16;
+        yield return dummyMethods.OpUInt16;
+        yield return dummyMethods.OpInt32;
+        yield return dummyMethods.OpUInt32;
+        yield return dummyMethods.OpInt64;
+        yield return dummyMethods.OpUInt64;
+        yield return dummyMethods.OpFloat32;
+        yield return dummyMethods.OpFloat64;
+        yield return dummyMethods.OpDecimal;
+        ITypeDefinition operandType = this.Operand.Type;
+        if (this.Helper.IsPointerType(operandType))
+          yield return dummyMethods.GetDummyOp(operandType, operandType);
+      }
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock)
+    {
+      return new VccPrefixDecrement(containingBlock, this);
+    }
+  }
 }
