@@ -93,7 +93,7 @@ namespace Microsoft.Research.Vcc
     private static StreamReader StartClProcessAndReturnOutput(string fileName, string arguments, string outFileName, VccOptions commandLineOptions) {
 
       StringBuilder errors = new StringBuilder();
-      ProcessStartInfo info = ConfigureStartInfoForClVersion10Or9(commandLineOptions);
+      ProcessStartInfo info = ConfigureStartInfoForClVersion11Or10Or9(commandLineOptions);
       info.Arguments = arguments;
       info.CreateNoWindow = true;
       info.RedirectStandardOutput = true;
@@ -147,30 +147,37 @@ namespace Microsoft.Research.Vcc
     /// VS90COMNTOOLS and setup the start info to invoke the found instance of cl, unless an explicit 
     /// location has been given as command line option.
     /// </summary>
-    private static ProcessStartInfo ConfigureStartInfoForClVersion10Or9(VccOptions commandLineOptions) {
-      if (!String.IsNullOrEmpty(commandLineOptions.ClPath)) {
+    private static ProcessStartInfo ConfigureStartInfoForClVersion11Or10Or9(VccOptions commandLineOptions) {
+      var envPath = Environment.GetEnvironmentVariable("PATH");
+      var envInclude = Environment.GetEnvironmentVariable("INCLUDE");
+      if (envPath != "") envPath = envPath + ";";
+      if (envInclude != "") envInclude = envInclude + ";";
+
+      if (!String.IsNullOrEmpty(commandLineOptions.ClPath))
+      {
         ProcessStartInfo result = new ProcessStartInfo("\"" + commandLineOptions.ClPath + "\"");
+
         try {
           FileInfo clPath = new FileInfo(commandLineOptions.ClPath);
-          string path = result.EnvironmentVariables["path"];
-          result.EnvironmentVariables["path"] = path + ";"
+          result.EnvironmentVariables["path"] = envPath
             + Path.Combine(clPath.Directory.Parent.Parent.FullName, @"Common7\IDE") + ";"
             + Path.Combine(clPath.Directory.Parent.Parent.Parent.FullName, @"Common7\IDE");
-          result.EnvironmentVariables["include"] =
-              Path.Combine(clPath.Directory.Parent.Parent.FullName, @"VC\INCLUDE") + ";"
+
+          result.EnvironmentVariables["include"] = envInclude 
+            + Path.Combine(clPath.Directory.Parent.Parent.FullName, @"VC\INCLUDE") + ";"
             + Path.Combine(clPath.Directory.Parent.Parent.Parent.FullName, @"VC\INCLUDE");
 
         } catch (Exception) { } // we only do a best effort to set the path
         return result;
       } else {
-        string VSCOMNTOOLS = Environment.GetEnvironmentVariable("VS100COMNTOOLS");
+        string VSCOMNTOOLS = Environment.GetEnvironmentVariable("VS110COMNTOOLS");
+        if (VSCOMNTOOLS == null) VSCOMNTOOLS = Environment.GetEnvironmentVariable("VS100COMNTOOLS");
         if (VSCOMNTOOLS == null) VSCOMNTOOLS = Environment.GetEnvironmentVariable("VS90COMNTOOLS");
         if (VSCOMNTOOLS == null) throw new FileNotFoundException();
         string vsDir = new DirectoryInfo(VSCOMNTOOLS).Parent.Parent.FullName;
         ProcessStartInfo info = new ProcessStartInfo(Path.Combine(vsDir, @"vc\bin\cl.exe"));
-        string path = info.EnvironmentVariables["path"];
-        info.EnvironmentVariables["path"] = path + ";" + Path.Combine(vsDir, @"Common7\IDE");
-        info.EnvironmentVariables["include"] = Path.Combine(vsDir, @"VC\INCLUDE");
+        info.EnvironmentVariables["path"] = envPath + Path.Combine(vsDir, @"Common7\IDE");
+        info.EnvironmentVariables["include"] = envInclude + Path.Combine(vsDir, @"VC\INCLUDE");
         return info;
       }
     }

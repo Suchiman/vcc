@@ -294,6 +294,7 @@ namespace Microsoft.Research.Vcc
 
       bool errorsInPreprocessor;
       var f = CCompilerHelper.Preprocess(options, out errorsInPreprocessor);
+      if (errorsInPreprocessor) return -1;
       var st = f.First();
       test = st.ReadToEnd();
       st.Close();
