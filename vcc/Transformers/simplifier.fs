@@ -583,19 +583,24 @@ namespace Microsoft.Research.Vcc
          ( *s_).y = 12;
        }
      *)
-    let rec replaceWithPointers (subst:Dict<_,_>) _ = function
+    let rec replaceWithPointers (subst:Dict<_,_>) inClaim _ = function
       | Expr.Macro (c, "&", [Expr.Ref (_, v)]) ->
         match subst.TryGetValue v with
           | true, (v', _) -> Some (Expr.Ref (c, v'))
           | _ -> None
       | Expr.Ref (c, v) ->
         match subst.TryGetValue v with
-          | true, (v', _) -> Some (Expr.Deref (c, Expr.Ref ({ c with Type = v'.Type }, v')))
+          | true, (v', _) -> 
+            let result = Expr.Deref (c, Expr.Ref ({ c with Type = v'.Type }, v'))
+            let result = if inClaim then Old(c,  Macro(bogusEC, "_vcc_when_claimed", []), result) else result
+            Some (result)
           | _ -> None
       | Expr.VarDecl (_, v, _) ->
         match subst.TryGetValue v with
           | true, (_, decl) -> Some(decl)
           | false, _ -> None
+      | Expr.Macro(ec, "claim", args) ->
+        Some(Expr.Macro(ec, "claim", List.map (fun (expr:Expr) -> expr.SelfMap(replaceWithPointers subst true)) args))
       | _ -> None
 
     let heapifyAddressedLocals decls =
@@ -648,7 +653,7 @@ namespace Microsoft.Research.Vcc
             fnTok := { !fnTok with Token = d.Token }
             List.iter (fun (e:Expr) -> e.SelfVisit (findThem false)) (d.Reads @ d.Writes @ d.Requires @ d.Ensures)
             b.SelfVisit (findThem true)
-            let b = b.SelfMap (replaceWithPointers addressableLocals)
+            let b = b.SelfMap (replaceWithPointers addressableLocals false)
             let outParDecls = [ for (v, (_, expr)) in !addressableLocalsList do if v.Kind = VarKind.OutParameter then yield expr ]
             let b = Expr.MkBlock(outParDecls @ [b])
             d.Body <- Some b
@@ -683,7 +688,7 @@ namespace Microsoft.Research.Vcc
             | _ -> ga
         | t -> t
         
-      decls |> List.map handle |> List.concat |> List.map replaceVarsInGeneratedAxioms |> deepMapExpressions (replaceWithPointers globalSubst)  
+      decls |> List.map handle |> List.concat |> List.map replaceVarsInGeneratedAxioms |> deepMapExpressions (replaceWithPointers globalSubst false)  
 
    
     // ============================================================================================================
