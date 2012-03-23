@@ -157,6 +157,7 @@ _(\state \now();)
 _(logic template<typename T> T \by_claim(\claim c, T expr) = \at(\by_claim_wrapper(c), expr);)
 _(logic template<typename T> T \when_claimed(T expr) = \at(\when_claimed_marker(), expr);)
 _(logic bool \on_unwrap(\object o, bool expr) = \old(o->\closed) && !o->\closed ==> expr;)
+_(logic \objset \everything() = \universe();)
 
 // built-in fields
 
@@ -262,6 +263,7 @@ _(bool \macro_recursive_with(void *p)
 
 _(logic bool \wrapped0(\object o) = \wrapped(o) && o->\claim_count == 0)
 _(logic template<typename T> bool \unchanged(T expr) = \old(expr) == expr)
+_(logic template<typename T> bool \same(T expr) = \old(expr) == expr)
 
 // Internal functions - not meant to be called directly, unless you know what you are doing
 

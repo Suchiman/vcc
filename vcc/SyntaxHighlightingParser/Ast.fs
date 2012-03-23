@@ -160,6 +160,7 @@ module Ast =
                   "\\index_within";
                   "\\wrapped0";
                   "\\unchanged";
+                  "\\same";
                   "\\recursive_with";
                   "\\natural" ;
     ]
