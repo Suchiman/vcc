@@ -70,7 +70,7 @@ module Termination =
                   ()
                 else
                   // for expanded spec-macros we should get an error later
-                  if not (Normalizer.isSpecMacro tfn) then
+                  if not (Normalizer.isSpecMacro tfn) && not (fn.Name.StartsWith("\\") && fn.Token.Filename.EndsWith("vccp.h", System.StringComparison.OrdinalIgnoreCase)) then
                     helper.GraveWarning (ec.Token, 9315, "termination checking not enabled for function '" + fn.Name + "'; consider supplying _(decreases ...) clause")
                 true
                 (*
