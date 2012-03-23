@@ -204,7 +204,7 @@ namespace Microsoft.Research.Vcc
       let hasKeeps exprs =
         let keepsFound = ref false
         let hasKeeps' self = function
-          | CallMacro(_, "_vcc_keeps", _, _) -> 
+          | CallMacro(_, "_vcc_keeps", _, This _ :: _) -> 
             keepsFound := true
             false
           | _ -> not !keepsFound

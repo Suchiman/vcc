@@ -255,15 +255,13 @@ namespace Microsoft.Research.Vcc
     
     // ============================================================================================================
     
-    /// Replace calls to Boogie predicates/functions with Expr.Macro(...)
-    
     let handleKeeps decls = 
     
       let handleKeeps' staticOwns self = function
         | CallMacro (c, "_vcc_keeps", _, this :: []) ->
           Some (Expr.True)
           
-        | CallMacro (c, "_vcc_keeps", _, this :: keeps) ->
+        | CallMacro (c, "_vcc_keeps", _, (This _ as this) :: keeps) ->
         
           let reportErrorForNonPtrArgument (e : Expr) =
             match e.Type with
@@ -283,6 +281,11 @@ namespace Microsoft.Research.Vcc
           List.iter reportErrorForNonPtrArgument keeps
           Some (self (List.fold build None keeps).Value)
           
+        | CallMacro (c, "_vcc_keeps", _, other :: keeps) ->
+          let mkKeeps expr = 
+            Macro(c, "keeps", [other; expr])
+          Some(keeps |> List.map mkKeeps |> List.fold mkAnd Expr.True)
+        
         | _ -> None
       
       for d in decls do
