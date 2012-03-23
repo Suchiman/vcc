@@ -37,8 +37,9 @@ namespace Microsoft.Research.Vcc
           Some (Loop (comm, invs, writes, variants, body))
       | _ -> None
     
-    let preconditions (f:Function) =
-      List.concat (List.map splitConjunction f.Requires)
+    let conjuncts = List.map splitConjunction >> List.concat
+
+    let preconditions (f:Function) = conjuncts f.Requires
     
     let allOnWhichCalled name f lst =
       let add acc = function
@@ -52,20 +53,32 @@ namespace Microsoft.Research.Vcc
     let inferMacro name (args: list<Expr>) =
       inferAssert args.Head.Token (Macro (boolBogusEC(), name, args))
     
-    let inferInDomain f b =
-      Expr.MkBlock (allOnWhichCalled "_vcc_wrapped" (fun p -> inferMacro "_vcc_in_domain" [p; p]) (preconditions f) @ [b])
+    let inferInDomain f (b:Expr) =
+      let addWrapped = allOnWhichCalled "_vcc_wrapped" (fun p -> inferMacro "_vcc_in_domain" [p; p])
+      let handleBlocks self = function
+        | Block(ec, stmts, Some bc) -> 
+          Some(Block(ec, (addWrapped (conjuncts bc.Requires)) @ (List.map self stmts), Some bc))
+        | _ -> None
+
+      Expr.MkBlock (addWrapped (preconditions f) @ [b.SelfMap(handleBlocks)])
     
     let concatSome =
       let add acc = function Some e -> e :: acc | None -> acc
       List.fold add []
       
-    let inferValidClaim (f:Function) b =
+    let inferValidClaim (f:Function) (b:Expr) =
       let mkAssert (p:Expr) =
         match p.Type with
           | Ptr Claim ->
             Some (inferMacro "_vcc_valid_claim" [p])
           | _ -> None
-      Expr.MkBlock (concatSome (allOnWhichCalled "_vcc_wrapped" mkAssert (preconditions f)) @ [b])
+      let addWrapped = allOnWhichCalled "_vcc_wrapped" mkAssert >> concatSome
+      let handleBlocks self = function
+        | Block(ec, stmts, Some bc) -> 
+          Some(Block(ec, (addWrapped (conjuncts bc.Requires)) @ (List.map self stmts), Some bc))
+        | _ -> None
+
+      Expr.MkBlock (addWrapped (preconditions f) @ [b.SelfMap(handleBlocks)])
       
     let doInferAlwaysByClaim conds =
       let add acc = function
@@ -85,36 +98,6 @@ namespace Microsoft.Research.Vcc
         td.Invariants <- doInferAlwaysByClaim td.Invariants
         decl
       | decl -> decl
-
-    let inferWeakOutParam = 
-      let isPtrToPrimitive =
-        let rec isPrimitive = function
-          | Type.Bool | Type.Integer _ | Type.Primitive _ | Type.PhysPtr _ | Type.SpecPtr _  -> true
-          | Type.Volatile t -> isPrimitive t
-          | _ -> false
-        function | Ptr t -> isPrimitive t | _ -> false
-      let extraEnsuresFor (e:Expr) =
-        if isPtrToPrimitive e.Type then 
-          let emb = Expr.Macro({e.Common with Type = Type.ObjectT}, "_vcc_emb", [e])
-          let mutableTok = {forwardingToken e.Token None (fun () -> afmt 8536 "mutable({0}) (inferred from writes clause)" [e.Token.Value]) with Type = Type.Bool }
-          let embTok = {forwardingToken e.Token None (fun () -> afmt 8536 "unchanged(emb({0})) (inferred from writes clause)" [e.Token.Value]) with Type = Type.Bool }
-          [ Expr.Macro(mutableTok, "_vcc_mutable", [e]);
-            Expr.Prim(embTok, Op.Op("==", CheckedStatus.Unchecked), [emb; (mkOld emb.Common "prestate" emb) ]) ]
-        else []
-      let ensuresForWrites = List.filter (fun (e:Expr) -> isPtrToPrimitive e.Type) >> List.map extraEnsuresFor >> List.concat
-      
-      let inferForBlocksWithContracts self = function
-        | Expr.Block(ec, ss, Some cs) ->
-            Some (Expr.Block (ec, (List.map self ss), Some {cs with Ensures = cs.Ensures @ (ensuresForWrites cs.Writes)}))
-        | _ -> None
-        
-      function
-        | Top.FunctionDecl(fn) as decl ->
-           let extraEnsures = ensuresForWrites fn.Writes 
-           fn.Ensures <- fn.Ensures @ extraEnsures
-           fn.Body <- Option.map (fun (e:Expr) -> e.SelfMap(inferForBlocksWithContracts)) fn.Body
-           decl
-        | decl -> decl
 
     let shouldInfer attrs attr =
       let check = function
@@ -285,7 +268,5 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("infer-loop_invariants", TransHelper.Expr inferLoopInvariants)
     helper.AddTransformer ("infer-set_in", TransHelper.Decl (inferAny "set_in" inferSetIn))
     helper.AddTransformer ("infer-empty-owns", TransHelper.Decl (inferAny "empty_owns" inferEmptyOwns))
-    // disabled as it should not be neeeded for vcc /3:
-    // helper.AddTransformer ("infer-weak_out_param", TransHelper.Decl (inferAny "weak_out_param" inferWeakOutParam))
    
     helper.AddTransformer ("infer-end", TransHelper.DoNothing)
