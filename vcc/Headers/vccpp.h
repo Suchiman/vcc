@@ -12,11 +12,13 @@
 
 // hide annotations from C compiler
 
-#define _(...) /* nothing */
+#define _(...)        /* nothing */
+#define vcc_attr(...) /* nothing */
 
 #else
 
 void free(void*, size_t);
+#define vcc_attr(k, v) __declspec("System.Diagnostics.Contracts.CodeContract.StringVccAttr", k, v)
 
 #endif 
 
