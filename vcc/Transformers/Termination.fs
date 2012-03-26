@@ -52,7 +52,7 @@ module Termination =
             expr.SelfVisit aux
             false
           | _ -> true
-        tfn.Requires <- tfn.Requires |> List.filter keepIt
+        tfn.Ensures <- tfn.Ensures |> List.filter keepIt
 
         let body =
           if Normalizer.isSpecMacro tfn then

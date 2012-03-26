@@ -942,10 +942,10 @@ namespace Microsoft.Research.Vcc
 
       let expand = function
         | Top.FunctionDecl f ->
-          let (macros, reqs) = List.partition isMacroCall f.Requires
+          let (macros, ens) = List.partition isMacroCall f.Ensures
           let contr = collectExpansions macros
-          f.Requires <- reqs @ contr.Requires
-          f.Ensures <- f.Ensures @ contr.Ensures
+          f.Requires <- f.Requires @ contr.Requires
+          f.Ensures <- ens @ contr.Ensures
           f.Writes <- f.Writes @ contr.Writes
           f.Reads <- f.Reads @ contr.Reads
           f.Variants <- f.Variants @ contr.Decreases
@@ -953,10 +953,10 @@ namespace Microsoft.Research.Vcc
 
       let expandBlockContracts self = function
         | Block(ec, stmts, Some(contract)) ->
-          let (macros, reqs) = List.partition isMacroCall contract.Requires
+          let (macros, ens) = List.partition isMacroCall contract.Ensures
           let contr = collectExpansions macros
-          let contract' = { contract with Requires = reqs @ contr.Requires;
-                                          Ensures = contract.Ensures @ contr.Ensures;
+          let contract' = { contract with Requires = contract.Requires @ contr.Requires;
+                                          Ensures = ens @ contr.Ensures;
                                           Writes = contract.Writes @ contr.Writes;
                                           Reads = contract.Reads @ contr.Reads;
                                           Decreases = contract.Decreases @ contr.Decreases }
