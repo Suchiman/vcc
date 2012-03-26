@@ -262,6 +262,7 @@ namespace VCC
     template<class T> bool Onunwrap(T, bool);
     template<class T> T Precise(T);
     template<class T> T ReadOnly(T);
+    void ReadsHavoc();
     template<class T> void RecursiveWith(T);
     template<class T> T Retype(T);
     bool Programentrypoint();
