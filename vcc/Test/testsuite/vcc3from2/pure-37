@@ -1,7 +1,5 @@
 #include <vcc.h>
 
-_(logic \objset \everything() = \universe())
-
 int foo(int i) 
   _(reads \everything())
   _(ensures \result == i)
