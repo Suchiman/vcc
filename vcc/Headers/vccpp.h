@@ -284,6 +284,7 @@ namespace VCC
     Set Universe();
     void Unwrapping(...);
     template<class T> bool Valid(T);
+    template<class T> Set Vdomain(T);
     template<class T> T Whenclaimed(T);
     template<class T> bool Wrapped(T);
     template<class T> bool Wrappedwithdeepdomain(T);
