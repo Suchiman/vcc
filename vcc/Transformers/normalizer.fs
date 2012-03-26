@@ -773,7 +773,7 @@ namespace Microsoft.Research.Vcc
           | Block(_, stmts, _) -> recurse tgt stmts
           | _ -> tgt
         and recurse = List.fold foldBackFieldAssignments' 
-        recurse (Macro({ec with Type = Type.MathStruct}, "vs_zero",  []))
+        recurse (Macro(ec, "vs_zero",  []))
         
       function
         | Block(ec, stmts, _) when shouldHandle (ec.Type) ->
