@@ -148,6 +148,7 @@ namespace VCC
     {
     public:
       S& operator[](T);
+      operator Map<S, T>() const;
     };
 
     template <typename T> class GhostOut: public Ghost<T>
