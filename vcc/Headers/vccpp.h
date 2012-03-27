@@ -329,6 +329,7 @@ namespace VCC
     // special variables
     bool Equivalence;
     bool Implies;
+    bool ReverseImplies;
     Thread Me;
 
     // templates for quantifiers
