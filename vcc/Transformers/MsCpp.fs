@@ -363,7 +363,7 @@ namespace Microsoft.Research.Vcc
 
       function 
         | Prim(ec, (Op(("!"|"||"|"&&"), _) as op), args) ->
-          Some(Prim(ec, op, args |> List.map self |> List.map toBool))
+          Some(Prim(ec, op, args |> List.map toBool))
         | Macro(ec, "=", [lhs; rhs]) when lhs.Type = Type.Bool -> 
           Some(Macro(ec, "=", [self lhs; toBool rhs]))
         | Macro(ec, "for", [contr; init; cond; incr; body]) ->
