@@ -238,6 +238,7 @@ namespace VCC
     template<class T> void Increases(T, ...);
     Set Inter(Set, Set);
     template<class T> bool Inv(T);
+    template<class T> bool Inv2(T);
     template<class T> bool Inv2s(State, State, T);
     template<class T> bool Inrangephysptr(T);
     template<class T, class V> bool Is(V);
