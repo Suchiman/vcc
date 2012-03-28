@@ -103,10 +103,6 @@ namespace VCC
       bool operator+=(Ghost<Set>);
     };
 
-    class Objset: public Set
-    {
-    };
-
     class State {      
     public:
       State();
