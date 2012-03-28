@@ -27,6 +27,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Now"
                                                     "VCC::Union"
                                                     "VCC::Universe"
+                                                    "VCC::Owns"
                                                   ]
 
   let specialFunctionMap = Map.ofList [
@@ -117,6 +118,8 @@ namespace Microsoft.Research.Vcc
 
   let (|Contains|_|) substr (s:string) = if s.Contains(substr) then Some() else None
 
+  let (|EndsWith|_|) postfix (s:string) = if s.EndsWith(postfix, System.StringComparison.Ordinal) then Some () else None
+
   let nongeneric (name:string) = 
     let endpos = name.IndexOf('<')
     if endpos = -1 then name else name.Substring(0, endpos)
@@ -126,6 +129,8 @@ namespace Microsoft.Research.Vcc
     if startPos = -1 then name else name.Substring(startPos + 2)
 
   let (|SpecialCallTo|_|) name = Map.tryFind (nongeneric name) specialFunctionMap
+
+  let (|IsSpecialType|_|) name = Map.tryFind name specialTypesMap
   
   let (|AddrOf|_|) = function
     | Macro(ec, "&", [arg]) -> Some(ec, arg)
@@ -440,6 +445,43 @@ namespace Microsoft.Research.Vcc
           | _ -> ()
 
       decls
+
+    // ============================================================================================================    
+
+    let collectTypeContracts decls =
+
+      // move attribute markers (like VCCDynamicOwns) and invariants, both of which are 
+      // represented as member functions to their types
+      // filter out those entities as they are moved
+
+      let rewriteThis td self = function
+        | Call(ec, ({ FriendlyName = "VCC::Mine" } as fn), [], args) -> 
+          Some(Call(ec, fn, [], This({ec with Type = Type.MkPtrToStruct(td)}) :: (List.map self args)))
+        | Ref(ec, { Name = "this" }) -> 
+          Some(This(ec))
+        | _ -> None
+
+      let collectTypeContracts' = function
+        | Top.FunctionDecl({FriendlyName = EndsWith("::VCCDynamicOwns"); Parent = Some(td)}) ->
+          td.CustomAttr <- VccAttr(CAST.AttrDynamicOwns, "") :: td.CustomAttr
+          false
+        | Top.FunctionDecl({FriendlyName = Contains("::VCCInvariant"); Parent = Some(td); Body = body}) as fn ->
+          match body with
+            | Some(Block(_, [Return(_, Some(inv))], None)) ->
+              td.Invariants <- inv.SelfMap(rewriteThis td) :: td.Invariants
+            | Some(expr) ->
+              helper.Oops(expr.Token, "unexpected invariant function structure")
+            | _ -> helper.Oops(fn.Token, "invariant function without body")
+          false
+        | _ -> true
+
+      let reverseInvariants = function
+        | Top.TypeDecl(td) as d -> td.Invariants <- List.rev td.Invariants; d
+        | d -> d
+
+      decls 
+      |> List.filter collectTypeContracts' 
+      |> List.map reverseInvariants
 
     // ============================================================================================================    
 
@@ -991,8 +1033,9 @@ namespace Microsoft.Research.Vcc
       // turn types from the VCC:: namespace into their CAST counterparts
 
       let typeSubst = function
-        | Type.Ref(td) when Map.containsKey td.Name specialTypesMap ->
-          Some(Map.find td.Name specialTypesMap)
+        | Type.Ref({Name = IsSpecialType(t')})
+        | Type.PhysPtr(Type.Ref({Name = IsSpecialType(t')})) ->
+          Some(t')
         | Type.Ref(td) when td.Name.StartsWith("VCC::Map") ->
           Some(Type.Bogus) // TODO: handle map type
         | _ -> None
@@ -1039,6 +1082,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-remove-object-copying", TransHelper.Expr removeObjectCopyOperations)
     helper.AddTransformer ("cpp-blocks", TransHelper.Expr normalizeBlocks)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
+    helper.AddTransformer ("cpp-type-contracts", TransHelper.Decl collectTypeContracts)
     helper.AddTransformer ("cpp-field-attributes", TransHelper.Decl rewriteFieldAttributes)
     helper.AddTransformer ("cpp-ghost", TransHelper.Decl rewriteGhost)
     helper.AddTransformer ("cpp-assign-ops", TransHelper.Expr rewriteAssignOps)

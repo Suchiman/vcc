@@ -291,11 +291,11 @@ module Microsoft.Research.Vcc.CAST
     member this.IsGroup = List.exists (function VccAttr ("__vcc_group", "") -> true | _ -> false) this.CustomAttr
     member this.IsUnion = this.Kind = Union
     
-    member this.Declaration () =
+    member this.ToStringWT showTypes =
       let prInv = function
-        | Macro(_, "labeled_invariant", [Macro(_, "", _); i]) -> "invariant " + i.ToString()
-        | Macro(_, "labeled_invariant", [Macro(_, lbl, _); i]) -> "invariant " + lbl + ": " + i.ToString()
-        | e -> "invariant " + e.ToString()
+        | Macro(_, "labeled_invariant", [Macro(_, "", _); i]) -> "invariant " + i.ToStringWT(showTypes)
+        | Macro(_, "labeled_invariant", [Macro(_, lbl, _); i]) -> "invariant " + lbl + ": " + i.ToStringWT(showTypes)
+        | e -> "invariant " + e.ToStringWT(showTypes)
       CustomAttr.AsString this.CustomAttr +
       this.ToString () + " {\r\n  " + String.concat ";\r\n  " [for f in this.Fields -> f.ToString ()] + ";\r\n" +
         String.concat "" [for f in this.DataTypeOptions -> f.ToString() ] +
@@ -1689,8 +1689,8 @@ module Microsoft.Research.Vcc.CAST
       let wr = wrb b
       match this with
         | Global (v, None) -> wr (v.ToString() + ";\r\n")
-        | Global (v, Some e) -> wr (v.ToString()); wr " = "; e.WriteTo System.Int32.MinValue false b; wr ";\r\n"
-        | TypeDecl d -> wr (d.Declaration())
+        | Global (v, Some e) -> wr (v.ToString()); wr " = "; e.WriteTo System.Int32.MinValue showTypes b; wr ";\r\n"
+        | TypeDecl d -> wr (d.ToStringWT(showTypes))
         | FunctionDecl d -> 
           wr (d.ToStringWT(showTypes))
           match d.Body with
