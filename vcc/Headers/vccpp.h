@@ -137,6 +137,9 @@ namespace VCC
       operator T() const;
       operator Ghost<Object>() const;
       bool operator==(T);
+      bool operator!=(T);
+      bool operator==(Object);
+      bool operator!=(Object);
       T operator ->();
     };
       
