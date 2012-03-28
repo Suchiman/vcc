@@ -200,6 +200,7 @@ namespace VCC
     template<class T1, class T2> bool Addreq(T1, T2);
     template<class T> T* Allocarray(size_t);
     template<class T> void Always(T, bool);
+    template<class T> bool Alwaysbyclaim(Claim, T);
     template<class T> T* Alloc();
     template<class T1, class T2> bool Approves(T1, T2);
     template<class T> T Array(T, size_t);
