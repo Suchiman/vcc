@@ -138,6 +138,9 @@ namespace VCC
       operator T() const;
       operator Ghost<Object>() const;
       bool operator==(T);
+      bool operator!=(T);
+      bool operator==(Object);
+      bool operator!=(Object);
       T operator ->();
     };
       
@@ -161,6 +164,11 @@ namespace VCC
       bool operator==(T);
       T operator ->();
     };
+    
+    template <typename T> class TypeLockageFunctor {
+    public:
+      T operator()(T);
+    };    
 
     // assert/assume
     void Assert(bool);
@@ -206,7 +214,7 @@ namespace VCC
     template<class T1, class T2> Object Blob(T1, T2);
     template<class T> void Blobify(T);    
     template<class T> void BumpVolatileVersion(T);
-    template<class T> T ByClaim(Claim, T);
+    template <typename T> TypeLockageFunctor<T> ByClaim(Claim);
     bool Claims(Claim, bool);
     template<class T> unsigned int Claimcount(T);
     template<class T> bool Claimsobject(Claim, T);
