@@ -20,14 +20,15 @@ namespace Microsoft.Research.Vcc
 
   let functionsReturningsClassValues = Set.ofList [
                                                     "VCC::Arrayrange"
-                                                    "VCC::Extent"
                                                     "VCC::Domain"
+                                                    "VCC::Extent"
                                                     "VCC::Inter"
                                                     "VCC::Makeclaim"
                                                     "VCC::Now"
+                                                    "VCC::Owns"
+                                                    "VCC::Span"
                                                     "VCC::Union"
                                                     "VCC::Universe"
-                                                    "VCC::Owns"
                                                   ]
 
   let specialFunctionMap = Map.ofList [
@@ -45,6 +46,8 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Extent",              "_vcc_extent"
                                                     "VCC::Extentmutable",       "_vcc_extent_mutable"
                                                     "VCC::Fresh",               "_vcc_is_fresh"
+                                                    "VCC::In",                  "_vcc_set_in"
+                                                    "VCC::In0",                 "_vcc_set_in0"
                                                     "VCC::Inter",               "_vcc_set_intersection"
                                                     "VCC::Mallocroot",          "_vcc_is_malloc_root"
                                                     "VCC::Mine",                "_vcc_keeps"

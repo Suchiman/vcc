@@ -93,6 +93,7 @@ namespace VCC
     class Set {
     public:
       Set(...);
+      //Set(const Set&);
       bool operator==(Set);
       bool operator==(Ghost<Set>);
       bool operator!=(Set);
@@ -269,7 +270,7 @@ namespace VCC
     template<class T> size_t Size(T);
     size_t Sizeofobject(Object);
     void SkipSmoke();
-    template<class T> int Span(T);
+    template<class T> Set Span(T);
     bool Starthere();
     template<class T> bool Threadlocal(T);
     template<class T> bool Threadlocalarray(T, size_t);
