@@ -212,9 +212,10 @@ namespace VCC
     template<class T> void BumpVolatileVersion(T);
     template <class T> TypeLockageFunctor<T> ByClaim(Claim);
     template <class T> bool Claimable(T);
-    bool Claims(Claim, bool);
     template<class T> unsigned int Claimcount(T);
+    bool Claims(Claim, bool);
     template<class T> bool Claimsobject(Claim, T);
+    bool Claimsclaim(Claim, Claim);
     template<class T> bool Closed(T);
     template<class T> void Decreases(T, ...);
     template<class T> bool Deepeq(T, T);
