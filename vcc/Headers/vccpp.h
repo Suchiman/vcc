@@ -63,6 +63,8 @@ namespace VCC
       Natural(unsigned);
       Natural operator-=(Natural);
       Natural operator+=(Natural);
+      Natural operator/(Natural);
+      Natural operator%(Natural);
       operator unsigned() const;
     };
 
