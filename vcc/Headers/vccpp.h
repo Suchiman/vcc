@@ -52,14 +52,8 @@ namespace VCC
     public:
       Integer();
       Integer(int);
-      bool operator==(Ghost<Integer>);
-      bool operator!=(Ghost<Integer>);
-      bool operator<(Ghost<Integer>);
-      bool operator>(Ghost<Integer>);
-      bool operator<=(Ghost<Integer>);
-      bool operator>=(Ghost<Integer>);
-      Integer operator+=(Integer);
       Integer operator-=(Integer);
+      Integer operator+=(Integer);
       operator int() const;
     };
 
@@ -67,14 +61,8 @@ namespace VCC
     public:
       Natural();
       Natural(unsigned);
-      bool operator==(Ghost<Natural>);
-      bool operator!=(Ghost<Natural>);
-      bool operator<(Ghost<Natural>);
-      bool operator>(Ghost<Natural>);
-      bool operator<=(Ghost<Natural>);
-      bool operator>=(Ghost<Natural>);
-      Natural operator+=(Natural);
       Natural operator-=(Natural);
+      Natural operator+=(Natural);
       operator unsigned() const;
     };
 
@@ -98,7 +86,6 @@ namespace VCC
     class Set {
     public:
       Set(...);
-      //Set(const Set&);
       bool operator==(Set);
       bool operator==(Ghost<Set>);
       bool operator!=(Set);
@@ -244,6 +231,7 @@ namespace VCC
     template<class T> bool Fresh(T);
     bool Fullcontext();
     template<class T> Set Fullextent(T);
+    template<class T> Object Gemb(T);
     template<class T> void HavocOthers(T);
     template<class T> bool In(T, Set);
     template<class T> bool In0(T, Set);
