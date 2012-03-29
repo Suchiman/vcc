@@ -65,10 +65,12 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Universe",            "_vcc_set_universe"
                                                     "VCC::Valid",               "_vcc_typed2"
                                                     "VCC::Wrapped",             "_vcc_wrapped"
+                                                    "VCC::Writable",            "_vcc_writable"
                                       ]
 
   let specialFunctionWithContractMap = Map.ofList [
                                                     "VCC::Alloc",               "_vcc_spec_alloc"
+                                                    "VCC::Allocarray",          "_vcc_spec_alloc_array"
                                                     "VCC::Matchlong",           "_vcc_match_long"
                                                     "VCC::Matchulong",          "_vcc_match_ulong"
                                                     "VCC::Unwrap",              "_vcc_unwrap"
