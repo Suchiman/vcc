@@ -1305,7 +1305,18 @@ namespace Microsoft.Research.Vcc
                              Variable.CreateUnique "obj" Type.ObjectT VarKind.Parameter ]
         })
 
-      [stackAlloc; stackFree] @ decls
+      // \object \heap_alloc(\type);
+      let alloc = 
+        Top.FunctionDecl ( 
+          { Function.Empty() with 
+              Flags = Flags.Spec
+              Name = "_vcc_alloc"
+              FriendlyName = "_vcc_alloc"
+              Parameters = [ Variable.CreateUnique "type" Type.TypeIdT VarKind.Parameter ]
+              RetType = Type.ObjectT                             
+        })
+
+      [stackAlloc; stackFree; alloc] @ decls
 
     // ============================================================================================================
 
