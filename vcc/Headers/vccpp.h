@@ -250,6 +250,7 @@ namespace VCC
     template<class T> bool Isarray(T, size_t);
     template<class T> bool Isghost(T);
     void IsolateProof();
+    void JoinBlobs(Object, Object);
     template<class T> T Labeled(const char*, T);
     template<class T1, class T2, class L> Map<T1, T2> Lambda(L);
     template<class T1, class T2, class T3, class L> Map<T1, Map<T2, T3>> Lambda(L);
@@ -278,6 +279,7 @@ namespace VCC
     template<class T> size_t Size(T);
     size_t Sizeofobject(Object);
     void SkipSmoke();
+    void SplitBlob(Object, size_t);
     template<class T> Set Span(T);
     bool Starthere();
     template<class T> bool Threadlocal(T);
