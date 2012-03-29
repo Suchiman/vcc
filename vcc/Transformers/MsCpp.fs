@@ -68,6 +68,7 @@ namespace Microsoft.Research.Vcc
                                       ]
 
   let specialFunctionWithContractMap = Map.ofList [
+                                                    "VCC::Alloc",               "_vcc_spec_alloc"
                                                     "VCC::Matchlong",           "_vcc_match_long"
                                                     "VCC::Matchulong",          "_vcc_match_ulong"
                                                     "VCC::Unwrap",              "_vcc_unwrap"
@@ -1049,6 +1050,21 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let makeAssignmentsIntoStmts self = 
+
+      // assignments that occur on statement have their type changed to 'void'
+
+      let handleAssignmentStmts = function
+        | Macro(ec, "=", args) -> Macro({ec with Type = Type.Void}, "=", args)
+        | Block(ec, stmts, bc) -> Block(ec, List.map self stmts, bc)
+        | expr -> expr
+
+      function
+        | Block(ec, stmts, bc) -> Some(Block(ec, List.map handleAssignmentStmts stmts, bc))
+        | _ -> None
+
+    // ============================================================================================================    
+
     let rewriteGlobalsInitialization = 
       
       // rewrite Global(v, Some(skip)) to Global(v, None))
@@ -1070,6 +1086,34 @@ namespace Microsoft.Research.Vcc
         | _ -> true
 
       List.filter filterSpecialDecls decls
+
+    // ============================================================================================================    
+
+    let despecializeAlloc decls = 
+
+      let (|IsSpecAlloc|_|) = function
+        | "_vcc_spec_alloc"
+        | "_vcc_spec_alloc_array"
+        | "_vcc_alloc" -> Some()
+        | _ -> None
+
+      let despecializeCall self = function
+        | Call(ec, ({Name = IsSpecAlloc() } as alloc), [], args) ->
+          match ec.Type with
+            | Ptr(t) -> Some(Call(ec, alloc, [t], List.map self args))
+            | _ -> helper.Oops(ec.Token, "unexpected return type in call to _vcc_alloc"); None
+        | _ -> None
+
+      let despecializeDecl = function
+        | Top.FunctionDecl({Name = IsSpecAlloc()} as alloc) ->
+          let tv = { Name = "T" } : TypeVariable
+          alloc.RetType <- Type.SpecPtr(TypeVar(tv))
+          alloc.TypeParameters <- [tv]
+          alloc.Flags <- alloc.Flags ||| Flags.Spec
+        | _ -> ()
+
+      decls |> List.iter despecializeDecl
+      decls |> deepMapExpressions despecializeCall
 
     // ============================================================================================================    
 
@@ -1101,6 +1145,8 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-rewrite-ops", TransHelper.Expr rewriteExtraOps)
     helper.AddTransformer ("cpp-sanitize-names", TransHelper.Decl sanitizeNames)
     helper.AddTransformer ("cpp-remove-decls", TransHelper.Decl removeSpecialDecls)
+    helper.AddTransformer ("cpp-despecialize-alloc", TransHelper.Decl despecializeAlloc)
+    helper.AddTransformer ("cpp-assignment-to-stmts", TransHelper.Expr makeAssignmentsIntoStmts)
     helper.AddTransformer ("cpp-declare-parameters", TransHelper.Decl addDeclarationsForParameters)
 
     helper.AddTransformer ("cpp-end", TransHelper.DoNothing)
