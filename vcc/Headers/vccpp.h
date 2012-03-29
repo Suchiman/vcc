@@ -232,6 +232,7 @@ namespace VCC
     template<class T> bool Extentfresh(T);
     template<class T> bool Extentmutable(T);
     template<class T> Free(T*);
+    bool FreeRequiresOrEnsures(bool);
     template<class T> bool Fresh(T);
     bool Fullcontext();
     template<class T> Set Fullextent(T);
