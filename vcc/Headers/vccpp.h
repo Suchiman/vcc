@@ -262,6 +262,7 @@ namespace VCC
     template<class T> bool Nested(T);
     template<class T> bool Nonprimitiveptr(T);
     void NoReadsCheck();
+    bool Normalexit();
     template<class T> bool Notshared(T);
     State Now();
     template<class T> bool Objectroot(T);
