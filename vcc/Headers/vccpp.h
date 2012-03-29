@@ -65,6 +65,8 @@ namespace VCC
 
     class Natural {
     public:
+      Natural();
+      Natural(unsigned);
       bool operator==(Ghost<Natural>);
       bool operator!=(Ghost<Natural>);
       bool operator<(Ghost<Natural>);
