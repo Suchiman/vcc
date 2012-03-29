@@ -41,8 +41,10 @@ namespace VCC
       Claim operator=(const Ghost<Claim>&);
       Claim operator=(const volatile Claim&);
       bool operator==(Claim);
+      volatile bool operator==(Claim) volatile;
       bool operator==(Ghost<Claim>);
       bool operator!=(Claim);
+      volatile bool operator!=(Claim) volatile;
       bool operator!=(Ghost<Claim>);
     };
 
@@ -87,6 +89,7 @@ namespace VCC
       bool operator!=(void*);
       bool operator!=(Ghost<Object>);
       bool operator!=(Ghost<Claim>);
+      bool volatile operator!=(void*) volatile;
       Object operator=(void*);      
     };
     
@@ -194,6 +197,7 @@ namespace VCC
     void VolatileOwns();
     
     // object state
+    template<class T> bool Accountclaim(Claim, T);
     template<class T> bool Activeclaim(T);
     template<class T> T Activemember(T);
     template<class T> Integer Addr(T);
@@ -291,6 +295,7 @@ namespace VCC
     template<class T> void UnionReinterpret(T);
     Set Universe();
     void Unwrapping(...);
+    Claim Upgradeclaim(Set, bool);
     template<class T> bool Valid(T);
     template<class T> Set Vdomain(T);
     template<class T> T Whenclaimed(T);
