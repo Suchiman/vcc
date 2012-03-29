@@ -25,9 +25,24 @@ namespace Microsoft.Research.Vcc.Cpp
 #pragma warning restore 168
         }
 
-        public CppDriver(string[] pipeOperations)
+        public CppDriver(string[] vccArgs, string[] pipeOperations)
         {
-            env = new TransEnv(pipeOperations);
+            VccppOptions vccOptions = new VccppOptions();
+            if (vccArgs != null && vccArgs.Length > 0)
+            {
+                // Register VccppOptions as CommandLineOption
+                VccppOptions.Install(vccOptions);
+
+                //CommandLineOptions.Clo.RunningBoogieFromCommandLine = false;
+
+                // Parse arguments
+                if (!CommandLineOptions.Clo.Parse(vccArgs))
+                {
+                    throw new ArgumentException("Unsupported switch.");
+                }
+            }
+
+            env = new TransEnv(pipeOperations, vccOptions);
             CAST.PointerSizeInBytes.Value = env.PointerSizeInBytes;
             Transformers.init(env);
             Transformers.processPipeOptions(env);
@@ -99,7 +114,6 @@ namespace Microsoft.Research.Vcc.Cpp
 
             // write Boogie
 
-            //TODO: what is this blank commandline options, reuse InstallBoogieOptions()?
             CommandLineOptions.Install(new CommandLineOptions());
 
             using (var writer = new TokenTextWriter(outputFileName))
@@ -129,14 +143,8 @@ namespace Microsoft.Research.Vcc.Cpp
             return true;
         }
 
-        public bool Verify(FSharpList<CAST.Top> decls, string reference, string vccArgs, bool dumpAstBeforeTransformations = false)
+        public bool Verify(FSharpList<CAST.Top> decls, string reference, bool dumpAstBeforeTransformations = false)
         {
-            if (!String.IsNullOrEmpty(vccArgs))
-            {
-                // TODO: use vccArgs
-                Utils.Log("VCC Arguments: " + vccArgs);
-            }
-
             if (dumpAstBeforeTransformations)
             {
                 TransUtil.dumpDecls("AST after Conversion", false, decls);
