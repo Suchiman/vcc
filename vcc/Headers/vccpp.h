@@ -210,7 +210,8 @@ namespace VCC
     template<class T1, class T2> Object Blob(T1, T2);
     template<class T> void Blobify(T);    
     template<class T> void BumpVolatileVersion(T);
-    template <typename T> TypeLockageFunctor<T> ByClaim(Claim);
+    template <class T> TypeLockageFunctor<T> ByClaim(Claim);
+    template <class T> bool Claimable(T);
     bool Claims(Claim, bool);
     template<class T> unsigned int Claimcount(T);
     template<class T> bool Claimsobject(Claim, T);
