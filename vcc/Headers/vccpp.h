@@ -67,23 +67,6 @@ namespace VCC
       Natural operator%(Natural);
       operator unsigned() const;
     };
-
-    class Object {
-    public:
-      Object();
-      Object(const Object&);
-      Object(const volatile Object&);
-      Object(void*);
-      bool operator==(void*);
-      bool operator==(Ghost<Object>);
-      bool operator==(Ghost<Claim>);
-      bool volatile operator==(void*) volatile;
-      bool operator!=(void*);
-      bool operator!=(Ghost<Object>);
-      bool operator!=(Ghost<Claim>);
-      bool volatile operator!=(void*) volatile;
-      Object operator=(void*);      
-    };
     
     class Set {
     public:
@@ -96,6 +79,25 @@ namespace VCC
       bool operator-=(Ghost<Set>);
       bool operator+=(Set);
       bool operator+=(Ghost<Set>);
+    };
+
+    class Object {
+    public:
+      Object();
+      Object(const Object&);
+      Object(const volatile Object&);
+      Object(void*);
+      bool operator==(void*);
+      bool operator==(Ghost<Object>);
+      bool operator==(Ghost<Claim>);
+      bool operator==(Ghost<Set>);
+      bool volatile operator==(void*) volatile;
+      bool operator!=(void*);
+      bool operator!=(Ghost<Object>);
+      bool operator!=(Ghost<Claim>);
+      bool operator!=(Ghost<Set>);
+      bool volatile operator!=(void*) volatile;
+      Object operator=(void*);      
     };
 
     class State {      
@@ -242,6 +244,7 @@ namespace VCC
     template<class T> bool In0(T, Set);
     template<class T1, class T2> bool Inarray(T1, T2, size_t);
     template<class T> void Increases(T, ...);
+    template<class T1, class T2> int Indexwithin(T1, T2);
     Set Inter(Set, Set);
     template<class T> bool Inv(T);
     template<class T> bool Inv2(T);
