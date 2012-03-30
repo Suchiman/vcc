@@ -93,11 +93,13 @@ namespace VCC
       bool operator==(Ghost<Object>);
       bool operator==(Ghost<Claim>);
       bool operator==(Ghost<Set>);
+      bool operator==(Ghost<Thread>);
       bool volatile operator==(void*) volatile;
       bool operator!=(void*);
       bool operator!=(Ghost<Object>);
       bool operator!=(Ghost<Claim>);
       bool operator!=(Ghost<Set>);
+      bool operator!=(Ghost<Thread>);
       bool volatile operator!=(void*) volatile;
       Object operator=(void*);      
     };
