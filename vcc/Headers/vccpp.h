@@ -162,7 +162,7 @@ namespace VCC
       bool operator==(T);
       T operator ->();
     };
-    
+   
     template <typename T> class TypeLockageFunctor {
     public:
       T operator()(T);
@@ -211,6 +211,7 @@ namespace VCC
     void Atomic(...);
     template<class T> void BeginGhostAtomic(T);
     template<class T> Object Blob(T);
+    template<class T> Object BlobOf(T);
     template<class T1, class T2> Object Blob(T1, T2);
     template<class T> void Blobify(T);    
     template<class T> void BumpVolatileVersion(T);
