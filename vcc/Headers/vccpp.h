@@ -54,6 +54,8 @@ namespace VCC
       Integer(int);
       Integer operator-=(Integer);
       Integer operator+=(Integer);
+      Integer operator/(Ghost<Integer>);
+      Integer operator%(Ghost<Integer>);
       operator int() const;
     };
 
@@ -63,8 +65,8 @@ namespace VCC
       Natural(unsigned);
       Natural operator-=(Natural);
       Natural operator+=(Natural);
-      Natural operator/(Natural);
-      Natural operator%(Natural);
+      Natural operator/(Ghost<Natural>);
+      Natural operator%(Ghost<Natural>);
       operator unsigned() const;
     };
     
