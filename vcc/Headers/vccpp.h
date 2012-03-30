@@ -38,7 +38,7 @@ namespace VCC
       Claim();
       Claim(const Claim&);
       Claim(const volatile Claim&);
-      Claim operator=(const Ghost<Claim>&);
+      Claim operator=(const Ghost<Claim>&) volatile;
       Claim operator=(const volatile Claim&);
       bool operator==(Claim);
       volatile bool operator==(Claim) volatile;
