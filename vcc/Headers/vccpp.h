@@ -127,7 +127,7 @@ namespace VCC
       volatile Map<From, To> operator=(const Map<From, To>&) volatile;
     };
 
-    template <typename T> class Ghost
+    template <class T> class Ghost
     {
     private:
       T _t_member_;
@@ -144,14 +144,14 @@ namespace VCC
       T operator ->();
     };
       
-    template <typename S, typename T> class Ghost< Map <S, T> >
+    template <class S, class T> class Ghost< Map <S, T> >
     {
     public:
       S& operator[](T);
       operator Map<S, T>() const;
     };
 
-    template <typename T> class GhostOut: public Ghost<T>
+    template <class T> class GhostOut: public Ghost<T>
     {
     private:
       T _t_member_;
@@ -165,7 +165,7 @@ namespace VCC
       T operator ->();
     };
    
-    template <typename T> class TypeLockageFunctor {
+    template <class T> class TypeLockageFunctor {
     public:
       T operator()(T);
     };    
@@ -211,14 +211,16 @@ namespace VCC
     void AssumeCorrect();
     template<class T> T At(State, T t);
     void Atomic(...);
+    template<class T> TypeLockageFunctor<T> AtomicOp(...);
+    template<class T> TypeLockageFunctor<T> AtomicRead(...);
     template<class T> void BeginGhostAtomic(T);
     template<class T> Object Blob(T);
     template<class T> Object BlobOf(T);
     template<class T1, class T2> Object Blob(T1, T2);
     template<class T> void Blobify(T);    
     template<class T> void BumpVolatileVersion(T);
-    template <class T> TypeLockageFunctor<T> ByClaim(Claim);
-    template <class T> bool Claimable(T);
+    template<class T> TypeLockageFunctor<T> ByClaim(Claim);
+    template<class T> bool Claimable(T);
     template<class T> unsigned int Claimcount(T);
     bool Claims(Claim, bool);
     template<class T> bool Claimsobject(Claim, T);
@@ -316,10 +318,10 @@ namespace VCC
     template<class T> Set Owns(T);
     template<class T> Object Owner(T);
     
-    template <typename T> Ghost<T> CreateGhost(Ghost<T>);
-    template <typename T> Ghost<T> CreateGhost(T);
-    template <typename T> GhostOut<T> CreateGhostOut(GhostOut<T>);
-    template <typename T> GhostOut<T> CreateGhostOut(T);
+    template <class T> Ghost<T> CreateGhost(Ghost<T>);
+    template <class T> Ghost<T> CreateGhost(T);
+    template <class T> GhostOut<T> CreateGhostOut(GhostOut<T>);
+    template <class T> GhostOut<T> CreateGhostOut(T);
 
     // matching helper functions
 
