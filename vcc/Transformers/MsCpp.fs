@@ -603,11 +603,16 @@ namespace Microsoft.Research.Vcc
                 if notEmpty fn.CustomAttr || notEmpty fn.Reads || notEmpty fn.Writes || notEmpty fn.Requires || notEmpty fn.Ensures || notEmpty fn.Variants then
                   helper.Error(fn.Token, 9803, "function '" + fn.FriendlyName + "' cannot have both contracts and out-of-band contracts", Some(fnContr.Token))
                 else
-                  fn.Reads <- fnContr.Reads
-                  fn.Writes <- fnContr.Writes
-                  fn.Requires <- fnContr.Requires
-                  fn.Ensures <- fnContr.Ensures
-                  fn.Variants <- fnContr.Variants
+                  // substitute the parameters from the contract with their counterpart from the function's declaration
+                  let parameterSubst = new Dict<_,_>()
+                  List.iter2 (fun p0 p1 -> parameterSubst.Add(p0, mkRef p1)) fnContr.Parameters fn.Parameters
+                  let subst = List.map (fun (expr:Expr) -> expr.Subst parameterSubst)
+
+                  fn.Reads <- fnContr.Reads |> subst
+                  fn.Writes <- fnContr.Writes |> subst
+                  fn.Requires <- fnContr.Requires |> subst
+                  fn.Ensures <- fnContr.Ensures |> subst
+                  fn.Variants <- fnContr.Variants |> subst
                   fn.CustomAttr <- fnContr.CustomAttr
               | false, _ -> ()
           | _ -> ()

@@ -79,6 +79,7 @@ rule token = parse
 | '#'		{ Op "#" }
 | '\\'  { Op "\\" }
 | '$'   { Op "$" }
+| '@'   { Op "@" }
 
 
 | idbeg idbody* { Id (lexeme lexbuf) }
