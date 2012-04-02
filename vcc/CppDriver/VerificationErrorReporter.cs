@@ -91,7 +91,7 @@ namespace Microsoft.Research.Vcc.Cpp
       EventHandler<ErrorReportedEventArgs> temp = ErrorReported;
       if (temp != null)
       {
-        temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.filename, false, tok.line, tok.col, errno, msg)));
+        temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.filename, false, tok.line, tok.col, errno, msg, false)));
       }
 
       Utils.Log(String.Format("{0}({1},{2}): error VC{3:0000}: {4}", tok.filename, tok.line, tok.col, errno, String.Format(fmt, args)));
