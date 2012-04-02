@@ -268,7 +268,7 @@ module Microsoft.Research.Vcc.CAST
       mutable IsNestedAnon: bool;
       mutable GenerateEquality: StructEqualityKind;
       mutable IsSpec: bool;
-      Parent : TypeDecl option;
+      mutable Parent : TypeDecl option;
       IsVolatile : bool
       UniqueId:Unique;
     }
