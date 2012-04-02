@@ -5,11 +5,6 @@ namespace Microsoft.Research.Vcc.Cpp
 {
     class TransEnv : TransHelper.TransEnv, IErrorSink
     {
-        public TransEnv(string[] pipeOperations, VccppOptions vccppOptions)
-            : base(new TransOptions(pipeOperations, vccppOptions))
-        {
-        }
-
         public event EventHandler<ErrorReportedEventArgs> ErrorReportedEvent;
 
         private bool errorReported;
@@ -22,6 +17,16 @@ namespace Microsoft.Research.Vcc.Cpp
         public override bool ShouldDumpStack
         {
             get { return true; }
+        }
+
+        public override int PointerSizeInBytes
+        {
+            get { return 4; }
+        }
+
+        public TransEnv(string[] pipeOperations, VccppOptions vccppOptions)
+            : base(new TransOptions(pipeOperations, vccppOptions))
+        {
         }
 
         public override void Error(Token tok, int code, string msg, FSharp.Core.FSharpOption<Token> related)
@@ -48,11 +53,6 @@ namespace Microsoft.Research.Vcc.Cpp
 
                 Utils.Log(String.Format("{0}({1},{2}): oops: {3}", tok.Filename, tok.Line, tok.Column, msg));
             }
-        }
-
-        public override int PointerSizeInBytes
-        {
-            get { return 4; }
         }
 
         public override void Warning(Token tok, int code, string msg, FSharp.Core.FSharpOption<Token> related)

@@ -25,18 +25,17 @@ namespace Microsoft.Research.Vcc.Cpp
 #pragma warning restore 168
         }
 
-        public CppDriver(string[] vccArgs, string[] pipeOperations)
+        public CppDriver(string vccArgs, string[] pipeOperations)
         {
+            // Register VccppOptions as CommandLineOption
             VccppOptions vccOptions = new VccppOptions();
-            if (vccArgs != null && vccArgs.Length > 0)
+            VccppOptions.Install(vccOptions);
+
+            // Parse arguments
+            if (!String.IsNullOrEmpty(vccArgs))
             {
-                // Register VccppOptions as CommandLineOption
-                VccppOptions.Install(vccOptions);
-
-                //CommandLineOptions.Clo.RunningBoogieFromCommandLine = false;
-
-                // Parse arguments
-                if (!CommandLineOptions.Clo.Parse(vccArgs))
+                var vccArgsArr = vccArgs.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (!CommandLineOptions.Clo.Parse(vccArgsArr))
                 {
                     throw new ArgumentException("Unsupported switch.");
                 }

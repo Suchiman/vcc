@@ -7,12 +7,6 @@
         private readonly string[] pipeOperations;
         private readonly VccppOptions vccppOptions;
 
-        public TransOptions(string[] pipeOperations, VccppOptions vccppOptions)
-        {
-            this.vccppOptions = vccppOptions;
-            this.pipeOperations = pipeOperations;
-        }
-
         public override bool AggressivePruning
         {
             get { return false; }
@@ -81,6 +75,12 @@
         public override bool YarraMode
         {
             get { return false; }
+        }
+
+        public TransOptions(string[] pipeOperations, VccppOptions vccppOptions)
+        {
+            this.vccppOptions = vccppOptions;
+            this.pipeOperations = pipeOperations;
         }
     }
 }
