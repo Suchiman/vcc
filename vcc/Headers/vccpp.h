@@ -240,7 +240,7 @@ namespace VCC
     template<class T> Set Extent(T);
     template<class T> bool Extentfresh(T);
     template<class T> bool Extentmutable(T);
-    template<class T> Free(T*);
+    template<class T> void Free(T*);
     bool FreeRequiresOrEnsures(bool);
     template<class T> bool Fresh(T);
     bool Fullcontext();
@@ -327,13 +327,13 @@ namespace VCC
 
     bool Matchulong(unsigned __int64) {
       _(pure)
-      _(ensures \result == true)
+      _(ensures \result<bool> == true)
       return true;
     };
 
     bool Matchlong(__int64) {
       _(pure)
-      _(ensures \result == true)
+      _(ensures \result<bool> == true)
       return true;
     };
 
