@@ -506,7 +506,9 @@ namespace Microsoft.Research.Vcc
           | Call(ec, {FriendlyName = StartsWith "VCC::Reads"}, [], args) ->      { bc with Reads = args @ bc.Reads }, invs
           | Call(ec, {FriendlyName = StartsWith "VCC::Writes"}, [], args) ->     { bc with Writes = args @ bc.Writes }, invs
           | Call(ec, {FriendlyName = StartsWith "VCC::Decreases"}, [], args) ->  { bc with Decreases = args @ bc.Decreases }, invs
-          | Call(ec, {FriendlyName = StartsWith "VCC::Pure"}, [], []) ->         { bc with IsPureBlock = true }, invs
+          | Call(ec, {FriendlyName = StartsWith "VCC::Pure"}, [], []) ->         { bc with CustomAttr = VccAttr(CAST.AttrIsPure, "") :: bc.CustomAttr}, invs
+          | Call(ec, {FriendlyName = StartsWith "VCC::FrameAxiom"}, [], []) ->   { bc with CustomAttr = VccAttr(CAST.AttrFrameaxiom, "") :: bc.CustomAttr}, invs
+          | Call(ec, {FriendlyName = StartsWith "VCC::NoReadsCheck"}, [], []) -> { bc with CustomAttr = VccAttr(CAST.AttrNoReadsCheck, "") :: bc.CustomAttr}, invs
           | Call(ec, {FriendlyName = StartsWith "VCC::Invariant"}, [], [arg]) -> bc, (arg :: invs)
           | _ -> bc, invs
 
@@ -516,7 +518,7 @@ namespace Microsoft.Research.Vcc
           Reads = List.rev found.Reads
           Writes = List.rev found.Writes
           Decreases = List.rev found.Decreases
-          IsPureBlock = found.IsPureBlock }, List.rev invs
+          CustomAttr = List.rev found.CustomAttr}, List.rev invs
 
       let removeContracts = 
         let isNoContract = function
@@ -527,6 +529,8 @@ namespace Microsoft.Research.Vcc
           | Call(ec, {FriendlyName = StartsWith "VCC::Decreases"}, [], _) 
           | Call(ec, {FriendlyName = StartsWith "VCC::Pure"}, [], [])
           | Call(ec, {FriendlyName = StartsWith "VCC::Invariant"}, [], [_])
+          | Call(ec, {FriendlyName = StartsWith "VCC::FrameAxiom"}, [], [])
+          | Call(ec, {FriendlyName = StartsWith "VCC::NoReadsCheck"}, [], [])
             ->  false
           | _ -> true
         List.filter isNoContract
@@ -564,7 +568,7 @@ namespace Microsoft.Research.Vcc
                 fn.Reads <- bc.Reads
                 fn.Writes <- bc.Writes
                 fn.Variants <- bc.Decreases
-                fn.CustomAttr <- (if bc.IsPureBlock then [VccAttr(AttrIsPure, "")] else []) @ fn.CustomAttr
+                fn.CustomAttr <- bc.CustomAttr @ fn.CustomAttr
                 fn.Body <- Some(Block(ec, stmts, None))
               | _ -> fn.Body <- Some body'
           | _ -> ()

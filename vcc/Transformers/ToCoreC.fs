@@ -804,11 +804,11 @@ namespace Microsoft.Research.Vcc
         List.iter (List.iter (fun (e : Expr) -> e.SelfVisit findLocals)) (body :: cs.Requires :: cs.Ensures :: cs.Reads :: cs.Writes :: [cs.Decreases])
         let body' = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) body
         let contract = {Requires = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.Requires;
-                        Ensures = List.map (fun (e : Expr) -> e.SelfMap (replLocalsEnsures cs.IsPureBlock)) cs.Ensures;
+                        Ensures = List.map (fun (e : Expr) -> e.SelfMap (replLocalsEnsures (CustomAttr.hasPureAttr cs.CustomAttr))) cs.Ensures;
                         Reads = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.Reads;
                         Writes = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.Writes;
                         Decreases = List.map (fun (e : Expr) -> e.SelfMap replLocalsNonEnsures) cs.Decreases;
-                        IsPureBlock = cs.IsPureBlock }
+                        CustomAttr = cs.CustomAttr }
         body', contract, !localsThatGoIn, vMap inMap, !localsThatGoOut, vMap outMap
           
       let findReferencesBeforeAndAfter (fn : Function) block =
@@ -883,7 +883,7 @@ namespace Microsoft.Research.Vcc
                              Writes = stripInitialPure cs'.Writes
                              Variants = stripInitialPure cs'.Decreases
                              Reads = stripInitialPure cs'.Reads;
-                             CustomAttr = (if cs'.IsPureBlock then [VccAttr (AttrIsPure, "")] else []) @ inheritedAttrs (!currentFunction).CustomAttr
+                             CustomAttr = cs'.CustomAttr @ inheritedAttrs (!currentFunction).CustomAttr
                              Body = Some (Expr.MkBlock(Expr.VarDecl(bogusEC, blockExitStatus, []) :: ss 
                                                           @ [Expr.VarWrite(bogusEC, [blockExitStatus], Expr.True)]
                                                           @ [Expr.Label(bogusEC, exitLabel)]
