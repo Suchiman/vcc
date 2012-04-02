@@ -12,9 +12,7 @@
 
         protected override bool ParseOption(string name, CommandLineOptionEngine.CommandLineParseState ps)
         {
-            // TODO: short form switches
-
-            switch (name.ToLowerInvariant())
+            switch (name)
             {
                 // Example
                 //case "rprint":
@@ -25,70 +23,99 @@
                 //break;
 
                 //TODO: set vccOptions
+                case "a":
                 case "aggressivepruning":
                     return true;
+                case "b":
                 case "boogie":
                     return true;
                 case "bvd":
                     return true;
+                case "det":
                 case "determinize":
                     return true;
+                case "d0":
                 case "dumpsource0":
                     return true;
+                case "d":
                 case "dumpsource":
                     return true;
+                case "f":
                 case "functions":
                     return true;
+                case "F":
+                case "Functions":
+                    return true;
+                case "?":
                 case "help":
                     return true;
+                case "h":
                 case "hide":
                     return true;
+                case "i":
                 case "inspector":
                     return true;
+                case "ii":
                 case "ignoreincludes":
                     return true;
+                case "n":
                 case "nopreprocessor":
                     return true;
+                case "nv":
                 case "noverification":
                     return true;
+                case "oaf":
                 case "opsasfuncs":
                     return true;
+                case "o":
                 case "out":
                     return true;
+                case "p":
                 case "preprocessor":
                     return true;
                 case "prelude":
                     return true;
+                case "ps":
                 case "pointersize":
                     return true;
                 case "pipe":
                     return true;
                 case "weight":
                     return true;
+                case "sm":
                 case "smoke":
                     return true;
+                case "st":
                 case "stats":
                     return true;
+                case "s":
                 case "suite":
                     return true;
                 case "time":
                     return true;
+                case "t":
                 case "translate":
                     return true;
+                case "term":
                 case "termination":
                     return true;
+                case "dexp":
                 case "defexpansion":
                     return true;
                 case "version":
                     return true;
+                case "wx":
                 case "warningsaserrors":
                     return true;
+                case "w":
                 case "warn":
                     return true;
                 case "xml":
                     return true;
+                case "z":
                 case "z3":
                     return true;
+                case "dt":
                 case "dumptriggers":
                     return true;
                 default:
