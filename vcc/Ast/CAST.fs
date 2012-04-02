@@ -199,6 +199,11 @@ module Microsoft.Research.Vcc.CAST
 
     static member AsString (lst:list<CustomAttr>) = lst |> List.map (fun a -> a.ToString() + " ") |> String.concat ""
 
+    static member hasCustomAttr n = List.exists (function VccAttr (n', _) -> n = n' | _ -> false)
+
+    static member hasPureAttr = List.exists (function VccAttr((AttrFrameaxiom|AttrIsPure|AttrSpecMacro|AttrDefinition|AttrAbstract|AttrIsDatatypeOption), "") -> true | _ -> false)
+
+
   and [<StructuralEquality; NoComparison>] TypeKind =
     | Struct
     | Union
@@ -770,7 +775,7 @@ module Microsoft.Research.Vcc.CAST
       //else if this.Name.StartsWith "fnptr#" && this.Writes = [] then
       //  true // HACK
       else
-        List.exists (function VccAttr((AttrFrameaxiom|AttrIsPure|AttrSpecMacro|AttrDefinition|AttrAbstract|AttrIsDatatypeOption), "") -> true | _ -> false) this.CustomAttr 
+        CustomAttr.hasPureAttr this.CustomAttr 
       
     member this.IsDatatypeOption =
       List.exists (function VccAttr(AttrIsDatatypeOption, "") -> true | _ -> false) this.CustomAttr 
@@ -920,10 +925,10 @@ module Microsoft.Research.Vcc.CAST
       Reads : list<Expr>;
       Writes : list<Expr>;
       Decreases : list<Expr>;
-      IsPureBlock : bool
+      CustomAttr : list<CustomAttr>;
     }
 
-    static member Empty = { Requires = []; Ensures = []; Reads = []; Writes = []; Decreases = []; IsPureBlock = false }
+    static member Empty = { Requires = []; Ensures = []; Reads = []; Writes = []; Decreases = []; CustomAttr = [] }
 
     member this.IsEmpty = 
       this.Requires.IsEmpty 
@@ -931,7 +936,7 @@ module Microsoft.Research.Vcc.CAST
       && this.Reads.IsEmpty 
       && this.Writes.IsEmpty 
       && this.Decreases.IsEmpty 
-      && not (this.IsPureBlock)
+      && this.CustomAttr.IsEmpty
 
   and TestClassifier = Expr
   
@@ -1292,7 +1297,7 @@ module Microsoft.Research.Vcc.CAST
                 let rReads, reads' = apply paux cs.Reads
                 let rWrites, writes' = apply paux cs.Writes
                 let rDecreases, decreases' = apply paux cs.Decreases
-                let cs' = {Requires=pres'; Ensures=posts'; Reads=reads'; Writes=writes'; Decreases=decreases'; IsPureBlock = cs.IsPureBlock }
+                let cs' = {Requires=pres'; Ensures=posts'; Reads=reads'; Writes=writes'; Decreases=decreases'; CustomAttr = cs.CustomAttr }
                 let rSS, block'' =
                     match  constructList (fun args -> Block (c, args, Some cs')) (map ctx) ss with
                       | None -> false, Block (c,ss,Some cs')
@@ -1823,7 +1828,7 @@ module Microsoft.Research.Vcc.CAST
   
   let splitConjunction = splitConjunctionEx false
   
-  let hasCustomAttr n = List.exists (function VccAttr (n', _) -> n = n' | _ -> false)
+  let hasCustomAttr = CustomAttr.hasCustomAttr
 
   let mkBoolOp str (args:list<Expr>) =
     Prim ((List.head (List.rev args)).Common, Op(str, Processed), args)
