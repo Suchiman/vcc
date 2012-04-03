@@ -1292,7 +1292,7 @@ namespace Microsoft.Research.Vcc
               Parameters = [ Variable.CreateUnique "stack_frame" (Type.MathInteger(MathIntKind.Signed)) VarKind.Parameter
                              Variable.CreateUnique "is_spec" Type.Bool VarKind.Parameter ]
               TypeParameters = [ { Name = "T" } ]
-        })
+          })
 
       // void \stack_free(\integer, \object);
       let stackFree = 
@@ -1303,7 +1303,7 @@ namespace Microsoft.Research.Vcc
               FriendlyName = "_vcc_stack_free"
               Parameters = [ Variable.CreateUnique "stack_frame" (Type.MathInteger(MathIntKind.Signed)) VarKind.Parameter
                              Variable.CreateUnique "obj" Type.ObjectT VarKind.Parameter ]
-        })
+          })
 
       // \object \heap_alloc(\type);
       let alloc = 
@@ -1314,9 +1314,23 @@ namespace Microsoft.Research.Vcc
               FriendlyName = "_vcc_alloc"
               Parameters = [ Variable.CreateUnique "type" Type.TypeIdT VarKind.Parameter ]
               RetType = Type.ObjectT                             
-        })
+          })
 
-      [stackAlloc; stackFree; alloc] @ decls
+      // void \free(\object p) _(writes p, \extent(p))
+      let free =
+        let p = Variable.CreateUnique "p"  Type.ObjectT VarKind.Parameter
+        let pRef = mkRef p
+        Top.FunctionDecl (
+          { Function.Empty() with
+              Flags = Flags.Spec
+              Name = "_vcc_free"
+              FriendlyName = "_vcc_free"
+              Parameters = [ p ]
+              RetType = Type.Void
+              Writes = [ pRef; Macro({ bogusEC with Type = Type.PtrSet }, "_vcc_extent", [pRef]) ]              
+          })
+
+      [stackAlloc; stackFree; alloc; free] @ decls
 
     // ============================================================================================================
 
