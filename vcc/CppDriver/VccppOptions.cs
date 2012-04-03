@@ -4,51 +4,68 @@
     using System.Collections.Generic;
     using System;
 
-    class VccppOptions : CommandLineOptions
+    class VccppOptions : CommandLineOptions, Helper.IOptions
     {
+        public List<string> boogieOptions = new List<string>();
+        public List<string> functions = new List<string>();
+        public List<string> functionsWithExactName = new List<string>();
+        public List<string> pipeOperations = new List<string>();
+        public List<string> preprocessorOptions = new List<string>();
+        public List<string> weightOptions = new List<string>();
+
         public bool AggressivePruning { get; private set; }
-        public List<string> BoogieOptions = new List<string>();
-        public List<string> PipeOperations = new List<string>();
-        public bool PrintCEVModel { get; private set; }
-        public bool SaveModelForBvd { get; private set; }
-        public bool RunInBatchMode { get; private set; }
         public bool DebugOnWarningOrError { get; private set; }
+        public bool DetailedTimes { get; private set; }
         public bool DeterminizeOutput { get; private set; }
-        public int DefExpansionLevel { get; private set; }
-        public bool DumpBoogie { get; private set; }
-        public int DumpTriggers { get; private set; }
-        public List<string> Functions = new List<string>();
-        public List<string> FunctionsWithExactName = new List<string>();
         public bool DisplayCommandLineHelp { get; private set; }
-        public Dictionary<long, bool> DisabledWarnings = new Dictionary<long, bool>();
-        public bool RunInspector { get; private set; }
-        public string IgnoreIncludes { get; private set; }
+        public bool DisplayVersion { get; private set; }
+        public bool DumpBoogie { get; private set; }
         public bool KeepPreprocessorFiles { get; private set; }
-        public string VerificationLocation { get; private set; }
         public bool NoPreprocessor { get; private set; }
         public bool NoVerification { get; private set; }
         public bool OpsAsFunctions { get; private set; }
-        public string OutputDir { get; private set; }
-        public List<string> PreprocessorOptions = new List<string>();
-        public string PreludePath { get; private set; }
-        public int PointerSize { get; private set; }
-        public bool TimeStats { get; private set; }
+        public bool PrintCEVModel { get; private set; }
+        public bool RunInBatchMode { get; private set; }
+        public bool RunInspector { get; private set; }
         public bool RunTestSuite { get; private set; }
-        public bool DisplayVersion { get; private set; }
-        public bool YarraMode { get; private set; }
-        public double RunTestSuiteMultiThreaded { get; private set; }
-        public int WarningLevel { get; private set; }
-        public int TerminationLevel { get; private set; }
-        public bool DetailedTimes { get; private set; }
+        public bool SaveModelForBvd { get; private set; }
+        public bool TimeStats { get; private set; }
         public bool TranslateToBPL { get; private set; }
-        public UInt32 VerifyUpToLine { get; private set; }
-        public List<string> WeightOptions = new List<string>();
         public bool WarningsAsErrors { get; private set; }
+        public bool YarraMode { get; private set; }
+        public Dictionary<long, bool> DisabledWarnings = new Dictionary<long, bool>();
+        public double RunTestSuiteMultiThreaded { get; private set; }
+        public IEnumerable<string> BoogieOptions { get { return boogieOptions; } }
+        public IEnumerable<string> Functions { get { return functions; } }
+        public IEnumerable<string> FunctionsWithExactName { get { return functionsWithExactName; } }
+        public IEnumerable<string> PipeOperations { get { return pipeOperations; } }
+        public IEnumerable<string> PreprocessorOptions { get { return preprocessorOptions; } }
+        public IEnumerable<string> WeightOptions { get { return weightOptions; } }
+        public int DefExpansionLevel { get; private set; }
+        public int DumpTriggers { get; private set; }
+        public int PointerSize { get; private set; }
+        public int TerminationLevel { get; private set; }
+        public bool TerminationForPure { get { return TerminationLevel >= 1; } }
+        public bool TerminationForGhost { get { return TerminationLevel >= 2; } }
+        public bool TerminationForAll { get { return TerminationLevel >= 3; } }
+        public int WarningLevel { get; private set; }
+        public string IgnoreIncludes { get; private set; }
+        public string OutputDir { get; private set; }
+        public string PreludePath { get; private set; }
+        public string VerificationLocation { get; private set; }
         public string XmlLogFile { get; private set; }
+        public UInt32 VerifyUpToLine { get; private set; }
 
-        public VccppOptions()
+        public bool ExplicitTargetsGiven
+        {
+            // TODO
+            get { return false; }
+        }
+
+        public VccppOptions(string[] pipeOperations)
             : base("Vccpp", "VCC")
         {
+            this.pipeOperations.AddRange(pipeOperations);
             RunTestSuiteMultiThreaded = -1;
             WarningLevel = 1;
             PointerSize = 64;
@@ -67,7 +84,7 @@
                     return true;
                 case "b":
                 case "boogie":
-                    this.BoogieOptions.AddRange(ps.args);
+                    this.boogieOptions.AddRange(ps.args);
                     return true;
                 case "bvd":
                     this.PrintCEVModel = true;
@@ -76,13 +93,13 @@
                 case "batch":
                     this.RunInBatchMode = true;
                     return true;
-                case "cevprint":
                 case "cev":
+                case "cevprint":
                     this.PrintCEVModel = true;
-                    this.BoogieOptions.Add("/mv:" + ps.args[0]);
+                    this.boogieOptions.Add("/mv:" + ps.args[0]);
                     return true;
-                case "debug":
                 case "dbg":
+                case "debug":
                     this.DebugOnWarningOrError = true;
                     return true;
                 case "det":
@@ -107,19 +124,19 @@
                     return true;
                 case "d0":
                 case "dumpsource0":
-                    this.PipeOperations.Add("dump before begin");
+                    this.pipeOperations.Add("dump before begin");
                     return true;
                 case "d":
                 case "dumpsource":
-                    this.PipeOperations.Add("dump after end");
+                    this.pipeOperations.Add("dump after end");
                     return true;
                 case "f":
                 case "functions":
-                    this.Functions.AddRange(ps.args);
+                    this.functions.AddRange(ps.args);
                     return true;
                 case "F":
                 case "Functions":
-                    this.FunctionsWithExactName.AddRange(ps.args);
+                    this.functionsWithExactName.AddRange(ps.args);
                     return true;
                 case "?":
                 case "help":
@@ -178,9 +195,9 @@
                     {
                         if (ps.args[i].Contains(" "))
                         {
-                            ps.args[i] = ps.args[i].Insert(2, "\"") + "\"";
+                            ps.args[i] = ps.args[i].Insert(2, "\"") + "\""; //TODO: test, why index 2
                         }
-                        this.PreprocessorOptions.Add(ps.args[i]);
+                        this.preprocessorOptions.Add(ps.args[i]);
                     }
                     return true;
                 case "prelude":
@@ -195,7 +212,7 @@
                     }
                     return true;
                 case "pipe":
-                    this.PipeOperations.AddRange(ps.args);
+                    this.pipeOperations.AddRange(ps.args);
                     return true;
                 case "suitemt":
                 case "smt":
@@ -203,7 +220,7 @@
                     return true;
                 case "sm":
                 case "smoke":
-                    this.BoogieOptions.Add("/smoke");
+                    this.boogieOptions.Add("/smoke");
                     return true;
                 case "st":
                 case "stats":
@@ -232,7 +249,7 @@
                     this.DisplayVersion = true;
                     return true;
                 case "weight":
-                    this.WeightOptions.AddRange(ps.args);
+                    this.weightOptions.AddRange(ps.args);
                     return true;
                 case "wx":
                 case "warningsaserrors":
