@@ -24,8 +24,8 @@ namespace Microsoft.Research.Vcc.Cpp
             get { return 4; }
         }
 
-        public TransEnv(string[] pipeOperations, VccppOptions vccppOptions)
-            : base(new TransOptions(pipeOperations, vccppOptions))
+        public TransEnv(VccppOptions vccppOptions)
+            : base(vccppOptions)
         {
         }
 
