@@ -55,6 +55,10 @@ module Tokenizer =
   let fromFile filename = 
     let path = System.IO.Path.GetDirectoryName filename
     let stream = System.IO.File.OpenText filename
-    let result = tokenize 0 path (Lexing.LexBuffer<char>.FromTextReader (stream))    
+    let result = tokenize 0 path (Lexing.LexBuffer<char>.FromTextReader (stream))
     stream.Dispose()
+    result
+   
+  let fromString s = 
+    let result = tokenize 0 "" (Lexing.LexBuffer<char>.FromString(s))
     result
