@@ -783,31 +783,21 @@ module Microsoft.Research.Vcc.CAST
     member this.IsStateless =
       this.IsPure && this.Reads = []
 
-    member this.Specialize(targs : list<Type>, includeBody : bool) =
-      if targs.Length = 0 then this else       
-        let typeVarSubst = new Dict<_,_>()
-        let varSubst = new Dict<_,_>()
+    member this.SubstType(typeSubst, includeBody, createCopy) =
+      let varSubst = new Dict<_,_>()
+      let sv (v : Variable) = 
+        match v.Type.Subst(typeSubst) with
+          | None -> v
+          | Some t' ->
+            let v' = { v with Type = t' } : Variable
+            varSubst.Add(v,v')
+            v'
+      let pars = List.map sv this.Parameters // do this first to populate varSubst
+      let se (e : Expr) = e.SubstType(typeSubst, varSubst)
+      let ses = List.map se
 
-        let toTypeMap (tvs : Dict<TypeVariable, Type>) = function
-          | TypeVar tv -> 
-            match tvs.TryGetValue tv with
-              | true, t -> Some t
-              | false, _ -> None
-          | _ -> None
-
-        List.iter2 (fun tv t -> typeVarSubst.Add(tv, t)) this.TypeParameters targs 
-        let typeMap = toTypeMap typeVarSubst
-        let sv (v : Variable) = 
-          match v.Type.Subst(typeMap) with
-            | None -> v
-            | Some t' ->
-              let v' = { v with Type = t' } : Variable
-              varSubst.Add(v,v')
-              v'
-        let pars = List.map sv this.Parameters // do this first to populate varSubst
-        let se (e : Expr) = e.SubstType(typeMap, varSubst)
-        let ses = List.map se
-        { this with RetType = this.RetType.ApplySubst(typeMap);
+      if createCopy then
+        { this with RetType = this.RetType.ApplySubst(typeSubst);
                     Parameters = pars;
                     Requires = ses this.Requires;
                     Ensures = ses this.Ensures;
@@ -816,6 +806,33 @@ module Microsoft.Research.Vcc.CAST
                     Reads = ses this.Reads;
                     TypeParameters = [];
                     Body = if includeBody then Option.map se this.Body else None }
+      else
+        this.RetType <- this.RetType.ApplySubst(typeSubst)
+        this.Parameters <- pars;
+        this.Requires <- ses this.Requires;
+        this.Ensures <- ses this.Ensures;
+        this.Writes <- ses this.Writes;
+        this.Variants <- ses this.Variants;
+        this.Reads <- ses this.Reads;
+        this.TypeParameters <- [];
+        this.Body <- if includeBody then Option.map se this.Body else None
+        this
+        
+    member this.Specialize(targs : list<Type>, includeBody : bool) =
+      if targs.Length = 0 then this else       
+        let typeVarSubst = new Dict<_,_>()
+
+        let toTypeSubst (tvs : Dict<TypeVariable, Type>) = function
+          | TypeVar tv -> 
+            match tvs.TryGetValue tv with
+              | true, t -> Some t
+              | false, _ -> None
+          | _ -> None
+
+        List.iter2 (fun tv t -> typeVarSubst.Add(tv, t)) this.TypeParameters targs 
+        let typeSubst = toTypeSubst typeVarSubst
+
+        this.SubstType(typeSubst, includeBody, true)
 
     member this.CallSubst args =
       let subst = new Dict<_,_>()
