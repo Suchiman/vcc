@@ -241,7 +241,7 @@ namespace Microsoft.Research.Vcc
       
 
     [<AbstractClass>]
-    type public TransEnv (opts : Helper.Options) as this =
+    type public TransEnv (opts : Helper.IOptions) as this =
       inherit Helper.Env(opts)
       let stopwatches = ref []
       let sw name = 
