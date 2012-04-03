@@ -28,7 +28,7 @@ namespace Microsoft.Research.Vcc.Cpp
         public CppDriver(string vccArgs, string[] pipeOperations)
         {
             // Register VccppOptions as CommandLineOption
-            VccppOptions vccOptions = new VccppOptions();
+            VccppOptions vccOptions = new VccppOptions(pipeOperations);
             VccppOptions.Install(vccOptions);
 
             // Parse arguments
@@ -41,7 +41,7 @@ namespace Microsoft.Research.Vcc.Cpp
                 }
             }
 
-            env = new TransEnv(pipeOperations, vccOptions);
+            env = new TransEnv(vccOptions);
             CAST.PointerSizeInBytes.Value = env.PointerSizeInBytes;
             Transformers.init(env);
             Transformers.processPipeOptions(env);
