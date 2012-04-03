@@ -12,8 +12,7 @@ namespace Microsoft.Research.Vcc
 
   module Helper =
 
-    [<AbstractClass>]
-    type public Options() =
+    type public IOptions =
       abstract TerminationForPure : bool with get
       abstract TerminationForGhost : bool with get
       abstract TerminationForAll : bool with get
@@ -30,7 +29,7 @@ namespace Microsoft.Research.Vcc
       abstract WeightOptions : string seq with get
 
     [<AbstractClass>]
-    type public Env(options:Options) =
+    type public Env(options:IOptions) =
 
       let currentId = ref 0
       let pureCalls = new Dict<string,string>()

@@ -2,77 +2,77 @@
 {
     using System.Collections.Generic;
 
-    class TransOptions : Helper.Options
+    class TransOptions : Helper.IOptions
     {
         private readonly string[] pipeOperations;
         private readonly VccppOptions vccppOptions;
 
-        public override bool AggressivePruning
+        public bool AggressivePruning
         {
             get { return false; }
         }
 
-        public override int DefExpansionLevel
+        public int DefExpansionLevel
         {
             get { return 0; }
         }
 
-        public override bool DeterminizeOutput
+        public bool DeterminizeOutput
         {
             get { return false; }
         }
 
-        public override int DumpTriggers
+        public int DumpTriggers
         {
             get { return 0; }
         }
 
-        public override bool ExplicitTargetsGiven
+        public bool ExplicitTargetsGiven
         {
             get { return false; }
         }
 
-        public override IEnumerable<string> Functions
+        public IEnumerable<string> Functions
         {
             get { return new string[] { }; }
         }
 
-        public override bool OpsAsFunctions
+        public bool OpsAsFunctions
         {
             get { return false; }
         }
 
-        public override IEnumerable<string> PipeOperations
+        public IEnumerable<string> PipeOperations
         {
             get { return pipeOperations; }
         }
 
-        public override bool PrintCEVModel
+        public bool PrintCEVModel
         {
             get { return false; }
         }
 
-        public override bool TerminationForAll
+        public bool TerminationForAll
         {
             get { return false; }
         }
 
-        public override bool TerminationForGhost
+        public bool TerminationForGhost
         {
             get { return false; }
         }
 
-        public override bool TerminationForPure
+        public bool TerminationForPure
         {
             get { return false; }
         }
 
-        public override IEnumerable<string> WeightOptions
+        public IEnumerable<string> WeightOptions
         {
             get { return new string[] { }; }
         }
 
-        public override bool YarraMode
+        public bool YarraMode
         {
             get { return false; }
         }
