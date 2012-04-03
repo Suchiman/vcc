@@ -340,7 +340,8 @@ namespace VCC
     // statements
     template<class T> void Wrap(T o, ...)
     {
-      VCC::Writes(o); // TODO: also writes o->\owns
+      VCC::Writes(o); 
+      VCC::Writes(VCC::Owns(o));
     }
 
     template<class T> void Unwrap(T o, ...)
