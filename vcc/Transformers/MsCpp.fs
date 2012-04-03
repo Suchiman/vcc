@@ -71,6 +71,7 @@ namespace Microsoft.Research.Vcc
   let specialFunctionWithContractMap = Map.ofList [
                                                     "VCC::Alloc",               "_vcc_spec_alloc"
                                                     "VCC::Allocarray",          "_vcc_spec_alloc_array"
+                                                    "VCC::Free",                "_vcc_free"
                                                     "VCC::Matchlong",           "_vcc_match_long"
                                                     "VCC::Matchulong",          "_vcc_match_ulong"
                                                     "VCC::Unwrap",              "_vcc_unwrap"
@@ -1055,9 +1056,15 @@ namespace Microsoft.Research.Vcc
           Some(Type.Bogus) // TODO: handle map type
         | _ -> None
 
-      // TODO: handle return values, parameter types, field types
+      // TODO: field types
 
-      decls |> mapExpressions (fun _ (e:Expr) -> e.SubstType(typeSubst, new Dict<_,_>()))
+      let rewriteDecl = function
+        | Top.FunctionDecl(fn) ->
+          fn.SubstType(typeSubst, true, false) |> ignore
+        | _ -> () 
+
+      decls |> List.iter rewriteDecl
+      decls |> mapExpressions (fun _ (e:Expr) -> e.SubstType(typeSubst, new Dict<_,_>())) // to do all the other occurrences
 
     // ============================================================================================================    
 
