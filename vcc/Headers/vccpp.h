@@ -147,7 +147,7 @@ namespace VCC
     template <class S, class T> class Ghost< Map <S, T> >
     {
     public:
-      S& operator[](T);
+      T& operator[](S);
       operator Map<S, T>() const;
     };
 
