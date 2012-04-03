@@ -96,7 +96,6 @@
     <Compile Include="PathHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TransEnv.cs" />
-    <Compile Include="TransOptions.cs" />
     <Compile Include="VccppOptions.cs" />
     <Compile Include="VerificationErrorReporter.cs" />
     <Compile Include="VerificationFinishedEventArgs.cs" />
