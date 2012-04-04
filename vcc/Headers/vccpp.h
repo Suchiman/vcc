@@ -364,4 +364,10 @@ namespace VCC
     template<class T> bool ForAll(T);
     template<class T> bool Exists(T);
     void Trigger(...);
+
+    void AstHelper() {
+      // reference some functions so we are sure that are in the AST even when they are not explicitly referenced
+      VCC::Wrap(0);
+      VCC::Unwrap(0);
+    }
 }
