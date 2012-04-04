@@ -9,6 +9,6 @@ struct A {
   _(invariant x ==> \mine(&b))
 };
 `
-testcase(9,21) : warning VC9110: keeps(...) (or set_in(..., owns(this))) is not allowed here; annotate the type 'A' with vcc(dynamic_owns)
+testcase(9,21) : warning VC9110: \mine(...) (or ... \in \owns(\this)) is not allowed here; annotate the type 'A' with _(dynamic_owns)
 Verification of A#adm succeeded.
 `
