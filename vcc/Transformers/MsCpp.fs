@@ -199,15 +199,19 @@ namespace Microsoft.Research.Vcc
 
     let rewriteMaps self =
 
-      // rewrite map accesses
+      // rewrite map accesses and assignments
 
       let (|MapGet|_|) = function
-        | Deref(ec, Call(_, { FriendlyName = n }, [], [Macro(_, "&", [m]); idx])) when n.StartsWith("VCC::Map") && n.EndsWith("operator[]") ->          
+        | Deref(ec, Call(_, { FriendlyName = n }, [], [Macro(_, "&", [m]); idx])) 
+            when n.StartsWith("VCC::Map") && n.EndsWith("operator[]") ->          
           Some(ec, m, idx)
         | _ -> None
 
       function 
         | MapGet(ec, m, idx) -> Some(Macro(ec, "map_get", [self m; self idx]))
+        | Deref(ec, Call(_, { FriendlyName = fname }, [], [Macro(_, "&", [lhs]); Macro(_, "&", [rhs])])) 
+            when fname.StartsWith("VCC::Map") && fname.EndsWith("operator=") ->
+          Some(Macro(ec, "=", [self lhs; self rhs]))
         | _ -> None
 
     // ============================================================================================================        
@@ -679,9 +683,17 @@ namespace Microsoft.Research.Vcc
       // their original form
 
       let (|Quantifier|_|) = function
-        | Call(ec, {FriendlyName = (StartsWith "VCC::Exists" | StartsWith "VCC::ForAll" as friendlyName)}, [], 
-                   [Deref(_, Call(_, closureCtor, [], _this :: captures))])
-          -> Some(ec, closureCtor, captures, if friendlyName.StartsWith("VCC::Exists") then QuantKind.Exists else QuantKind.Forall)
+        | Deref(ec, Call(_, {FriendlyName = (StartsWith "VCC::Lambda" as friendlyName)}, [], 
+                   [Deref(_, Call(_, closureCtor, [], _this :: captures))]))
+        | Call(ec, {FriendlyName = (StartsWith "VCC::Exists" | StartsWith "VCC::ForAll" | StartsWith "VCC::Lambda" as friendlyName)}, [], 
+                   [Deref(_, Call(_, closureCtor, [], _this :: captures))]) -> 
+          let kind = 
+            match friendlyName with
+            | StartsWith "VCC::Exists" -> QuantKind.Exists
+            | StartsWith "VCC::ForAll" -> QuantKind.Forall
+            | StartsWith "VCC::Lambda" -> QuantKind.Lambda
+            | _ -> die()
+          Some(ec, closureCtor, captures, kind)
         | _ -> None
 
       let closures = new HashSet<_>()
