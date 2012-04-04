@@ -119,6 +119,9 @@ namespace VCC
     };
 
     template <class From, class To> class Map {
+    private:
+      From _from_member_;
+      To _to_member_;
     public:
       To& operator[](From);
       To& operator[](From) volatile;

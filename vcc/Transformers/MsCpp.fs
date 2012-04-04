@@ -410,12 +410,12 @@ namespace Microsoft.Research.Vcc
           Some(Expr.Macro(ec, "fake_block", [VarDecl(ec, vptr, attr); assign]))
         | _ -> None
 
-      let typeSubst t = 
+      let typeSubst _ t = 
         match typeSubst.TryGetValue(t) with
           | true, t' -> Some t'
           | _ -> None
 
-      decls |> deepMapExpressions replaceDeclsAndAllocate |> mapExpressions (fun _ (expr:Expr) -> expr.SubstType(typeSubst, varSubst))
+      decls |> deepMapExpressions replaceDeclsAndAllocate |> mapExpressions (fun _ (expr:Expr) -> expr.SubstType(typeSubst, varSubst, new Dict<_,_>()))
 
     // ============================================================================================================    
 
@@ -920,7 +920,7 @@ namespace Microsoft.Research.Vcc
       let (|GhostType|_|) = 
         let getOriginalType (td : TypeDecl) =
           match td.Fields with 
-            | [{Name = "_t_member_"} as f] -> f.Type
+            | [{Name = "_t_member_"; Type = t} ] -> t
             | _ -> helper.Oops(td.Token, "unexpected Ghost type structure"); die()
       
         function
@@ -1049,23 +1049,17 @@ namespace Microsoft.Research.Vcc
 
       // turn types from the VCC:: namespace into their CAST counterparts
 
-      let typeSubst = function
+      let typeSubst self = function
         | Type.Ref({Name = IsSpecialType(t')})
         | Type.PhysPtr(Type.Ref({Name = IsSpecialType(t')})) ->
           Some(t')
         | Type.Ref(td) when td.Name.StartsWith("VCC::Map") ->
-          Some(Type.Bogus) // TODO: handle map type
+          match td.Fields with
+            | [ { Name = "_from_member_"; Type = fromType }; { Name = "_to_member_"; Type = toType } ] -> Some(Type.Map(self fromType, self toType))
+            | _ -> helper.Oops(td.Token, "unexpected map type structure"); None
         | _ -> None
 
-      // TODO: field types
-
-      let rewriteDecl = function
-        | Top.FunctionDecl(fn) ->
-          fn.SubstType(typeSubst, true, false) |> ignore
-        | _ -> () 
-
-      decls |> List.iter rewriteDecl
-      decls |> mapExpressions (fun _ (e:Expr) -> e.SubstType(typeSubst, new Dict<_,_>())) // to do all the other occurrences
+      decls |> deepRetype typeSubst
 
     // ============================================================================================================    
 
