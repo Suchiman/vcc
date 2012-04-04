@@ -120,8 +120,8 @@ namespace VCC
 
     template <class From, class To> class Map {
     private:
-      From _from_member_;
-      To _to_member_;
+      From *_from_member_;
+      To *_to_member_;
     public:
       To& operator[](From);
       To& operator[](From) volatile;
@@ -135,7 +135,7 @@ namespace VCC
     template <class T> class Ghost
     {
     private:
-      T _t_member_;
+      T *_t_member_;
     public:
       Ghost(T t);
       Ghost(const Ghost<T> &);
@@ -159,7 +159,7 @@ namespace VCC
     template <class T> class GhostOut: public Ghost<T>
     {
     private:
-      T _t_member_;
+      T *_t_member_;
     public:
       GhostOut(T t);
       GhostOut(const GhostOut<T> &);

@@ -920,7 +920,7 @@ namespace Microsoft.Research.Vcc
       let (|GhostType|_|) = 
         let getOriginalType (td : TypeDecl) =
           match td.Fields with 
-            | [{Name = "_t_member_"; Type = t} ] -> t
+            | [{Name = "_t_member_"; Type = Ptr(t)} ] -> t
             | _ -> helper.Oops(td.Token, "unexpected Ghost type structure"); die()
       
         function
@@ -1055,7 +1055,7 @@ namespace Microsoft.Research.Vcc
           Some(t')
         | Type.Ref(td) when td.Name.StartsWith("VCC::Map") ->
           match td.Fields with
-            | [ { Name = "_from_member_"; Type = fromType }; { Name = "_to_member_"; Type = toType } ] -> Some(Type.Map(self fromType, self toType))
+            | [ { Name = "_from_member_"; Type = Ptr(fromType) }; { Name = "_to_member_"; Type = Ptr(toType) } ] -> Some(Type.Map(self fromType, self toType))
             | _ -> helper.Oops(td.Token, "unexpected map type structure"); None
         | _ -> None
 
