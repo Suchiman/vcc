@@ -197,7 +197,24 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let rewriteMaps self =
+
+      // rewrite map accesses
+
+      let (|MapGet|_|) = function
+        | Deref(ec, Call(_, { FriendlyName = n }, [], [Macro(_, "&", [m]); idx])) when n.StartsWith("VCC::Map") && n.EndsWith("operator[]") ->          
+          Some(ec, m, idx)
+        | _ -> None
+
+      function 
+        | MapGet(ec, m, idx) -> Some(Macro(ec, "map_get", [self m; self idx]))
+        | _ -> None
+
+    // ============================================================================================================        
+
     let rewriteSets self = 
+
+      // rewrite set creation and equality
 
       let (|CreateSet|_|) = function
         | Deref(_, Macro(_, "comma", [Deref(_, Call(ec, {FriendlyName = "VCC::Set::Set"}, [], (AddrOf(_, Ref(_, v))) :: elems )); AddrOf(_, Ref(_, v'))])) when v.Name = v'.Name ->
@@ -396,7 +413,6 @@ namespace Microsoft.Research.Vcc
     let handleStackArrays decls = 
     
       let varSubst = new Dict<_,_>()
-      let typeSubst = new Dict<_,_>()
 
       let replaceDeclsAndAllocate self = function
         | VarDecl(ec, ({Type = Array(t, n)} as v), attr) as decl ->
@@ -405,17 +421,13 @@ namespace Microsoft.Research.Vcc
           let vptrRef = Expr.Ref({ec with Type=v.Type}, vptr)
           let stackAlloc = Expr.Macro({ ec with Type = ptrType }, "stack_allocate_array", [mkInt n; Expr.False])
           let assign = Expr.Macro(ec, "=", [vptrRef; stackAlloc])
-          varSubst.Add(v, vptr)
-          typeSubst.[v.Type] <- ptrType
+          varSubst.Add(v, mkRef vptr)
           Some(Expr.Macro(ec, "fake_block", [VarDecl(ec, vptr, attr); assign]))
         | _ -> None
 
-      let typeSubst _ t = 
-        match typeSubst.TryGetValue(t) with
-          | true, t' -> Some t'
-          | _ -> None
-
-      decls |> deepMapExpressions replaceDeclsAndAllocate |> mapExpressions (fun _ (expr:Expr) -> expr.SubstType(typeSubst, varSubst, new Dict<_,_>()))
+      decls 
+      |> deepMapExpressions replaceDeclsAndAllocate
+      |> mapExpressions (fun _ (e:Expr) -> e.Subst(varSubst))
 
     // ============================================================================================================    
 
@@ -1139,6 +1151,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-special-args", TransHelper.Decl specialArgumentHandling)
     helper.AddTransformer ("cpp-special-types", TransHelper.Decl rewriteSpecialTypes)
     helper.AddTransformer ("cpp-set", TransHelper.Expr rewriteSets)
+    helper.AddTransformer ("cpp-map", TransHelper.Expr rewriteMaps)
     helper.AddTransformer ("cpp-remove-object-copying", TransHelper.Expr removeObjectCopyOperations)
     helper.AddTransformer ("cpp-blocks", TransHelper.Expr normalizeBlocks)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)

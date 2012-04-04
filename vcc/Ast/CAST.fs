@@ -1828,7 +1828,7 @@ module Microsoft.Research.Vcc.CAST
         | None -> f
   
     let retypeFields = function
-      | Top.TypeDecl(td) -> td.Fields <- List.map retypeField td.Fields
+      | Top.TypeDecl(td) when not (td.Name.StartsWith("VCC::")) -> td.Fields <- List.map retypeField td.Fields
       | _ -> ()
 
     let substExpr (e:Expr) = e.SubstType(subst, emptyVarSubst, fieldSubst)
