@@ -1,9 +1,0 @@
-#include <vcc.h>
-
-void test()
-{
-  _(assert {:foobar} \true)
-}
-`
-testcase(5,12) : error VC9724: expression label {:foobar ...} unsupported (here)
-`
