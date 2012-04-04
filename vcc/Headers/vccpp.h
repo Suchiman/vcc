@@ -41,9 +41,11 @@ namespace VCC
       Claim operator=(const Ghost<Claim>&) volatile;
       Claim operator=(const volatile Claim&);
       bool operator==(Claim);
+      bool operator==(void*);
       volatile bool operator==(Claim) volatile;
       bool operator==(Ghost<Claim>);
       bool operator!=(Claim);
+      bool operator!=(void*);
       volatile bool operator!=(Claim) volatile;
       bool operator!=(Ghost<Claim>);
     };
