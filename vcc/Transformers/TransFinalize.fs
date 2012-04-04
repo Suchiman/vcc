@@ -174,8 +174,8 @@ namespace Microsoft.Research.Vcc
           | BoolOp (_, "&&", e1, e2) as e when top -> self e1; self e2; false
           | Macro (_, "keeps", _) as e ->
             if not top then 
-              helper.Warning (e.Token, 9110, "keeps(...) (or set_in(..., owns(this))) is not allowed here; " +
-                                             "annotate the type '" + td.Name + "' with vcc(dynamic_owns)")
+              helper.Warning (e.Token, 9110, "\\mine(...) (or ... \\in \\owns(\\this)) is not allowed here; " +
+                                             "annotate the type '" + td.Name + "' with _(dynamic_owns)")
             true
           // 9111 for | Macro (_, "_vcc_set_in", _) as e ?
           | e when top ->
@@ -196,7 +196,7 @@ namespace Microsoft.Research.Vcc
         | CallMacro(_, "_vcc_owns", _, [_; expr]) as owns -> 
           match expr.Type with
             | Ptr(Type.Ref(td)) when staticOwns td ->
-              helper.Error(owns.Token, 9662, "Explicit reference to owns-set of type '" + td.Name + "', which is static. Use keeps(...) or mark '" + td.Name + "' with vcc(dynamic_owns).")
+              helper.Error(owns.Token, 9662, "Explicit reference to owns-set of type '" + td.Name + "', which is static. Use \\mine(...) or mark '" + td.Name + "' with _(dynamic_owns).")
               true
             | _ -> true
         | _ -> true
