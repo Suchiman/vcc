@@ -44,6 +44,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Depends",             "_vcc_depends"
                                                     "VCC::Disjoint",            "_vcc_set_disjoint"
                                                     "VCC::Extent",              "_vcc_extent"
+                                                    "VCC::Extentfresh",         "_vcc_extent_is_fresh"
                                                     "VCC::Extentmutable",       "_vcc_extent_mutable"
                                                     "VCC::Fresh",               "_vcc_is_fresh"
                                                     "VCC::In",                  "_vcc_set_in"
