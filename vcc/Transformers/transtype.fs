@@ -1105,12 +1105,12 @@ namespace Microsoft.Research.Vcc
        
       do deepVisitExpressions findVolatileTypes decls
 
-      let typeMap t = 
+      let typeMap _ t = 
         match typeSubst.TryGetValue t with
           | true, t' -> Some t'
           | false, _ -> None
         
-      let decls = deepMapExpressions (fun _ (expr : Expr) -> Some(expr.SubstType(typeMap, new Dict<Variable, Variable>()))) decls
+      let decls = deepMapExpressions (fun _ (expr : Expr) -> Some(expr.SubstType(typeMap, new Dict<_,_>(), new Dict<_,_>()))) decls
 
       for d in decls do
         match d with
@@ -1362,7 +1362,7 @@ namespace Microsoft.Research.Vcc
             ()
           | _ -> ()
 
-      let typeMap = function
+      let typeMap _ = function
         | Type.Ref(td) ->
           match primMap.TryGetValue td with 
             | true, t' -> Some t'
@@ -1378,19 +1378,19 @@ namespace Microsoft.Research.Vcc
         match d with
           | Top.FunctionDecl(fn) -> 
             let retypeParameter (p : Variable) =
-              match p.Type.Subst(typeMap) with
+              match p.Type.SelfSubst(typeMap) with
                 | None -> p
                 | Some t' -> 
                   let p' = { p.UniqueCopy() with Type = t'}
                   paramSubst.Add(p, p')
                   p'
             fn.Parameters <- List.map retypeParameter fn.Parameters
-            fn.RetType <- match fn.RetType.Subst(typeMap) with
+            fn.RetType <- match fn.RetType.SelfSubst(typeMap) with
                            | None -> fn.RetType
                            | Some t' -> t'
           | Top.TypeDecl(td) ->
             let retypeField (fld:Field) =
-              match fld.Type.Subst(typeMap) with
+              match fld.Type.SelfSubst(typeMap) with
                 | None -> fld
                 | Some t' ->
                   let fld' = { fld with Type = t' }
@@ -1410,7 +1410,7 @@ namespace Microsoft.Research.Vcc
             | false, _ -> None
         | _ -> None
 
-      let substTypes _ (expr :Expr) = Some(expr.SubstType(typeMap, paramSubst))
+      let substTypes _ (expr :Expr) = Some(expr.SubstType(typeMap, paramSubst, new Dict<_,_>()))
 
       decls |> deepMapExpressions removeAndReplaceFields |> deepMapExpressions substTypes
 

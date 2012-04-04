@@ -583,10 +583,12 @@ module Microsoft.Research.Vcc.CAST
                     (sub zero x, sub x one)
                   else
                     (zero, sub (bigint.Pow(two, sz)) one))
-                    
-    member this.Subst(typeMap : Type -> Type option) =
+
+    /// When f returns Some(x), this is replaced by x, otherwise Map is applied
+    /// recursively to children, including application of f to child expressions.
+    member this.Subst(f : Type -> Type option) =
       let rec subst _type =
-        match typeMap _type with
+        match f _type with
           | Some t' -> Some t'
           | None ->
             match _type with
@@ -615,8 +617,14 @@ module Microsoft.Research.Vcc.CAST
               | t -> None
       subst this
 
+    member this.SelfSubst (f : (Type -> Type) -> Type -> Type option) =
+      let rec aux (t:Type) = 
+        match t.Subst f' with | Some(t') -> t' | _ -> t
+      and f' t = f aux t
+      this.Subst f'
+
     member this.ApplySubst(typeMap) = 
-      match this.Subst(typeMap) with
+      match this.SelfSubst(typeMap) with
         | Some t' -> t'
         | None -> this
         
@@ -783,17 +791,17 @@ module Microsoft.Research.Vcc.CAST
     member this.IsStateless =
       this.IsPure && this.Reads = []
 
-    member this.SubstType(typeSubst, includeBody, createCopy) =
+    member this.SubstType(typeSubst, fieldSubst, includeBody, createCopy) =
       let varSubst = new Dict<_,_>()
       let sv (v : Variable) = 
-        match v.Type.Subst(typeSubst) with
+        match v.Type.SelfSubst(typeSubst) with
           | None -> v
           | Some t' ->
             let v' = { v with Type = t' } : Variable
             varSubst.Add(v,v')
             v'
       let pars = List.map sv this.Parameters // do this first to populate varSubst
-      let se (e : Expr) = e.SubstType(typeSubst, varSubst)
+      let se (e : Expr) = e.SubstType(typeSubst, varSubst, fieldSubst)
       let ses = List.map se
 
       if createCopy then
@@ -822,7 +830,7 @@ module Microsoft.Research.Vcc.CAST
       if targs.Length = 0 then this else       
         let typeVarSubst = new Dict<_,_>()
 
-        let toTypeSubst (tvs : Dict<TypeVariable, Type>) = function
+        let toTypeSubst (tvs : Dict<TypeVariable, Type>) _ = function
           | TypeVar tv -> 
             match tvs.TryGetValue tv with
               | true, t -> Some t
@@ -832,7 +840,7 @@ module Microsoft.Research.Vcc.CAST
         List.iter2 (fun tv t -> typeVarSubst.Add(tv, t)) this.TypeParameters targs 
         let typeSubst = toTypeSubst typeVarSubst
 
-        this.SubstType(typeSubst, includeBody, true)
+        this.SubstType(typeSubst, new Dict<_,_>(), includeBody, true)
 
     member this.CallSubst args =
       let subst = new Dict<_,_>()
@@ -1203,7 +1211,7 @@ module Microsoft.Research.Vcc.CAST
        
 
     /// When f returns Some(x), this is replaced by x, otherwise Map is applied
-    /// recursively to children, including application of g to children expressions.
+    /// recursively to children, including application of f to child expressions.
     member this.Map (ispure : bool, f : ExprCtx -> Expr -> option<Expr>) : Expr =        
       let rec map ctx e =
         let apply f args =        
@@ -1329,14 +1337,17 @@ module Microsoft.Research.Vcc.CAST
         | Some this' -> this'
     
     // TODO: implement with DeepMap?
-    member this.SubstType(typeMap, varSubst : Dict<Variable, Variable>) =
-      let sc c = { c with Type = c.Type.ApplySubst(typeMap) } : ExprCommon
+    member this.SubstType(typeSubst, varSubst : Dict<Variable, Variable>, fieldSubst : Dict<Field, Field>) =
+      let sc c = 
+        match c.Type.SelfSubst typeSubst with
+          | None -> c
+          | Some(t') -> { c with Type = t' }
       let varSubst = new Dict<_,_>(varSubst) // we add to it, so make a copy first
       let sv v = 
         match varSubst.TryGetValue(v) with
           | true, v' -> v'
           | false, _ ->
-            match v.Type.Subst(typeMap) with
+            match v.Type.SelfSubst(typeSubst) with
               | Some t' ->
                 let v' = { v with Type = t' }
                 varSubst.Add(v,v')
@@ -1367,17 +1378,24 @@ module Microsoft.Research.Vcc.CAST
           | Result c -> Some(Result(sc c))
           | This c -> Some(This(sc c))
           | Prim (c, op, es) ->  Some(Prim(sc c, op, selfs es))
-          | Call (c, fn, tas, es) -> Some(Call(sc c, fn, List.map (fun (t : Type) -> t.ApplySubst(typeMap)) tas, selfs es))
+          | Call (c, fn, tas, es) -> 
+            Some(Call(sc c, fn, List.map (fun (t : Type) -> t.ApplySubst(typeSubst)) tas, selfs es))
           | Macro (c, op, es) -> Some(Macro(sc c, op, selfs es))
           | Deref (c, e) -> Some(Deref(sc c, self e))
-          | Dot (c, e, f) -> Some(Dot(sc c, self e, f))
+          | Dot (c, e, f) -> 
+            match fieldSubst.TryGetValue(f) with
+              | true, f' -> Some(Dot(sc c, self e, f'))
+              | false, _ -> Some(Dot(sc c, self e, f))
           | Index (c, e1, e2) -> Some(Index(sc c, self e1, self e2))
           | Cast (c, ch, e) -> Some(Cast(sc c, ch, self e))
           | Old (c, e1, e2) -> Some(Old(sc c, self e1, self e2))
           | Quant (c, q) -> Some(Quant(sc c, {q with Triggers = List.map selfs q.Triggers; Condition = Option.map self (q.Condition); Body = self (q.Body)}))
           | VarWrite (c, vs, e) -> Some(VarWrite(sc c, List.map sv vs, self e))
           | Return (c, Some e) -> Some(Return(sc c, Some(self e)))
-          | SizeOf(c, t) -> Some(SizeOf(c, t.ApplySubst(typeMap)))
+          | SizeOf(c, t) -> 
+            match t.SelfSubst typeSubst with
+              | None -> None
+              | Some(t') -> Some(SizeOf(c, t'))
       this.SelfMap(repl)
 
     member this.SelfCtxMap (ispure : bool, f : ExprCtx -> (Expr -> Expr) -> Expr -> option<Expr>) : Expr =        
@@ -1762,6 +1780,7 @@ module Microsoft.Research.Vcc.CAST
         | Top.Global(v, Some e) -> pf e
         | Top.Global(_, None) -> ()
 
+
   let mapExpressions f decls =
     List.map (fun (d:Top) -> d.MapExpressions f) decls
   
@@ -1794,6 +1813,37 @@ module Microsoft.Research.Vcc.CAST
     match [decl] |> deepMapExpressions f with
       | [decl'] -> decl'
       | _ -> die()
+
+  let deepRetype subst decls =
+
+    let fieldSubst = new Dict<_,_>()
+    let emptyVarSubst = new Dict<_,_>()
+
+    let retypeField (f:Field) =
+      match f.Type.SelfSubst(subst) with
+        | Some t' -> 
+          let f' = { f with Type = t' }
+          fieldSubst.Add(f, f')
+          f'
+        | None -> f
+  
+    let retypeFields = function
+      | Top.TypeDecl(td) -> td.Fields <- List.map retypeField td.Fields
+      | _ -> ()
+
+    let substExpr (e:Expr) = e.SubstType(subst, emptyVarSubst, fieldSubst)
+
+    let retypeDecl = function
+      | Top.FunctionDecl(fn) -> Top.FunctionDecl(fn.SubstType(subst, fieldSubst, true, false))
+      | Top.Axiom(e) -> Top.Axiom(substExpr e)
+      | Top.GeneratedAxiom(e, top) -> Top.GeneratedAxiom(substExpr e, top)
+      | Top.TypeDecl(td) -> 
+        td.Invariants <- List.map substExpr td.Invariants
+        Top.TypeDecl(td)
+      | Top.Global(v, init) -> Top.Global(v, Option.map substExpr init)
+
+    List.iter retypeFields decls
+    decls |> List.map retypeDecl
 
   // -----------------------------------------------------------------------------
   // Message/token formatting
