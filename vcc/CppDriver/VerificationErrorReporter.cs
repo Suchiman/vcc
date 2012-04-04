@@ -86,7 +86,7 @@ namespace Microsoft.Research.Vcc.Cpp
 
     private void ReportError(IToken tok, int errno, string fmt, params object[] args)
     {
-      var msg = String.Format(fmt, args);
+      var msg = args.Length > 0 ? String.Format(fmt, args) : fmt;
       
       EventHandler<ErrorReportedEventArgs> temp = ErrorReported;
       if (temp != null)
@@ -94,7 +94,7 @@ namespace Microsoft.Research.Vcc.Cpp
         temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.filename, false, tok.line, tok.col, errno, msg, false)));
       }
 
-      Utils.Log(String.Format("{0}({1},{2}): error VC{3:0000}: {4}", tok.filename, tok.line, tok.col, errno, String.Format(fmt, args)));
+      Utils.Log(String.Format("{0}({1},{2}): error VC{3:0000}: {4}", tok.filename, tok.line, tok.col, errno, msg));
     }
 
 
@@ -180,9 +180,18 @@ namespace Microsoft.Research.Vcc.Cpp
       if (retTok.line == 0) retTok = ensTok;
       if (ensTok.line == 0) ensTok = retTok;
 
-      ReportError(retTok, 9501, "Post condition{0} '{1}' did not verify.", comment, msg);
-      ReportRelated(ensTok, "Location of post condition.");
-      ReportAllRelated(ensTok);
+      var errnoAndMsg = GetErrorNumber(msg, -1);
+
+      if (errnoAndMsg.Item1 == -1)
+      {
+        ReportError(retTok, 9501, "Post condition{0} '{1}' did not verify.", comment, msg);
+        ReportRelated(ensTok, "Location of post condition.");
+        ReportAllRelated(ensTok);
+      }
+      else
+      {
+        ReportError(retTok, errnoAndMsg.Item1, errnoAndMsg.Item2);
+      }      
     }
 
     private void ReportAllRelated(IToken tok)
