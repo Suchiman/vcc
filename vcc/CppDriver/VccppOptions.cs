@@ -80,7 +80,7 @@
 
                 case "a":
                 case "aggressivepruning":
-                    bool AggressivePruning = ParseBool(ps.args);
+                    bool AggressivePruning = ParseBool(ps.args[ps.i]);
                     return true;
                 case "b":
                 case "boogie":
@@ -96,7 +96,7 @@
                 case "cev":
                 case "cevprint":
                     this.PrintCEVModel = true;
-                    this.boogieOptions.Add("/mv:" + ps.args[0]);
+                    this.boogieOptions.Add("/mv:" + ps.args[ps.i]);
                     return true;
                 case "dbg":
                 case "debug":
@@ -109,18 +109,18 @@
                 case "dexp":
                 case "defexpansion":
                     int expansionLev;
-                    if (int.TryParse(ps.args[0], out expansionLev))
+                    if (int.TryParse(ps.args[ps.i], out expansionLev))
                     {
                         this.DefExpansionLevel = expansionLev;
                     }
                     return true;
                 case "db":
                 case "dumpboogie":
-                    this.DumpBoogie = ParseBool(ps.args);
+                    this.DumpBoogie = ParseBool(ps.args[ps.i]);
                     return true;
                 case "dt":
                 case "dumptriggers":
-                    this.DumpTriggers = int.Parse(ps.args[0]);
+                    this.DumpTriggers = int.Parse(ps.args[ps.i]);
                     return true;
                 case "d0":
                 case "dumpsource0":
@@ -160,17 +160,17 @@
                     return true;
                 case "ii":
                 case "ignoreincludes":
-                    this.IgnoreIncludes = ps.args[0];
+                    this.IgnoreIncludes = ps.args[ps.i];
                     return true;
                 case "keepppoutput":
-                    this.KeepPreprocessorFiles = ParseBool(ps.args);
+                    this.KeepPreprocessorFiles = ParseBool(ps.args[ps.i]);
                     return true;
                 case "launch":
                     System.Diagnostics.Debugger.Launch();
                     return true;
                 case "loc":
                 case "location":
-                    this.VerificationLocation = ps.args[0];
+                    this.VerificationLocation = ps.args[ps.i];
                     return true;
                 case "n":
                 case "nopreprocessor":
@@ -186,7 +186,7 @@
                     return true;
                 case "o":
                 case "out":
-                    this.OutputDir = ps.args[0];
+                    this.OutputDir = ps.args[ps.i];
                     return true;
                 case "p":
                 case "preprocessor":
@@ -201,11 +201,11 @@
                     }
                     return true;
                 case "prelude":
-                    this.PreludePath = ps.args[0];
+                    this.PreludePath = ps.args[ps.i];
                     return true;
                 case "ps":
                 case "pointersize":
-                    int pointerSize = int.Parse(ps.args[0]);
+                    int pointerSize = int.Parse(ps.args[ps.i]);
                     if (pointerSize == 32 || pointerSize == 64)
                     {
                         this.PointerSize = pointerSize;
@@ -216,7 +216,7 @@
                     return true;
                 case "suitemt":
                 case "smt":
-                    this.RunTestSuiteMultiThreaded = double.Parse(ps.args[0]);
+                    this.RunTestSuiteMultiThreaded = double.Parse(ps.args[ps.i]);
                     return true;
                 case "sm":
                 case "smoke":
@@ -232,18 +232,18 @@
                     this.NoPreprocessor = true;
                     return true;
                 case "time":
-                    this.DetailedTimes = ParseBool(ps.args);
+                    this.DetailedTimes = ParseBool(ps.args[ps.i]);
                     return true;
                 case "t":
                 case "translate":
-                    this.TranslateToBPL = ParseBool(ps.args);
+                    this.TranslateToBPL = ParseBool(ps.args[ps.i]);
                     return true;
                 case "term":
                 case "termination":
-                    this.TerminationLevel = ushort.Parse(ps.args[0]);
+                    this.TerminationLevel = ushort.Parse(ps.args[ps.i]);
                     return true;
                 case "uptoline":
-                    this.VerifyUpToLine = UInt32.Parse(ps.args[0]);
+                    this.VerifyUpToLine = UInt32.Parse(ps.args[ps.i]);
                     return true;
                 case "version":
                     this.DisplayVersion = true;
@@ -253,14 +253,14 @@
                     return true;
                 case "wx":
                 case "warningsaserrors":
-                    this.WarningsAsErrors = ParseBool(ps.args);
+                    this.WarningsAsErrors = ParseBool(ps.args[ps.i]);
                     return true;
                 case "w":
                 case "warn":
-                    this.WarningLevel = int.Parse(ps.args[0]);
+                    this.WarningLevel = int.Parse(ps.args[ps.i]);
                     return true;
                 case "xml":
-                    this.XmlLogFile = ps.args[0];
+                    this.XmlLogFile = ps.args[ps.i];
                     return true;
                 case "yarra":
                     this.YarraMode = true;
@@ -276,9 +276,9 @@
             return base.ParseOption(name, ps);
         }
 
-        private bool ParseBool(string[] input)
+        private bool ParseBool(string input)
         {
-            return input.Length == 0 || input[0] == "1" || input[0] == "true";
+            return input == "1" || input == "true";
         }
 
         protected override void ApplyDefaultOptions()
@@ -347,7 +347,7 @@
 /dumptriggers:<n>              1-report inferred triggers, 2-report results for different {:level}s, 3-report also when explicit triggers are present, 4-include Boogie form, 5-debug (Short form: /dt)
 ");
 
-            base.Usage();  // Prints the Boogie options
+            //base.Usage();  // Prints the Boogie options
         }
     }
 }
