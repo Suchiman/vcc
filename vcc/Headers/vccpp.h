@@ -103,7 +103,8 @@ namespace VCC
       bool operator!=(Ghost<Set>) volatile;
       bool operator!=(Ghost<Thread>) volatile;
       bool volatile operator!=(void*) volatile;
-      Object operator=(void*);      
+      Object operator=(void*);
+      operator void*() const;
     };
 
     class State {      
