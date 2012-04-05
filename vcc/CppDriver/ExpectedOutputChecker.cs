@@ -48,25 +48,27 @@ namespace Microsoft.Research.Vcc
 
     public void VerificationFinished(object sender, VerificationFinishedEventArgs data)
     {
-      var expectedMsg = String.Format("Verification of {0} {1}", data.Name, data.Outcome);
+      var expectedMsg1 = String.Format("Verification of {0} {1}", data.Name, data.Outcome);
+      var expectedMsg2 = String.Format("Verification of '{0}' {1}", data.Name, data.Outcome);
 
       if (idx >= expected.Length) {
         mismatchesFound++;
         if (firstMismatchFoundAt < 0) {
           firstMismatchFoundAt = idx+1;
           firstMismatchExpected = "<no more output expected>";
-          firstMismatchReceived = expectedMsg;
+          firstMismatchReceived = expectedMsg2;
         }
 
         return;
       }
 
-      if (!this.expected[idx].StartsWith(expectedMsg)) {
+      if ((!this.expected[idx].StartsWith(expectedMsg1)) && (!this.expected[idx].StartsWith(expectedMsg2)))
+      {
         mismatchesFound++;
         if (firstMismatchFoundAt < 0) {
           firstMismatchFoundAt = idx;
           firstMismatchExpected = expected[idx];
-          firstMismatchReceived = expectedMsg;
+          firstMismatchReceived = expectedMsg2;
         }
       }
 
