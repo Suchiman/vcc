@@ -11,5 +11,5 @@ _(always c, s->\closed)
 	}
 }
 `
-testcase(10,3) : error VC9742: returning from within atomic(...) is not allowed
+testcase(10,3) : error VC9742: returning from within _(atomic ...) is not allowed
 `

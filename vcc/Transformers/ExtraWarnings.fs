@@ -239,7 +239,7 @@ namespace Microsoft.Research.Vcc
 
       let doWarn self = function
         | Expr.Old(_, Macro (_, "prestate", []), e) as expr when not (mentionsVolatile e) ->
-          helper.Warning(expr.Token, 9115, "'old' in invariant does not refer to volatile state")
+          helper.Warning(expr.Token, 9115, "'\\old' in invariant does not refer to volatile state")
           true
         | _ -> true
       

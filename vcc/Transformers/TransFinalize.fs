@@ -368,7 +368,7 @@ namespace Microsoft.Research.Vcc
     
       let reportErrorForOld self = function
         | Expr.Old(ec, Expr.Macro(_, "prestate", []), expr) ->
-          helper.Error(ec.Token, 9697, "old(...) is allowed only in two-state contexts")
+          helper.Error(ec.Token, 9697, "\\old(...) is allowed only in two-state contexts")
           false
         | CallMacro(ec, n, _, args) ->
           match helper.PureCallSignature n with
@@ -441,7 +441,7 @@ namespace Microsoft.Research.Vcc
       let errorForWhenClaimedOutsideOfClaim' _ = function
         | Macro(_, ("claim" | "_vcc_claims" | "upgrade_claim"), body) -> false
         | CallMacro(ec, "_vcc_when_claimed", _, _) ->
-          helper.Error(ec.Token, 9708, "'when_claimed' cannot be used outside of a claim.")
+          helper.Error(ec.Token, 9708, "'\\when_claimed' cannot be used outside of a claim.")
           false
         | _ -> true
 
@@ -460,12 +460,12 @@ namespace Microsoft.Research.Vcc
       let rec checkPolarity seenFunctions polarity  _ = function
         | CallMacro(ec, ("_vcc_inv"|"_vcc_inv2"), _, _) ->
           if (polarity <= 0) then
-            helper.Error(ec.Token, 9712, "Use of 'inv(...)' or 'inv2(...)' with " + polarityStatus polarity + " polarity.")
+            helper.Error(ec.Token, 9712, "Use of '\\inv(...)' or '\\inv2(...)' with " + polarityStatus polarity + " polarity.")
           true
         | Call(ec, fn, _, args) -> 
           checkPolarities seenFunctions 0 args
           if Set.contains fn.UniqueId seenFunctions then
-            helper.Error(ec.Token, 9712, "Encountered cyclic dependency for function '" + fn.Name + "' when checking for legal use of inv(...) or inv2(...)")
+            helper.Error(ec.Token, 9712, "Encountered cyclic dependency for function '" + fn.Name + "' when checking for legal use of \\inv(...) or \\inv2(...)")
           else checkPolarities (Set.add fn.UniqueId seenFunctions) polarity fn.Ensures
           false
         | _ when polarity = 0 -> true // stick on unknown
@@ -553,13 +553,13 @@ namespace Microsoft.Research.Vcc
     let rec errorWhenJumpingFromAtomic inAtomic _= function
       | Atomic(_, _, body) -> body.SelfMap(errorWhenJumpingFromAtomic true) |> ignore; None
       | Return(ec, _) when inAtomic ->
-        helper.Error(ec.Token, 9742, "returning from within atomic(...) is not allowed")
+        helper.Error(ec.Token, 9742, "returning from within _(atomic ...) is not allowed")
         None
       | Goto(ec, _) when inAtomic ->
-        helper.Error(ec.Token, 9742, "goto from within atomic(...) is not allowed")
+        helper.Error(ec.Token, 9742, "goto from within _(atomic ...) is not allowed")
         None
       | Label(ec, _) when inAtomic ->
-        helper.Error(ec.Token, 9742, "label withing atomic(...) is not allowed")
+        helper.Error(ec.Token, 9742, "label withing _(atomic ...) is not allowed")
         None
       | _ -> None
 

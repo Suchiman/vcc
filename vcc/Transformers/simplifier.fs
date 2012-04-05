@@ -472,7 +472,7 @@ namespace Microsoft.Research.Vcc
             match f.Type with
               | ObjectT -> ()
               | _ ->
-                helper.Error (approvers.[f], 9673, "approver field '" + f.Name + "' should have obj_t type, it has '" + f.Type.ToString() + "'")
+                helper.Error (approvers.[f], 9673, "approver field '" + f.Name + "' should have \\object type, it has '" + f.Type.ToString() + "'")
             if not (selfApproved.ContainsKey f) && f.IsVolatile then
               helper.Error (approvers.[f], 9672, "volatile field '" + f.Name + "' is an approver, but not a self-approver")
           d :: axioms
