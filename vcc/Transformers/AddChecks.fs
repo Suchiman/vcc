@@ -190,7 +190,7 @@ namespace Microsoft.Research.Vcc
                 Some (Some prestate, Some curstate1, curstate2, pre @ save @ save1 @ changeOwner,
                   None, dyns @ [this], stas, post @ check)
               | t -> 
-                helper.Error (tok, 9621, "call to wrap(...) with an improper type: " + t.ToString(), None)
+                helper.Error (tok, 9621, "call to _(wrap ...) with an improper type: " + t.ToString(), None)
                 None
 
       let unwrapExpr expr callComm this = function
@@ -241,7 +241,7 @@ namespace Microsoft.Research.Vcc
                 Some (Some prestate, curstate, all_save @ save,
                   pre @ [checkWrap; assumeInv], None, dyns @ [this], stas, post @ check)
               | t -> 
-                helper.Error (tok, 9621, "call to unwrap(...) with an improper type: " + t.ToString(), None)
+                helper.Error (tok, 9621, "call to _(unwrap ...) with an improper type: " + t.ToString(), None)
                 None
             
       let makeBlock es =
@@ -551,10 +551,10 @@ namespace Microsoft.Research.Vcc
       | Expr.Assert (_, Expr.Macro (_, "_vcc_bv_lemma", [e]), _) -> 
         let reportCheckedOpsInBvLemma' self = function 
           | Expr.Cast(ec, (Checked|Processed), _) ->
-            helper.Error (ec.Token, 9659, "casts in bv_lemma(...) need to be unchecked (expression: " + ec.Token.Value + ")", None)
+            helper.Error (ec.Token, 9659, "casts in _(assert {:bv} ...) need to be unchecked (expression: " + ec.Token.Value + ")", None)
             None
           | Expr.Prim (ec, Op (("+"|"-"|"*"|"/"|"%"), Checked), _) ->
-            helper.Error (ec.Token, 9659, "operators in bv_lemma(...) need to be unchecked (expression: " + ec.Token.Value + ")", None)
+            helper.Error (ec.Token, 9659, "operators in _(assert {:bv} ...) need to be unchecked (expression: " + ec.Token.Value + ")", None)
             None
           | _ -> None
         let _ = e.Map(false, reportCheckedOpsInBvLemma')
