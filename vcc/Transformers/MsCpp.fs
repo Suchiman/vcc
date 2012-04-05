@@ -553,22 +553,30 @@ namespace Microsoft.Research.Vcc
           | _ -> true
         List.filter isNoContract
 
+      let toLoopContract (bc : BlockContract, invs) =
+        let mkLoopContract kind (expr:Expr) = 
+          Expr.MkAssert (Macro ({ expr.Common with Type = Type.Bool }, kind, [expr]))
+        
+        List.map Expr.MkAssert invs @
+        List.map (mkLoopContract "loop_variant") bc.Decreases @ 
+        List.map (mkLoopContract "loop_writes") bc.Writes
+
       let pullOutContracts self = function
-        | Macro(ec, "for", [ Macro(lec, "loop_contract", loopContract); init; cond; incr; Block(bec, stmts, None) ]) ->
+        | Macro(ec, "for", [ Macro(lec, "loop_contract", []); init; cond; incr; Block(bec, stmts, None) ]) ->
           let (bc, invs) = findContracts stmts
           let body' = Block(bec, stmts |> removeContracts |> List.map self, None)
-          let invs' = List.map Expr.MkAssert invs
-          Some(Macro(ec, "for", [ Macro(lec, "loop_contract", invs' @ loopContract); init; cond; incr; body']))
-        | Macro(ec, "do", [ Macro(lec, "loop_contract", loopContract); Block(bec, stmts, None); cond]) ->
+          let loopContracts = toLoopContract (bc, invs)
+          Some(Macro(ec, "for", [ Macro(lec, "loop_contract", loopContracts); init; cond; incr; body']))
+        | Macro(ec, "do", [ Macro(lec, "loop_contract", []); Block(bec, stmts, None); cond]) ->
           let (bc, invs) = findContracts stmts
           let body' = Block(bec, stmts |> removeContracts |> List.map self, None)
-          let invs' = List.map Expr.MkAssert invs
-          Some(Macro(ec, "do", [Macro(lec, "loop_contract", invs' @ loopContract); body'; cond]))
-        | Macro(ec, "while", [ Macro(lec, "loop_contract", loopContract); cond; Block(bec, stmts, None)]) ->
+          let loopContracts = toLoopContract (bc, invs)
+          Some(Macro(ec, "do", [Macro(lec, "loop_contract", loopContracts); body'; cond]))
+        | Macro(ec, "while", [ Macro(lec, "loop_contract", []); cond; Block(bec, stmts, None)]) ->
           let (bc, invs) = findContracts stmts
           let body' = Block(bec, stmts |> removeContracts |> List.map self, None)
-          let invs' = List.map Expr.MkAssert invs
-          Some(Macro(ec, "while", [Macro(lec, "loop_contract", invs' @ loopContract); cond; body']))
+          let loopContracts = toLoopContract (bc, invs)
+          Some(Macro(ec, "while", [Macro(lec, "loop_contract", loopContracts); cond; body']))
         | Block(ec, stmts, None) ->
           let (bc, invs) = findContracts stmts
           if not (List.isEmpty invs) then helper.Oops(invs.Head.Token, "invariant outside of loop")
