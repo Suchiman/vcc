@@ -1,25 +1,11 @@
 # testcases that got updated (need different annotations/have different output in VCC3)
-32bitPtr-01
-32bitPtr-02
-32bitPtr-03
 32bitPtr-04
-32bitPtr-08
 as_array-01
-arrays-01
-arraysNeg-06
 basics-02
-basics-27
-bv_lemma-00
-bv_lemma-09
 bv_lemma-12
-expose-00
 globals-01
-groups-18
 packedFraming-01
 pure-02
-specOrPhysical-05
-start_here-01
-staticWrap.ns-01
 triggerInference-04
 volatileModifier.ns-11
 basics-49
@@ -36,7 +22,7 @@ basics2-27
 structEquality.ns-00
 pure-42
 
-# wierd pointer arithmetic
+# weird pointer arithmetic
 groups-02
 groups-10
 
