@@ -41,6 +41,12 @@ namespace Microsoft.Research.Vcc.Cpp
                 }
             }
 
+            if (vccOptions.DisplayCommandLineHelp)
+            {
+                vccOptions.Usage();
+                throw new Exception("vcchelp");
+            }
+
             env = new TransEnv(vccOptions);
             CAST.PointerSizeInBytes.Value = env.PointerSizeInBytes;
             Transformers.init(env);
