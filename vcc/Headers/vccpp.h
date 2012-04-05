@@ -17,16 +17,18 @@
 
 #else
 
-void free(void*, size_t);
+namespace VCC
+{
+  class Ghost;
+}
+
+void free(void*, VCC::Ghost, size_t);
 #define vcc_attr(k, v) __declspec("System.Diagnostics.Contracts.CodeContract.StringVccAttr", k, v)
 
 #endif 
 
 namespace VCC
 {
-    // types
-    template<class T> class Ghost;
-
     class Thread {
     public:
       bool operator==(Thread);
@@ -38,16 +40,14 @@ namespace VCC
       Claim();
       Claim(const Claim&);
       Claim(const volatile Claim&);
-      Claim operator=(const Ghost<Claim>&) volatile;
       Claim operator=(const volatile Claim&);
       bool operator==(Claim);
       bool operator==(void*);
       volatile bool operator==(Claim) volatile;
-      bool operator==(Ghost<Claim>);
       bool operator!=(Claim);
       bool operator!=(void*);
       volatile bool operator!=(Claim) volatile;
-      bool operator!=(Ghost<Claim>);
+      Claim operator=(Claim) const volatile;
     };
 
     class Integer {
@@ -56,8 +56,6 @@ namespace VCC
       Integer(int);
       Integer operator-=(Integer);
       Integer operator+=(Integer);
-      Integer operator/(Ghost<Integer>);
-      Integer operator%(Ghost<Integer>);
       operator int() const;
     };
 
@@ -67,8 +65,6 @@ namespace VCC
       Natural(unsigned);
       Natural operator-=(Natural);
       Natural operator+=(Natural);
-      Natural operator/(Ghost<Natural>);
-      Natural operator%(Ghost<Natural>);
       operator unsigned() const;
     };
     
@@ -76,35 +72,9 @@ namespace VCC
     public:
       Set(...);
       bool operator==(Set);
-      bool operator==(Ghost<Set>);
       bool operator!=(Set);
-      bool operator!=(Ghost<Set>);
       bool operator-=(Set);
-      bool operator-=(Ghost<Set>);
       bool operator+=(Set);
-      bool operator+=(Ghost<Set>);
-    };
-
-    class Object {
-    public:
-      Object();
-      Object(const Object&);
-      Object(const volatile Object&);
-      Object(void*);
-      bool operator==(void*);
-      bool operator==(Ghost<Object>) volatile;
-      bool operator==(Ghost<Claim>) volatile;
-      bool operator==(Ghost<Set>) volatile;
-      bool operator==(Ghost<Thread>) volatile;
-      bool volatile operator==(void*) volatile;
-      bool operator!=(void*);
-      bool operator!=(Ghost<Object>) volatile;
-      bool operator!=(Ghost<Claim>) volatile;
-      bool operator!=(Ghost<Set>) volatile;
-      bool operator!=(Ghost<Thread>) volatile;
-      bool volatile operator!=(void*) volatile;
-      Object operator=(void*);
-      operator void*() const;
     };
 
     class State {      
@@ -113,9 +83,7 @@ namespace VCC
       State(const volatile State&);
       State(const State&);
       bool operator==(State);
-      bool operator==(Ghost<State>);
       bool operator!=(State);
-      bool operator!=(Ghost<State>);
       volatile State operator=(const State&) volatile;
     };
 
@@ -127,56 +95,44 @@ namespace VCC
       To& operator[](From);
       To& operator[](From) volatile;
       bool operator==(Map<From,To>);
-      bool operator==(Ghost<Map<From,To>>);
       bool operator!=(Map<From,To>);
-      bool operator!=(Ghost<Map<From,To>>);
       volatile Map<From, To> operator=(const Map<From, To>&) volatile;
     };
 
-    template <class T> class Ghost
-    {
-    private:
-      T *_t_member_;
+    class Object {
     public:
-      Ghost(T t);
-      Ghost(const Ghost<T> &);
-      Ghost(const Ghost<Object> &);
-      operator T() const;
-      operator Ghost<Object>() const;
-      bool operator==(T);
-      bool operator!=(T);
-      bool operator==(Object);
-      bool operator!=(Object);
-      T operator ->();
-    };
-      
-    template <class S, class T> class Ghost< Map <S, T> >
-    {
-    public:
-      T& operator[](S);
-      operator Map<S, T>() const;
+      Object();
+      Object(const Object&);
+      Object(const volatile Object&);
+      Object(void*);
+      bool operator==(Object) volatile;
+      bool operator==(void*) volatile;
+      bool operator==(Claim) volatile;
+      bool operator==(Set) volatile;
+      bool operator==(State) volatile;
+      bool operator==(Thread) volatile;
+      bool operator!=(Object) volatile;
+      bool operator!=(void*) volatile;
+      bool operator!=(Claim) volatile;
+      bool operator!=(Set) volatile;
+      bool operator!=(State) volatile;
+      bool operator!=(Thread) volatile;
+      Object operator=(void*);
+      operator void*() const;
     };
 
-    template <class T> class GhostOut: public Ghost<T>
+    class Ghost
     {
-    private:
-      T *_t_member_;
     public:
-      GhostOut(T t);
-      GhostOut(const GhostOut<T> &);
-      GhostOut(const GhostOut<Object> &);
-      operator T() const;
-      operator GhostOut<Object>() const;
-      bool operator==(T);
-      T operator ->();
+      static Ghost Instance();
     };
 
-    template <class T> class GhostOut< Ghost <T> >
+    class GhostOut
     {
     public:
-      operator GhostOut<T>();
+      static GhostOut Instance();
     };
-   
+
     template <class T> class TypeLockageFunctor {
     public:
       T operator()(T);
@@ -330,11 +286,6 @@ namespace VCC
     template<class T> Set Owns(T);
     template<class T> Object Owner(T);
     
-    template <class T> Ghost<T> CreateGhost(Ghost<T>);
-    template <class T> Ghost<T> CreateGhost(T);
-    template <class T> GhostOut<T> CreateGhostOut(GhostOut<T>);
-    template <class T> GhostOut<T> CreateGhostOut(T);
-
     // matching helper functions
 
     bool Matchulong(unsigned __int64) {
