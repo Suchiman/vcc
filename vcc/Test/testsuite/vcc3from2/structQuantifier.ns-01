@@ -31,6 +31,6 @@ void foo() {
   _(assert !bm[0])
 }
 `
-testcase(20,11) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not ensures(result == ...))
+testcase(20,11) : warning VC9310: [possible unsoundness]: a non-equality postcondition in a pure function (not _(ensures \result == ...))
 Verification of foo succeeded.
 `

@@ -205,7 +205,7 @@ namespace Microsoft.Research.Vcc
       let rec checkOne = function
         | QuantLet (c, ({ Condition = Some cond } as qd)) as expr ->
           if usesRes cond then
-            helper.GraveWarning (f.Token, 9312, "'result' cannot be used in let binding in a pure function definition")
+            helper.GraveWarning (f.Token, 9312, "'\\result' cannot be used in let binding in a pure function definition")
             expr
           else
             Quant (c, { qd with Body = checkOne qd.Body })
@@ -224,9 +224,9 @@ namespace Microsoft.Research.Vcc
             else e1, e2
           let round = ref None
           if not (usesRes res) then
-            helper.GraveWarning (post.Token, 9305, "'result' does not occur in one of a pure function postconditions")
+            helper.GraveWarning (post.Token, 9305, "'\\result' does not occur in one of a pure function postconditions")
           elif usesRes def then
-            helper.GraveWarning (f.Token, 9306, "'result' cannot be used recursively in a pure function definition")
+            helper.GraveWarning (f.Token, 9306, "'\\result' cannot be used recursively in a pure function definition")
           else
             let gave = ref false
             let rec collect aux = function
@@ -244,7 +244,7 @@ namespace Microsoft.Research.Vcc
               | Dot (_, e, f) -> collect (Field f :: aux) e
               | e ->
                 gave := true
-                helper.GraveWarning (post.Token, 9307, "form of a pure function postcondition is neither 'result == ...' nor 'result.x.y.z == ...' (it is: " + e.ToString() + ")")
+                helper.GraveWarning (post.Token, 9307, "form of a pure function postcondition is neither '\\result == ...' nor '\\result.x.y.z == ...' (it is: " + e.ToString() + ")")
                 [List.rev aux]
             let handlePath path =
               if not (paths.ContainsKey path) || !gave then
@@ -265,7 +265,7 @@ namespace Microsoft.Research.Vcc
               | _ -> post
           post
         | expr ->
-          helper.GraveWarning (f.Token, 9310, "a non-equality postcondition in a pure function (not ensures(result == ...))")
+          helper.GraveWarning (f.Token, 9310, "a non-equality postcondition in a pure function (not _(ensures \\result == ...))")
           expr
           
       let freebies, normals = f.Ensures |> List.partition (function CallMacro (_, "_vcc_assume", _, _) -> true | _ -> false)
@@ -445,7 +445,7 @@ namespace Microsoft.Research.Vcc
               match expr.Type with
                 | Ptr Void
                 | ObjectT ->
-                  helper.Error (expr.Token, 9647, "void* and obj_t are not supported in reads clauses", None)
+                  helper.Error (expr.Token, 9647, "void* and \\object are not supported in reads clauses", None)
                   Skip({expr.Common with Type = Type.Void})
                 | Ptr _ ->
                   Expr.MkAssume (Macro (boolBogusEC(), "reads_same", [subst expr]))
