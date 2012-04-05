@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Boogie;
+using System.Collections.Generic;
 
 namespace Microsoft.Research.Vcc.Cpp
 {
@@ -7,6 +8,7 @@ namespace Microsoft.Research.Vcc.Cpp
   {
     private string currentFunction = "<unknown>";
     private bool errorReported;
+    private HashSet<IToken> reportedCallFailures = new HashSet<IToken>();
 
     public event EventHandler<ErrorReportedEventArgs> ErrorReported;
     public event EventHandler<VerificationFinishedEventArgs> VerificationFinished;
@@ -169,7 +171,11 @@ namespace Microsoft.Research.Vcc.Cpp
 
       string reqMsg = reqTok.val;
 
-      ReportError(callTok, 9502, "Call '{0}' did not verify{1}.", RemoveWhiteSpace(callTok.val), comment);
+      if (this.reportedCallFailures.Add(callTok))
+      {
+        ReportError(callTok, 9502, "Call '{0}' did not verify{1}.", RemoveWhiteSpace(callTok.val), comment);
+      }
+
       ReportRelated(reqTok, "Precondition: '{0}'.", reqMsg);
       ReportAllRelated(reqTok);      
     }
