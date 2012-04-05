@@ -170,6 +170,12 @@ namespace VCC
       bool operator==(T);
       T operator ->();
     };
+
+    template <class T> class GhostOut< Ghost <T> >
+    {
+    public:
+      operator GhostOut<T>();
+    };
    
     template <class T> class TypeLockageFunctor {
     public:
