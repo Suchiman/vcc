@@ -833,7 +833,7 @@ namespace Microsoft.Research.Vcc
                   match fields with
                     | [] when not (VccScopedName.IsGroupType(typeDef)) && not td.IsSpec ->
                       if contract <> null && Seq.length contract.ContractFields > 0 then
-                        helper.Error (tok, 9620, "need at least one physical field in structure, got only spec fields", None)
+                        helper.Error (tok, 9620, "need at least one physical field in structure, got only ghost fields", None)
                       // forward declaration
                       C.Type.Ref td
                     | _ ->
@@ -1610,7 +1610,7 @@ namespace Microsoft.Research.Vcc
         let typeToCheck = this.DoType checkIfInstance.TypeToCheck
         let ec = this.ExprCommon checkIfInstance
         match typeToCheck with
-          | C.Ptr(_) -> helper.Warning(ec.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended", None)
+          | C.Ptr(_) -> helper.Warning(ec.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended", None) // TODO update to new syntax, \is
           | _ -> ()
         // set also the type in ExprCommon so we prevent pruning of the type
         let typeExpr = C.Expr.UserData({C.ExprCommon.Bogus with Type = typeToCheck}, typeToCheck ) 
@@ -2011,7 +2011,7 @@ namespace Microsoft.Research.Vcc
               match args with
                 | [_; C.Expr.Call(_, _, _, [C.Expr.Cast(_,_,e)])] ->
                   match e.Type with
-                    | C.Ptr(C.Ptr(_)) -> helper.Warning(e.Common.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended", None)
+                    | C.Ptr(C.Ptr(_)) -> helper.Warning(e.Common.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended", None) // TODO update to new syntax, \is
                     | _ -> ()
                 | _ -> ()
             let mtc, tArgs =

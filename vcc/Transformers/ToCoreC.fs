@@ -268,7 +268,7 @@ namespace Microsoft.Research.Vcc
               | ObjectT
               | Claim
               | Ptr _ -> ()
-              | t -> helper.Error(e.Token, 9699, "'keeps' requires arguments of pointer type; '" + e.Token.Value + "' has type '" + t.ToString() + "' which is not allowed.")
+              | t -> helper.Error(e.Token, 9699, "'\\mine' requires arguments of pointer type; '" + e.Token.Value + "' has type '" + t.ToString() + "' which is not allowed.")
         
           let build acc (e:Expr) =
             let eq = Macro (c, "keeps_stable", [Old (e.Common, Macro (bogusEC, "prestate", []), e); e])
@@ -562,7 +562,7 @@ namespace Microsoft.Research.Vcc
     // Make non-pure calls statements.        
     let rec pullOutCalls ctx self = 
       let reportErrorForCallToImpureFunction (call : Expr) (fn :Function) = 
-        helper.Error (call.Token, 9635, "function '" + fn.Name + "' used in pure context, but not marked with 'ispure'", Some(fn.Token))
+        helper.Error (call.Token, 9635, "function '" + fn.Name + "' used in pure context, but not marked with '_(pure)'", Some(fn.Token))
       function
         | VarWrite (c, v, (Call (c', fn, targs, args) as call)) -> 
           let processed = VarWrite (c, v, Call (c', fn, targs, List.map self args))
@@ -604,7 +604,7 @@ namespace Microsoft.Research.Vcc
         
         | Macro (c, ("claim"|"upgrade_claim" as name), args) ->
           if ctx.IsPure then
-            helper.Error (c.Token, 9652, "claim(...) used in pure context", None)
+            helper.Error (c.Token, 9652, "\\make_claim(...) used in pure context", None)
           let tmp = getTmp helper "res_claim" (SpecPtr Claim) VarKind.SpecLocal
           let call' = Macro (c, name, List.map self args)
           let c' = { c with Type = Void }
@@ -844,7 +844,7 @@ namespace Microsoft.Research.Vcc
         | _ -> None
 
       let errorForRemainingNormalExit _ = function
-        | CallMacro(ec, "_vcc_normal_exit", [], []) -> helper.Error(ec.Token, 9745, "\normal_exit is only allowed in post-conditions of blocks"); false
+        | CallMacro(ec, "_vcc_normal_exit", [], []) -> helper.Error(ec.Token, 9745, "\\normal_exit is only allowed in post-conditions of blocks"); false
         | _ -> true
 
       let notdetJumpToLabels expr =      
