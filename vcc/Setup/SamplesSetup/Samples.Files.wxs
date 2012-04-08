@@ -518,12 +518,8 @@
       <Component Id="sample47BC6E060235F014C5ED72AAA98DDD261078E524" Guid="E29B977C-9E77-4697-94E8-5A5BB4420496"><!-- vcc2 -->
         <RemoveFolder Id="dir47BC6E060235F014C5ED72AAA98DDD261078E524" On="uninstall" />
         <RegistryValue Root="HKCU" Key="Software\Microsoft Research\Vcc" Name="sample47BC6E060235F014C5ED72AAA98DDD261078E524" Type="integer" Value="1" KeyPath="yes" />
-        <File Id="fil443B4FBAE3F87374823A092234D7731873138028" Name="32bitPtr-04" />
-        <File Id="fil80387C4700205871DDAE1D213354E72C8B44E48E" Name="as_array-01" />
         <File Id="fil80F288B26BBD38CE7E46B7219894AED346495080" Name="as_array-04" />
         <File Id="fil4493DC2A9FAD17AF6EC698139AC2B8BB79947846" Name="as_array-09" />
-        <File Id="fil4C7776BC54AB8C64DCCBA9D1328912CF375F3189" Name="basics-02" />
-        <File Id="fil77C19F8FA4C817109DB5B50DE42D4BFAB318F5A1" Name="bv_lemma-12" />
         <File Id="fil4D13EFE08E76A977CF3B31888EDCBBB52A8E0E7D" Name="containingRecord-00" />
         <File Id="fil57AEEBB47E72A031527FBF9FEBACB4D86BD6F9B1" Name="extent_zero-00" />
         <File Id="filEBAC6EF2EEE9B914B7EA8AC2EF649956F83A45EC" Name="extent_zero-01" />
@@ -555,10 +551,7 @@
         <File Id="fil56A57FDB99194F79E0DF3EB82F6275EF6309BB24" Name="memoryReintp-09" />
         <File Id="fil9E4CD3A5A1F772E94FDE943C8177895EBFBAF640" Name="memoryReintp-10" />
         <File Id="fil865390E338CC9AC85E33E56C31930AF2FFB030C2" Name="not_shared-00" />
-        <File Id="filD7DA1842EF1BBA2A7DD7ED10326660A3E86759F5" Name="packedFraming-01" />
-        <File Id="fil5C274AFB398B403BCCD7D666930133D0E94E7D27" Name="pure-02" />
         <File Id="fil76F549F361AC705DCDD733F53C4C53C12AA0C743" Name="quantRange.ns-01" />
-        <File Id="filFF102EF220667E38ADD9675F485F6B5FEB80F80A" Name="records.ns-07" />
         <File Id="fil929A06EC668E09930B7FA7B6B7E4BC3FC0A2C117" Name="records.ns-09" />
         <File Id="fil120AFE25D43316D291A1160DA18D97598DC83D5C" Name="records.ns-19" />
         <File Id="fil269F2DEF4BBF28DBF3BD25F8DF7CDE9CB8AF667F" Name="specOrPhysical-01" />
@@ -569,19 +562,10 @@
         <File Id="fil7F6E677FCD6F9296E1B584A0B4F0F9F62B355809" Name="specOrPhysical-09" />
         <File Id="filAB3120390BCE2B65FE1AA03E15381E06BFC56F26" Name="specOrPhysical-10" />
         <File Id="filAC35092E4F0E1CE1BCF6C5A626176B27F9B4A8ED" Name="staticWrap.ns-07" />
-        <File Id="fil77DECEC30AAE895C68E715147D14FA165F8027B2" Name="structEquality.ns-00" />
         <File Id="fil3E81A48F6D268ADE2E39065554421D7E3B7ACA09" Name="structEquality.ns-01" />
-        <File Id="fil7CC5AE375D1AC6D755C37C8C5F29B546405EFE16" Name="triggerInference-04" />
-        <File Id="filADB9114DBF2ED1D95915B575F7BCC42B1AC8EB2E" Name="unions.ns-00" />
-        <File Id="fil52A68E80E495A30ABBB9E54B1E3AC1738136DC63" Name="unions.ns-01" />
-        <File Id="fil5B1A145B863A94B0A5CF7B9484185F07C3D08B91" Name="unions.ns-10" />
-        <File Id="filD5BAE4F61B39F9FAD6D0AE8C705180C2C14F516B" Name="unions.ns-11" />
         <File Id="fil262D354B0D40CC9889EDCBC7A591DBDB09B5B9B8" Name="unionsNeg.ns-02" />
-        <File Id="fil4EF087C8C56DF489669D9B38CC96A22F064488B7" Name="volatile.ns-03" />
-        <File Id="filA267D6798994BB11FDCA01922C727E2024B21E6B" Name="volatileModifier.ns-03" />
         <File Id="filB3C29EC78C3193ACB2B86F40F9D388E790006CB9" Name="volatileModifier.ns-09" />
         <File Id="fil207FAD61933599E2AB836554E0D3AD7CF7C1DCB9" Name="writes.ns-06" />
-        <File Id="fil838E0A87B21CA853E32ABB3D1D66555E946CD704" Name="writes.ns-10" />
       </Component>
     </DirectoryRef>
   </Fragment>
@@ -1442,6 +1426,7 @@
         <File Id="fil064545BB3AE2B639EC18C031EE9618AFD786CA3D" Name="records.ns-04" />
         <File Id="fil921FA70AF88AF1BC66A3C1C7D3FF6B0639B886B5" Name="records.ns-05" />
         <File Id="fil00153D5D451362B86DACB19363625656A06780A1" Name="records.ns-06" />
+        <File Id="filE974F15BB3FFB10C22CEECCFD1F19C78E6B93F46" Name="records.ns-07" />
         <File Id="fil56BEA3D2AAE84A98654B8B8A6D5D113DC9B37064" Name="records.ns-08" />
         <File Id="filCECA22FB21F9AF8A72FEEB364C90765F37FF8473" Name="records.ns-10" />
         <File Id="fil0A21A02DCCD8722F0AB77D1C7FD7D0FB14EC9148" Name="records.ns-11" />
