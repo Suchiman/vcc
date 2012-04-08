@@ -1,29 +1,6 @@
-# testcases that got updated (need different annotations/have different output in VCC3)
-32bitPtr-04
-as_array-01
-basics-02
-bv_lemma-12
-packedFraming-01
-pure-02
-triggerInference-04
-writes.ns-10
-volatileModifier.ns-03
-unions.ns-00
-unions.ns-01
-unions.ns-10
-unions.ns-11
-structEquality.ns-00
-
 # weird pointer arithmetic
 groups-02
 groups-10
-
-# extent_zero
-extent_zero-00
-extent_zero-01
-extent_zero-02
-extent_zero-03
-extent_zero-04
 
 # memory reinterpretation
 fieldInlining.ns-05
@@ -36,11 +13,20 @@ memoryReintp-03
 memoryReintp-04
 memoryReintp-05
 memoryReintp-06
-memoryReintp-07
-memoryReintp-08
 memoryReintp-09
 memoryReintp-10
 as_array-09
+
+# extent_zero
+extent_zero-00
+extent_zero-01
+extent_zero-02
+extent_zero-03
+extent_zero-04
+
+# extent_zero & memory reinterpretation
+memoryReintp-07
+memoryReintp-08
 
 # as_array locals
 specOrPhysical-10
@@ -60,7 +46,6 @@ invs-03
 labeledInvariants-00
 not_shared-00
 quantRange.ns-01
-records.ns-07
 specOrPhysical-01
 specOrPhysical-02
 specOrPhysical-03
@@ -69,10 +54,14 @@ specOrPhysical-08
 specOrPhysical-09
 structEquality.ns-01
 volatile.ns-03
+
+# mostly fixed by removing the trigger
 volatileModifier.ns-09
 
-# new ones?
+# problem with static wrap, _(dynamic_owns) fixes it
 staticWrap.ns-07
+
+# new ones?
 writes.ns-06
 ghosts-02
 

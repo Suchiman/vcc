@@ -17,13 +17,13 @@ void t1(int *x)
   _(assert \old(\embedding(x)) == \embedding(x))
 }
 
-void t1_fail(int *x)
+void t1_no_vcc3_fail(int *x)
 {
   donothing_nonpure();
   _(assert \old(\embedding(x)) == \embedding(x))
 }
 
-void t1_failAlso(int *x)
+void t1_fail(int *x)
 {
   donothing_nonpure();
   _(assert \old(\embedding(x)) != \embedding(x))
@@ -31,7 +31,7 @@ void t1_failAlso(int *x)
 `
 Verification of donothing_pure succeeded.
 Verification of t1 succeeded.
-Verification of t1_fail succeeded.
-Verification of t1_failAlso failed.
+Verification of t1_no_vcc3_fail succeeded.
+Verification of t1_fail failed.
 testcase(29,12) : error VC9500: Assertion '\old(\embedding(x)) != \embedding(x)' did not verify.
 `
