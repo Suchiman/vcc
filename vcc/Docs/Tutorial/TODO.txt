@@ -1,0 +1,5 @@
+- \consistent is still used in some places; hunt it down
+- add picture about wrapped transitions
+- explain better the difference between \owns and \owner, and when do they change (maybe on that picture)
+- explain why is it better to trigger on \owns, not \owner
+
