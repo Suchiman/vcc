@@ -20,10 +20,9 @@ _(dynamic_owns) union B {
   struct PtrWrap z;
 };
 
-/*
 union C {
-  int x;
-  int *y;
+  struct { int x; } _(Sx);
+  struct { int *y; } _(Sy);
 };
 
 void foo(union C *b)
@@ -32,7 +31,6 @@ void foo(union C *b)
 {
   b->x = 7;
 }
-*/
 
 void bar(union B *b)
   _(requires (&b->x)->\valid)
@@ -105,6 +103,7 @@ void reint4()
   if (b != NULL) reint2(b);
 }
 `
+Verification of foo succeeded.
 Verification of bar succeeded.
 Verification of baz succeeded.
 Verification of foobar succeeded.

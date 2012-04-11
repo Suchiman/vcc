@@ -1,4 +1,3 @@
-
 #include <vcc.h>
 
 struct S {
