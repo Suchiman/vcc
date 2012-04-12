@@ -2368,36 +2368,20 @@ namespace Microsoft.Research.Vcc.Parsing {
       // So the constructor invocations must occur in the opposite order.
       Keyword keyword = null;
       // __
-      keyword = new Keyword(Token.Specification, "__specification", keyword);
       keyword = new Keyword(Token.Inline,        "__forceinline", keyword);
-      keyword = new Keyword(Token.Unchecked, "__unchecked", keyword);
       keyword = new Keyword(Token.Unaligned, "__unaligned", keyword);
-      keyword = new Keyword(Token.Invariant, "__invariant", keyword);
-      keyword = new Keyword(Token.Decreases, "__decreases", keyword);
-      keyword = new Keyword(Token.Requires,  "__requires", keyword);
       keyword = new Keyword(Token.Fastcall,  "__fastcall", keyword);
       keyword = new Keyword(Token.Declspec,  "__declspec", keyword);
       keyword = new Keyword(Token.Stdcall,   "__stdcall", keyword);
-      keyword = new Keyword(Token.Ensures,   "__ensures", keyword);
       keyword = new Keyword(Token.AlignOf,   "__alignof", keyword);
-      keyword = new Keyword(Token.Writes,    "__writes", keyword);
       keyword = new Keyword(Token.Pragma,    "__pragma", keyword);
-      keyword = new Keyword(Token.Lambda,    "__lambda", keyword);
       keyword = new Keyword(Token.Inline,    "__inline", keyword);
-      keyword = new Keyword(Token.Forall,    "__forall", keyword);
-      keyword = new Keyword(Token.Exists,    "__exists", keyword);
-      keyword = new Keyword(Token.Assume,    "__assume", keyword);
-      keyword = new Keyword(Token.Assert,    "__assert", keyword);
-      keyword = new Keyword(Token.Reads,     "__reads", keyword);
       keyword = new Keyword(Token.Int64,     "__int64", keyword);
       keyword = new Keyword(Token.Int32,     "__int32", keyword);
       keyword = new Keyword(Token.Int16,     "__int16", keyword);
       keyword = new Keyword(Token.Cdecl,     "__cdecl", keyword);
-      keyword = new Keyword(Token.Block,     "__block", keyword);
-      keyword = new Keyword(Token.Axiom,     "__axiom", keyword);
       keyword = new Keyword(Token.Int8,      "__int8", keyword);
       keyword = new Keyword(Token.W64,       "__w64", keyword);
-      keyword = new Keyword(Token.Old,       "__old", keyword);
 
       return keyword;
     }
@@ -2413,11 +2397,10 @@ namespace Microsoft.Research.Vcc.Parsing {
       keyword         = new Keyword(Token.This,             "\\this", keyword);
       keyword         = new Keyword(Token.SetDifference,    "\\diff", keyword);
       keyword         = new Keyword(Token.Old,              "\\old", keyword);
-      keyword         = new Keyword(Token.SetIn0,          "\\in0", keyword);
+      keyword         = new Keyword(Token.SetIn0,           "\\in0", keyword);
       keyword         = new Keyword(Token.SpecIs,           "\\is", keyword);
       keyword         = new Keyword(Token.SetIn,            "\\in", keyword);
       return keyword;
     }
   }
 }
-
