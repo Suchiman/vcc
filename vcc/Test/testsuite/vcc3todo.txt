@@ -1,0 +1,76 @@
+# weird pointer arithmetic
+groups-02
+groups-10
+
+# memory reinterpretation
+fieldInlining.ns-05
+fieldInlining.ns-06
+generics-10
+memoryReintp-00
+memoryReintp-01
+memoryReintp-02
+memoryReintp-03
+memoryReintp-04
+memoryReintp-05
+memoryReintp-06
+memoryReintp-09
+memoryReintp-10
+as_array-09
+
+# extent_zero
+extent_zero-00
+extent_zero-01
+extent_zero-02
+extent_zero-03
+extent_zero-04
+
+# extent_zero & memory reinterpretation
+memoryReintp-07
+memoryReintp-08
+
+# as_array locals
+specOrPhysical-10
+
+# record with bitfields
+records.ns-09
+
+###START
+# Real TODO starts here
+containingRecord-00
+fieldInlining.ns-01
+functionPtrs-07
+functionPtrs-09
+generics-08
+groups-17
+invs-03
+labeledInvariants-00
+not_shared-00
+quantRange.ns-01
+specOrPhysical-01
+specOrPhysical-02
+specOrPhysical-03
+specOrPhysical-04
+specOrPhysical-08
+specOrPhysical-09
+structEquality.ns-01
+volatile.ns-03
+
+# mostly fixed by removing the trigger
+volatileModifier.ns-09
+
+# problem with static wrap, _(dynamic_owns) fixes it
+staticWrap.ns-07
+
+# new ones?
+writes.ns-06
+ghosts-02
+
+as_array-04
+
+# seems to be something broken in the types in AST
+records.ns-19
+
+# unions
+unionsNeg.ns-02
+
+# examples3/LockFreeStack.c (NOTYET?)
