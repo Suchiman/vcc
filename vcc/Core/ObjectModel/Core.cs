@@ -678,8 +678,15 @@ namespace Microsoft.Research.Vcc {
         case PrimitiveTypeCode.UInt64:
           return "unsigned __int64";
         default:
+          // TODO SystemDiagnosticsContractsCodeContractMapString
           if (TypeHelper.GetTypeName(typeDefinition) == SystemDiagnosticsContractsCodeContractTypedPtrString)
-            return "obj_t";
+            return "\\object";
+          else if (TypeHelper.GetTypeName(typeDefinition) == SystemDiagnosticsContractsCodeContractBigIntString)
+            return "\\integer";
+          else if (TypeHelper.GetTypeName(typeDefinition) == SystemDiagnosticsContractsCodeContractBigNatString)
+            return "\\natural";
+          else if (TypeHelper.GetTypeName(typeDefinition) == SystemDiagnosticsContractsCodeContractObjsetString)
+            return "\\objset";
           else
             return base.GetTypeName(typeDefinition);
       }
