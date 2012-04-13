@@ -37,7 +37,7 @@ namespace Microsoft.Research.Vcc.Cpp
                 var vccArgsArr = vccArgs.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 if (!CommandLineOptions.Clo.Parse(vccArgsArr))
                 {
-                    throw new ArgumentException("Unsupported switch.");
+                    throw new ArgumentException("Unsupported switch, aborting.");
                 }
             }
 

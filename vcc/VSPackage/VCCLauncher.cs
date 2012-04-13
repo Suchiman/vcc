@@ -148,7 +148,6 @@
             vccargs += " ";
             vccargs += VSIntegration.CurrentCompilerSettings.ToVccOptions();
             var clPath = GetCLPath(VSIntegration.CurrentPlatform);
-            if (clPath != null) vccargs += String.Format(" /clpath:\"{0}\"", clPath);
 
             VSIntegration.ClearErrorsAndMarkers();
             VSIntegration.UpdateStatus("Verifying...", true);

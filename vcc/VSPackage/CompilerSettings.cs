@@ -59,9 +59,10 @@ namespace Microsoft.Research.Vcc.VSPackage
         {
             var args = new StringBuilder();
 
-            args.Append(SplitAndFormatArgs(this.preprocessorDefinitions, "/p:/D", false));
-            args.Append(SplitAndFormatArgs(this.additionalIncludeDirectories, "/p:/I", true));
-            args.Append(SplitAndFormatArgs(this.forcedIncludeFiles, "/p:/I", true));
+            //TODO: agree on removed /D and /I after /p:, due to switch parsing issues.
+            args.Append(SplitAndFormatArgs(this.preprocessorDefinitions, "/p:", false));
+            args.Append(SplitAndFormatArgs(this.additionalIncludeDirectories, "/p:", true));
+            args.Append(SplitAndFormatArgs(this.forcedIncludeFiles, "/p:", true));
 
             return args.ToString();
         }
