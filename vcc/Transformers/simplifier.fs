@@ -208,7 +208,7 @@ namespace Microsoft.Research.Vcc
         | _ -> None
     
       let propagateKnownValue ctx self = 
-        let assertEq cond expectedValue = Expr.MkAssert (Expr.Prim (afmte 8533 "{0} has the value {1} specified by known(...)" [cond; expectedValue], Op("==", CheckedStatus.Unchecked), [cond; expectedValue]))
+        let assertEq cond expectedValue = Expr.MkAssert (Expr.Prim (afmte 8533 "{0} has the value {1} specified by _(known ...)" [cond; expectedValue], Op("==", CheckedStatus.Unchecked), [cond; expectedValue]))
         function
         | Expr.Macro(c, "_vcc_known", [expr; knownValue]) when not ctx.IsPure ->
           let e, ea = splitKnown (self expr)
