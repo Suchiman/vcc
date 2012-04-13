@@ -362,7 +362,7 @@ namespace Microsoft.Research.Vcc
         
       let warnForIneffectiveOld token expr =
         if not (bContains "$s" expr) then
-          helper.Warning (token, 9106, "'old', 'in_state', or 'when_claimed' in '" + token.Value + "' has no effect")
+          helper.Warning (token, 9106, "'\\old', '\\at', or '\\when_claimed' in '" + token.Value + "' has no effect")
 
       let claimStateId = ref 0
 

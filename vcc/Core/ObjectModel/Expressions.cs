@@ -3464,7 +3464,7 @@ namespace Microsoft.Research.Vcc {
 #pragma warning restore 168
       VccNamedTypeExpression namedType = this.ElementType as VccNamedTypeExpression;
       if (namedType != null && namedType.DidSilentlyResolveToVoid) {
-        // turn forward-declated pointers into obj_t
+        // turn forward-declared pointers into obj_t
         Expression typePtrRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.Compilation.NameTable, "TypedPtr");
         typePtrRef.SetContainingExpression(this);
         return new VccNamedTypeExpression(typePtrRef).Resolve(0);

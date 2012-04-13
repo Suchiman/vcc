@@ -82,7 +82,7 @@ namespace Microsoft.Research.Vcc
           | Some (BinDifferent (n1, n2)) -> (n1, n2, 2, false)
           | Some (BinPredDifferent (n1, n2)) -> (n1, n2, 2, true)
           | None -> 
-            helper.Oops (expr.Token, "unknown operator '" + name + "' bv_lemma(..." + expr.Token.Value + "...)")
+            helper.Oops (expr.Token, "unknown operator '" + name + "' _(assert {:bv} ..." + expr.Token.Value + "...)")
             die()
       let (sz, sign) = 
         match tp with
@@ -116,7 +116,7 @@ namespace Microsoft.Research.Vcc
           B.Expr.Primitive (opName, selfs args)
           
         | C.Expr.Prim (_, C.Op (("+"|"-"|"*"|"/"|"%"), C.Checked), _) ->
-          helper.Error (expr.Token, 9659, "operators in bv_lemma(...) need to be unchecked (expression: " + expr.Token.Value + ")")
+          helper.Error (expr.Token, 9659, "operators in _(assert {:bv} ...) need to be unchecked (expression: " + expr.Token.Value + ")")
           er "$err"
           
         | C.Expr.Prim (c, (C.Op((">>"|"<<") as op, _)), [arg1; arg2]) when c.Type.SizeOf = 8 ->
@@ -211,10 +211,10 @@ namespace Microsoft.Research.Vcc
               else B.BvExtract(self e, dst.SizeOf * 8, 0)
             | C.Ptr _, C.MathInteger _ -> self e
             | src, dst -> 
-              helper.Error (expr.Token, 9690, "cast from " + src.ToString() + " to " + dst.ToString() + " is not supported in bv_lemma(...)")
+              helper.Error (expr.Token, 9690, "cast from " + src.ToString() + " to " + dst.ToString() + " is not supported in _(assert {:bv} ...)")
               er "$err"
         
         | _ ->
-          helper.Error (expr.Token, 9660, "unsupported expression in bv_lemma(...): " + expr.Token.Value + " (" + expr.ToString() + ")")
+          helper.Error (expr.Token, 9660, "unsupported expression in _(assert {:bv} ...): " + expr.Token.Value + " (" + expr.ToString() + ")")
           er "$err"
     
