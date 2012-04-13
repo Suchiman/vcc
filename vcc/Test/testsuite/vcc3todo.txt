@@ -3,8 +3,8 @@ groups-02
 groups-10
 
 # memory reinterpretation
-fieldInlining.ns-05
-fieldInlining.ns-06
+fieldInlining-05
+fieldInlining-06
 generics-10
 memoryReintp-00
 memoryReintp-01
@@ -32,12 +32,12 @@ memoryReintp-08
 specOrPhysical-10
 
 # record with bitfields
-records.ns-09
+records-09
 
 ###START
 # Real TODO starts here
 containingRecord-00
-fieldInlining.ns-01
+fieldInlining-01
 functionPtrs-07
 functionPtrs-09
 generics-08
@@ -45,32 +45,43 @@ groups-17
 invs-03
 labeledInvariants-00
 not_shared-00
-quantRange.ns-01
+quantRange-01
 specOrPhysical-01
 specOrPhysical-02
 specOrPhysical-03
 specOrPhysical-04
 specOrPhysical-08
 specOrPhysical-09
-structEquality.ns-01
-volatile.ns-03
+structEquality-01
+volatile-03
 
 # mostly fixed by removing the trigger
-volatileModifier.ns-09
+volatileModifier-09
 
 # problem with static wrap, _(dynamic_owns) fixes it
-staticWrap.ns-07
+staticWrap-07
 
 # new ones?
-writes.ns-06
+writes-06
 ghosts-02
 
 as_array-04
 
 # seems to be something broken in the types in AST
-records.ns-19
+records-19
 
 # unions
-unionsNeg.ns-02
+unionsNeg-02
 
 # examples3/LockFreeStack.c (NOTYET?)
+
+# Left-overs from old testsuite\done directory:
+AllocFree-00
+AllocFree-01
+derefAddrOfLocal
+funcPtrEquality
+pointerArithmetik
+ptrToStructInLocalOrPar
+subRegion
+writeLocalArrayInLoop-00
+writeLocalArrayInLoop-01
