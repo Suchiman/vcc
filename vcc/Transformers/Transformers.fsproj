@@ -27,8 +27,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\Transformers.XML</DocumentationFile>
-    <OtherFlags>
-    </OtherFlags>
+    <OtherFlags>--keyfile:..\Common\InterimKey.snk</OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -38,8 +37,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\Transformers.XML</DocumentationFile>
-    <OtherFlags>
-    </OtherFlags>
+    <OtherFlags>--keyfile:..\Common\InterimKey.snk</OtherFlags>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

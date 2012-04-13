@@ -27,8 +27,7 @@
     <WarningLevel>3</WarningLevel>
     <StartWorkingDirectory>C:\dev\felt\vcc\Test\testsuite\tmp</StartWorkingDirectory>
     <StartArguments>a.c</StartArguments>
-    <OtherFlags>
-    </OtherFlags>
+    <OtherFlags>--keyfile:..\..\Common\InterimKey.snk</OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -37,6 +36,7 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
+    <OtherFlags>--keyfile:..\..\Common\InterimKey.snk</OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <StartWorkingDirectory>C:\dev\felt\vcc\Test\testsuite\</StartWorkingDirectory>
