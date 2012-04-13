@@ -784,44 +784,6 @@ namespace Microsoft.Research.Vcc
     
     // ============================================================================================================
     
-    let normalizeReinterpretation self = 
-      let asArray sz (obj:Expr) =
-        let msg () = "as_array((uint8_t*)" + obj.Token.Value + ", " + sz.ToString() + ")"
-        let bec = { forwardingToken obj.Token None msg with Type = PhysPtr Type.Byte } // TODO Ptr kind
-        Macro (bec, "_vcc_as_array", [Cast (bec, Unchecked, obj); sz])
-      let typeId (obj:Expr) =
-        Macro ({ obj.Common with Type = Type.Math "\\type" }, "_vcc_typeof", [obj])
-      function
-        | Call (c, ({ Name = "_vcc_from_bytes" } as fn), _, [CallMacro (_, "_vcc_as_array", [], [arg; sz]) as arr; preserveZero]) ->
-          let eltSz =
-            match arg.Type with
-              | Ptr t -> mkInt t.SizeOf
-              | _ ->
-                helper.Error (c.Token, 9684, "wrong type of object in from_bytes(as_array(...))", None)
-                mkInt 1
-          let sz = Prim (sz.Common, Op("*", Processed), [eltSz; sz])
-          Some (Stmt (c, Call (c, fn, [], [asArray sz arg; typeId arr; preserveZero])))
-        
-        | Call (c, ({ Name = "_vcc_from_bytes" } as fn), _, [obj; preserveZero]) ->
-          let sz =
-            match obj.Type with
-              | Ptr t ->
-                if not t.IsComposite then
-                  helper.Error (c.Token, 9700, "reinterpretation to a primitive type is not supported; please use a single-element array instead")
-                t.SizeOf
-              // Seems to be never reached
-              // | Array (_, _) as a -> a.SizeOf
-              | _ -> 
-                helper.Error (c.Token, 9684, "wrong type of object in from_bytes(...)", None)
-                1
-          Some (Stmt (c, Call (c, fn, [], [asArray (mkInt sz) obj; typeId obj; preserveZero])))
-        | CallMacro (c, "_vcc_from_bytes", _, _) ->
-          helper.Error (c.Token, 9685, "wrong number of arguments to from_bytes(...)", None)
-          None
-        | _ -> None
-    
-    // ============================================================================================================
-    
     let reportGenericsErrors decls = 
     
       let reportGenericsErrors' self =
@@ -1367,7 +1329,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("split-assertions", TransHelper.Expr splitConjunctionsInAssertions)
     helper.AddTransformer ("norm-writes", TransHelper.Decl normalizeWrites)
     helper.AddTransformer ("norm-atomic-inline", TransHelper.Decl inlineAtomics)
-    helper.AddTransformer ("norm-reintp", TransHelper.Expr normalizeReinterpretation)
     helper.AddTransformer ("norm-on-unwrap", TransHelper.Decl normalizeOnUnwrap)
     helper.AddTransformer ("norm-strings", TransHelper.Decl desugarStringLiterals)
     helper.AddTransformer ("norm-end", TransHelper.DoNothing)

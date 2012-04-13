@@ -146,10 +146,6 @@ module Ast =
                   "\\deep_unwrap" ;
                   "\\bump_volatile_version" ;
                   "\\begin_update" ;
-                  "\\join_arrays" ;
-                  "\\split_array" ;
-                  "\\to_bytes" ;
-                  "\\from_bytes" ;
                   "\\match_long" ;
                   "\\match_ulong" ;
                   "\\writable" ;

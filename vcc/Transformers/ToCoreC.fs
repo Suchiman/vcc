@@ -701,7 +701,6 @@ namespace Microsoft.Research.Vcc
       function
         | Stmt(_, (Call(_,_,_,_) as c)) -> processCall [] c
         | VarWrite(_, vs, (Call(_, _, _, _) as c)) -> processCall vs c
-        | Call (_, {Name = "_vcc_from_bytes"}, _, _) -> None // do not process those
         | Call _ as c -> processPureCall c
         | _ -> None
     
