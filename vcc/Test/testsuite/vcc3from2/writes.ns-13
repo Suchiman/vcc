@@ -1,13 +1,12 @@
 #include "vcc.h"
 
-
 typedef struct s1{
     int dummy;
     _(ghost volatile bool b[int];)
     _(invariant \approves(\this->\owner, b))
 } s1;
 
-struct SX { int x; } ;
+struct SX { int x; };
 
 s1 S;
 
@@ -24,11 +23,9 @@ void t1()
 _(maintains \wrapped(&S))
 _(requires \forall int i; (&S)->b[i])
 {
-    _(assert (\forall int i; (&S)->b[i]))
-    
-    f();  
     _(assert \forall int i; (&S)->b[i])
-    //error VC9500: Assertion '__forall(int i; (&S)->b[i])' did not verify.
+    f();
+    _(assert \forall int i; (&S)->b[i])
 }
 
 void okSX(struct SX *sx)
@@ -36,8 +33,8 @@ _(writes sx)
 _(maintains \wrapped(&S))
 _(requires \forall int i; (&S)->b[i])
 {
-    _(assert (\forall int i; (&S)->b[i]))
-    f2(sx);  
+    _(assert \forall int i; (&S)->b[i])
+    f2(sx);
     _(assert \forall int i; (&S)->b[i])
 }
 

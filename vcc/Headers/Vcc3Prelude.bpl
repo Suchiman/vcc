@@ -28,6 +28,7 @@ type $struct;
 
 // used for constants describing position in the source code (debugging/model printing only)
 type $token;
+const $state_zero : $state; // for record/map initialization
 
 type $state;
 
