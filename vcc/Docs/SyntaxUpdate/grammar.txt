@@ -1,3 +1,5 @@
+# Note: this is outdated
+#
 # This document gives extensions to the C99 grammar provided by the
 # VCC verification tool to facilitate annotation of C programs.
 # The C99 grammar extended can be found at:

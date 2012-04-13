@@ -333,13 +333,6 @@ namespace Microsoft.Research.Vcc
       | Macro (_, "spec", [body]) ->
         Some (body.SelfCtxMap (ctx.IsPure, addMemoryChecks true))
         
-      | Call (c, ({ Name = "_vcc_from_bytes"|"_vcc_to_bytes"} as fn), _, args) as call ->
-        let obj = args.Head
-        let w = Macro ({ obj.Common with Type = Type.PtrSet }, "_vcc_extent", [obj])
-        let prop = afmte 8510 "{1} is writable in call to {0}" [call; w]
-        Some (Expr.MkBlock [Expr.MkAssert (Expr.Macro (prop, "writes_check", [w])); 
-                            Macro (c, fn.Name, List.map self args)])
-      
       | Macro (c, (("_vcc_wrap_set"|"_vcc_unwrap_set") as name), args) ->
         let makeCheck n expr =
           let prop =

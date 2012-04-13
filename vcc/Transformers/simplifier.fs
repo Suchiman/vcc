@@ -860,9 +860,9 @@ namespace Microsoft.Research.Vcc
           false
         | CallMacro(_, "spec", _, _) 
         | CallMacro(_, ("_vcc_unwrap"|"_vcc_wrap"|"_vcc_wrap_non_owns"|"_vcc_wrap_set"|"_vcc_unwrap_set"|"_vcc_alloc"|"_vcc_free"|"_vcc_stack_alloc"), _, _)
-        | CallMacro(_, ("_vcc_from_bytes"|"_vcc_to_bytes"|"_vcc_havoc_others"), _, _)
+        | CallMacro(_, ("_vcc_havoc_others"), _, _)
         | CallMacro(_, ("_vcc_bump_volatile_version"|"_vcc_deep_unwrap"|"_vcc_union_reinterpret"|"_vcc_reads_havoc"),_ , _)
-        | CallMacro(_, ("_vcc_set_owns"|"_vcc_set_closed_owner"|"_vcc_set_closed_owns"|"_vcc_split_array"|"_vcc_join_arrays"),_ , _)
+        | CallMacro(_, ("_vcc_set_owns"|"_vcc_set_closed_owner"|"_vcc_set_closed_owns"),_ , _)
         | CallMacro(_, ("_vcc_giveup_closed_owner"), _, _)
         | CallMacro(_, "unclaim", _, _) 
         | CallMacro(_, "by_claim", _, [_; _; _]) ->
