@@ -75,8 +75,8 @@ namespace Microsoft.Research.Vcc
       {
         if (fi.Name.StartsWith(".")) continue;
         if (fi.Name.Contains(vccSplitSuffix)) continue;
-        if (fi.Extension != ".c" && fi.Extension != "" && !fi.Extension.StartsWith(".ns"))
-          continue; // remove *.ns* case eventually
+        if (fi.Extension != ".c" && fi.Extension != "")
+          continue;
 
         if (trmt != null) trmt.Queue(fi);
         else
