@@ -273,7 +273,13 @@
                     break;
             }
 
-            return base.ParseOption(name, ps);
+            bool result = base.ParseOption(name, ps);
+            if (!result)
+            {
+                Utils.Log("Unsupported switch: " + name);
+            }
+
+            return result;
         }
 
         private bool ParseBool(string input)
