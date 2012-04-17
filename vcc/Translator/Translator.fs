@@ -1172,8 +1172,11 @@ namespace Microsoft.Research.Vcc
             helper.Oops (tok, "wrong format of a claim")
             []
 
+      let writeTimes = new HashSet<_>()
+
       let setWritesTime tok env wr =
         let name = "#wrTime" + ctx.TokSuffix tok
+        let name = if writeTimes.Add(name) then name else name + "#" + CAST.unique().ToString() // TODO: remove once token info is more accurate
         let p = er "#p"
         let inWritesAt = bCall "$in_writes_at" [er name; p]
         let env = { env with Writes = wr; WritesTime = er name }
