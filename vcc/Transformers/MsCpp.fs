@@ -1127,6 +1127,7 @@ namespace Microsoft.Research.Vcc
       let filterSpecialDecls = function
         | Top.TypeDecl({Name = StartsWith "VCC::"}) -> false
         | Top.FunctionDecl({FriendlyName = StartsWith "VCC::"}) -> false
+        | Top.FunctionDecl(fn) when fn.Token.Filename.EndsWith("stdlib.h") -> false
         | Top.Global({Name = StartsWith "VCC::"}, _) -> false
         | _ -> true
 
