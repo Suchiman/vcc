@@ -94,6 +94,9 @@ namespace VCC
     public:
       To& operator[](From);
       To& operator[](From) volatile;
+      Map();
+      Map(volatile const Map<From, To>&);
+      Map(const Map<From, To>&);
       bool operator==(Map<From,To>);
       bool operator!=(Map<From,To>);
       volatile Map<From, To> operator=(const Map<From, To>&) volatile;
