@@ -1,13 +1,14 @@
 #include <vcc.h>
 
-_(logic bool fresh_object(\object ptr) = \object_root(ptr) && \mutable(ptr) && \fresh(ptr))
+_(logic bool fresh_object(\object ptr) =
+  \object_root(ptr) && \mutable(ptr) && \fresh(ptr))
 
-void *alloc(unsigned __int64  sz)
+void *alloc(unsigned __int64 sz)
   _(ensures fresh_object(_(blob sz)(\result)))
   ;
 
 struct A {
-  int x , y;
+  int x, y;
 };
 
 void bar()
@@ -26,7 +27,7 @@ void bar()
   a->x = 7;
   _(wrap a)
   _(unwrap a)
-  _(blobify a)
+  _(blobify a) // (blobify guarantees empty \owns set)
   _(wrap blob)
   _(unwrap blob)
 }
