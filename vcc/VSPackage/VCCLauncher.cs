@@ -145,8 +145,6 @@
 
         internal static void LaunchVCC(string filename, string vccargs)
         {
-            vccargs += " ";
-            vccargs += VSIntegration.CurrentCompilerSettings.ToVccOptions();
             var clPath = GetCLPath(VSIntegration.CurrentPlatform);
 
             VSIntegration.ClearErrorsAndMarkers();

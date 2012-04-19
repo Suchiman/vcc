@@ -157,7 +157,6 @@
     <Compile Include="CustomVerifyForm.Designer.cs">
       <DependentUpon>CustomVerifyForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="CompilerSettings.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>

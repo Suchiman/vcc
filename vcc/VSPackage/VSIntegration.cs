@@ -159,15 +159,6 @@ namespace Microsoft.Research.Vcc.VSPackage
             }
         }
 
-        internal static CompilerSettings CurrentCompilerSettings
-        {
-            get
-            {
-                SelectedItem sitem = DTE.SelectedItems.Item(1);
-                return new CompilerSettings(sitem.ProjectItem);
-            }
-        }
-
         internal static Dictionary<string, List<Tuple<int, string>>> ErrorLines
         {
             get { return errorLines; }
