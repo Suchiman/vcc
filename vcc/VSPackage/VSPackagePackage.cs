@@ -230,13 +230,15 @@ namespace Microsoft.Research.Vcc.VSPackage
         {
             if (sender != null)
             {
+                OleMenuCommand menuCommand = (OleMenuCommand)sender;
+
                 if (VCCLauncher.VCCRunning && VSIntegration.IsCodeFile)
                 {
-                    ((OleMenuCommand)sender).Visible = true;
+                    menuCommand.Visible = true;
                 }
                 else
                 {
-                    ((OleMenuCommand)sender).Visible = false;
+                    menuCommand.Visible = false;
                 }
             }
         }
@@ -286,7 +288,7 @@ namespace Microsoft.Research.Vcc.VSPackage
         {
             if (sender != null)
             {
-                ((OleMenuCommand)sender).Text = string.Format("Verify File: '{0}'", VSIntegration.ActiveFileName);
+                ((OleMenuCommand)sender).Text = string.Format(CultureInfo.InvariantCulture, "Verify File: '{0}'", VSIntegration.ActiveFileName);
                 CheckCodeFileAndVccNotRunning(sender, e);
             }
         }
@@ -300,7 +302,7 @@ namespace Microsoft.Research.Vcc.VSPackage
         {
             if (sender != null)
             {
-                ((OleMenuCommand)sender).Text = string.Format("Verify File Without Includes: '{0}'", VSIntegration.ActiveFileName);
+                ((OleMenuCommand)sender).Text = string.Format(CultureInfo.InvariantCulture, "Verify File Without Includes: '{0}'", VSIntegration.ActiveFileName);
                 CheckCodeFileAndVccNotRunning(sender, e);
             }
         }
