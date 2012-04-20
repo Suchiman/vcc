@@ -255,7 +255,7 @@ namespace Microsoft.Research.Vcc.VSPackage
             }
 
             errorLinesInDocument.Add(Tuple.Create(line, text));
-            if (!text.StartsWith("(related")) linesWithModels.Add(Tuple.Create(document.ToUpperInvariant(), line));
+            if (!text.StartsWith("(related", StringComparison.Ordinal)) linesWithModels.Add(Tuple.Create(document.ToUpperInvariant(), line));
             OnErrorLinesChanged(document);
         }
 

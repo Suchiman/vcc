@@ -49,7 +49,7 @@
                 if (this.dimAnnotations != value)
                 {
                     this.dimAnnotations = value;
-                    this.NotifyProperyChanged("DimAnnotations");
+                    this.NotifyPropertyChanged("DimAnnotations");
                 }
             }
         }
@@ -73,7 +73,7 @@
             }
         }
 
-        protected void NotifyProperyChanged(string name)
+        protected void NotifyPropertyChanged(string name)
         {
             PropertyChangedEventHandler temp = PropertyChanged;
             if (temp != null)

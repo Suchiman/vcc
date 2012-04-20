@@ -7,6 +7,7 @@
     using System.Threading;
     using System.Windows.Forms;
     using Microsoft.Win32;
+    using System.Globalization;
 
     /// <summary>
     ///     This class is used to start VCC.exe with the correct parameters and to get the results from VCC.exe
@@ -32,7 +33,7 @@
         {
             string Version = VSIntegration.DTE.Version;      //returns something like 8.0
             string CleanVersionTag = Version.Replace(".", "");
-            string VSDir = Environment.GetEnvironmentVariable(String.Format("VS{0}COMNTOOLS", CleanVersionTag));
+            string VSDir = Environment.GetEnvironmentVariable(String.Format(CultureInfo.InvariantCulture, "VS{0}COMNTOOLS", CleanVersionTag));
             return VSDir;
         }
 
@@ -73,7 +74,7 @@
         internal static void VerifyThis(string filename, string currentFile, int line, VccOptionPage options)
         {
             string addArguments = GetArgumentsFromOptions(options, true);
-            addArguments += String.Format(" /loc:\"{0}\":{1} ", currentFile, line);
+            addArguments += String.Format(CultureInfo.InvariantCulture, " /loc:\"{0}\":{1} ", currentFile, line);
             LaunchVCC(filename, addArguments);
         }
 
@@ -155,7 +156,7 @@
             VSIntegration.WriteToPane("=== VCC started. ===");
 
             //// Write Commandline-Command to Verification Outputpane
-            VSIntegration.WriteToPane(string.Format("Command Line: \"{0}\" {1}\n", VccPath, vccargs));
+            VSIntegration.WriteToPane(string.Format(CultureInfo.InvariantCulture, "Command Line: \"{0}\" {1}\n", VccPath, vccargs));
 
             //// Start the process
             try
@@ -246,7 +247,7 @@
                     break;
                 default:
                     VSIntegration.WriteToPane("\n=== VCC finished with unknown exitcode. ===");
-                    VSIntegration.WriteToPane(exitCode.ToString());
+                    VSIntegration.WriteToPane(exitCode.ToString(CultureInfo.InvariantCulture));
                     break;
             }
         }
@@ -265,8 +266,8 @@
                     VSIntegration.AddErrorToErrorList(
                       match.Groups["path"].Value,
                       match.Groups["errormessage"].Value,
-                      Int32.Parse(match.Groups["line"].Value),
-                      Microsoft.VisualStudio.Shell.TaskErrorCategory.Error);
+                      Int32.Parse(match.Groups["line"].Value, CultureInfo.InvariantCulture),
+                      VisualStudio.Shell.TaskErrorCategory.Error);
                 }
                 else if ((match = VCCWarningRegEx.Match(e.Message)).Success)
                 {
@@ -274,8 +275,8 @@
                     VSIntegration.AddErrorToErrorList(
                       match.Groups["path"].Value,
                       match.Groups["errormessage"].Value,
-                      Int32.Parse(match.Groups["line"].Value),
-                      Microsoft.VisualStudio.Shell.TaskErrorCategory.Warning);
+                      Int32.Parse(match.Groups["line"].Value, CultureInfo.InvariantCulture),
+                      VisualStudio.Shell.TaskErrorCategory.Warning);
                 }
             }
         }
