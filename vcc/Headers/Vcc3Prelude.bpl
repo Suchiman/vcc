@@ -3278,6 +3278,7 @@ procedure $split_blob(p:$ptr, off:int);
 
   ensures $mutable_root($s, $blob(p, off));
   ensures $owns($s, $blob(p, off)) == $set_empty();
+  ensures $in_range_phys_ptr($address_root($addr(p) + off, $blob_type($sizeof_object(p) - off)));
   ensures $mutable_root($s, $address_root($addr(p) + off, $blob_type($sizeof_object(p) - off)));
   ensures $owns($s, $address_root($addr(p) + off, $blob_type($sizeof_object(p) - off))) == $set_empty();
   ensures $modifies(old($s), $s, $set_singleton(p));

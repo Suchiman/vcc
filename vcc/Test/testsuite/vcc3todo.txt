@@ -6,13 +6,8 @@ groups-10
 fieldInlining-05
 fieldInlining-06
 generics-10
-memoryReintp-00
-memoryReintp-01
 memoryReintp-02
-memoryReintp-03
 memoryReintp-04
-memoryReintp-05
-memoryReintp-06
 memoryReintp-09
 memoryReintp-10
 as_array-09
