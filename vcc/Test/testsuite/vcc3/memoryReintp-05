@@ -19,13 +19,12 @@ typedef _(dynamic_owns) struct gA {
 } gA;
 
 void foo ()
- _(requires \object_root((void[sizeof(gA)])((byte*) 1024)))
- _(writes \extent((void[sizeof(gA)])((byte*) 1024)))
+ _(requires \object_root(_(blob sizeof(gA)) (void *) 1024))
+ _(writes \extent(_(blob sizeof(gA)) (void *) 1024))
 {
     gA* a;
-    a = (gA*) 1024;
+    a = _(unblobify) (gA*) 1024;
    
-    _(from_bytes a, \false)
     _(assert \mutable(&a->g[0]))
     _(assert \mutable(&a->g[0].b))
     _(assert \mutable(&a->g[0].b.c))

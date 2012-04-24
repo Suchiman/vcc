@@ -3,14 +3,15 @@
 typedef unsigned char byte;
 
 void *alloc(unsigned __int64  sz)
-  _(ensures \object_root((void[sz])((byte*)\result)))
-  _(ensures \mutable((void[sz])((byte*)\result)))
-  _(ensures \fresh((void[sz])((byte*)\result)))
+  _(ensures \object_root(_(blob sz) (\result)))
+  _(ensures \mutable(_(blob sz) (\result)))
+  _(ensures \fresh(_(blob sz) (\result)))
   ;
 
 struct A {
-  int x , y;
+  int x, y;
 };
+
 struct B {
   struct A a1;
   struct A a2;
@@ -19,24 +20,22 @@ struct B {
 
 void f1()
 {
-  struct B * b = alloc(sizeof(struct B));
-  _(from_bytes b, \false)
+  struct B *b = _(unblobify) (struct B *) alloc(sizeof(struct B));
   b->a1.x = 10;
   b->a2.y = 20;
   b->x = 20;
 }
 
 void mfree(void *p _(ghost unsigned __int64 sz))
-  _(writes \extent((void[sz])((byte*)p)));
+  _(writes \extent(_(blob sz) p));
 
 void f2()
 {
-  struct B * b = alloc(sizeof(struct B));
-  _(from_bytes b, \false)
+  struct B *b = _(unblobify) (struct B *) alloc(sizeof(struct B));
   b->a1.x = 10;
   b->a2.y = 20;
   b->x = 20;
-  _(to_bytes b)
+  _(blobify b)
   mfree(b _(ghost sizeof(*b)));
 }
 
