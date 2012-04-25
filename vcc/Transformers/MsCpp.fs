@@ -31,6 +31,17 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Universe"
                                                   ]
 
+  let functionsWithVarargs = Set.ofList [
+                                          "VCC::Atomic"
+                                          "VCC::AtomicOp"
+                                          "VCC::AtomicRead"
+                                          "VCC::Mine"
+                                          "VCC::Reads"
+                                          "VCC::Trigger"
+                                          "VCC::Unwrapping"
+                                          "VCC::Writes"
+                                        ]
+
   let specialFunctionMap = Map.ofList [
                                                     "VCC::Activeclaim",         "_vcc_active_claim"
                                                     "VCC::Addr",                "_vcc_addr"
@@ -59,6 +70,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Owner",               "_vcc_owner"
                                                     "VCC::Owns",                "_vcc_owns"
                                                     "VCC::Programentrypoint",   "_vcc_program_entry_point"
+                                                    "VCC::ReadsHavoc",          "_vcc_reads_havoc"
                                                     "VCC::Span",                "_vcc_span"
                                                     "VCC::Threadlocal",         "_vcc_thread_local2"
                                                     "VCC::Threadlocalarray",    "_vcc_is_thread_local_array"
@@ -289,6 +301,7 @@ namespace Microsoft.Research.Vcc
 
       // also, when passing structs, extra temporary variables are introduced, which we als remove here
 
+      | Macro(_, "&", [Deref(ec, Call(_, fn, [], args))])
       | Deref(ec, Call(_, fn, [], args))
       | Macro(_, "implicit_cast", [Cast(_, _, Deref(ec, Call(_, fn, [], args)))]) 
         when Set.contains (nongeneric fn.FriendlyName) functionsReturningsClassValues ->
@@ -326,6 +339,20 @@ namespace Microsoft.Research.Vcc
       
       decls
 
+    // ============================================================================================================    
+
+    let retypeMacros self = 
+
+      let macrosWithSpecialTypes = Map.ofList [
+                                                "_vcc_as_array", Type.ObjectT
+                                              ]
+      function
+        | Macro(ec, m, args) ->
+          match Map.tryFind m macrosWithSpecialTypes with
+            | None -> None
+            | Some t -> Some(Macro({ec with Type = t}, m, List.map self args))
+        | _ -> None
+          
     // ============================================================================================================    
 
     let rewriteExtraMacros self = 
@@ -821,10 +848,10 @@ namespace Microsoft.Research.Vcc
           Some(Result(ec))
         | Call(ec, {FriendlyName = StartsWith "VCC::Old"}, [], [arg]) ->
           Some(Old(ec, Macro({ec with Type = Type.MathState}, "prestate", []), self arg))
-        | Call(ec, {FriendlyName = SpecialCallTo(tgt)}, [], args)  ->
-          Some(Macro(ec, tgt, List.map self args))
         | Call(ec, {FriendlyName = StartsWith "VCC::Unchecked"}, [], [arg]) ->
           Some((self arg).SelfMap(toUnchecked))
+        | Call(ec, {FriendlyName = SpecialCallTo(tgt)}, [], args)  ->
+          Some(Macro(ec, tgt, List.map self args))
         | _ -> None
 
     // ============================================================================================================    
@@ -1163,6 +1190,24 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let removeVarargCasts self = 
+
+      // for functions with variable argument lists (...), the compiler introduces some implicit casts
+      // which we get rid of here
+
+      let stripInitialImplicitCast = 
+          let sic = function
+              | Macro(_, "implicit_cast", [Cast(_, _, expr)]) -> expr
+              | expr -> expr
+          List.map sic
+
+      function
+        | Call(ec, ({FriendlyName = name} as fn), [], args) when Set.contains name functionsWithVarargs ->
+          Some(Call(ec, fn, [], args |> stripInitialImplicitCast |> List.map self))
+        | _ -> None
+      
+    // ============================================================================================================    
+
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
     helper.AddTransformer ("cpp-check-ast-structure", TransHelper.Decl checkAstStructure)
@@ -1170,6 +1215,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-remove-temps", TransHelper.Decl removeTemps)
     helper.AddTransformer ("cpp-globals-init", TransHelper.Decl rewriteGlobalsInitialization)
     helper.AddTransformer ("cpp-special-args", TransHelper.Decl specialArgumentHandling)
+    helper.AddTransformer ("cpp-vararg-casts", TransHelper.Expr removeVarargCasts)
     helper.AddTransformer ("cpp-special-types", TransHelper.Decl rewriteSpecialTypes)
     helper.AddTransformer ("cpp-set", TransHelper.Expr rewriteSets)
     helper.AddTransformer ("cpp-map", TransHelper.Expr rewriteMaps)
@@ -1188,6 +1234,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-rewrite-block-decorators", TransHelper.Expr rewriteBlockDecorators)
     helper.AddTransformer ("cpp-rewrite-functions-with-contracts", TransHelper.Decl rewriteSpecialFunctionsWithContracts)
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
+    helper.AddTransformer ("cpp-retype-macros", TransHelper.Expr retypeMacros)
     helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)
     helper.AddTransformer ("cpp-rewrite-ops", TransHelper.Expr rewriteExtraOps)
     helper.AddTransformer ("cpp-sanitize-names", TransHelper.Decl sanitizeNames)
