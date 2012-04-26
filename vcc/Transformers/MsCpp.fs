@@ -311,16 +311,6 @@ namespace Microsoft.Research.Vcc
         // TODO: compare variable directly and not by name once the AST convertor re-uses variables for ALLOTEMPS
         Some(self expr)
 
-      // the following AST structure is generated for ghost parameters passed on as ghost arguments:
-      // and we remove it here
-      //
-      // @&(*(VCC::Ghost<int>::Ghost<int>(@currentobject, @&(n)))) is rewritten into 'n'
-
-      | Macro(_, "&", 
-              [Deref(_,Call(_, {Parent = Some({Name = StartsWith "VCC::Ghost"}); FriendlyName = name}, [], 
-                       [Macro(_, "currentobject", []); AddrOf(_, arg)]))]) when (basename name).StartsWith("Ghost") ->
-        Some(arg)
-
       | _ -> None
 
     // ============================================================================================================    
@@ -973,51 +963,56 @@ namespace Microsoft.Research.Vcc
             | false, _ -> None
         | _ -> None
 
-      // ghost arguments are passed by type Ghost<T> where T is the 'original' type; rewrite them into
-      // spec parameters
+      // ghost and out arguments are preceded by a marker parameter of type VCC::Ghost and VCC::GhostOut respectively
 
-      let (|GhostType|_|) = 
-        let getOriginalType (td : TypeDecl) =
-          match td.Fields with 
-            | [{Name = "_t_member_"; Type = Ptr(t)} ] -> t
-            | _ -> helper.Oops(td.Token, "unexpected Ghost type structure"); die()
-      
-        function
-          | Type.Ref({Name = StartsWith "VCC::GhostOut"} as td) ->
-            Some(getOriginalType td, true)
-          | Type.Ref({Name = StartsWith "VCC::Ghost"} as td) ->
-            Some(getOriginalType td, false)
-          | _ -> None
+      let (|GhostMarkerType|_|) = function
+        | Type.Ref({Name = "VCC::Ghost"}) -> Some(VarKind.SpecParameter)
+        | Type.Ref({Name = "VCC::GhostOut"}) -> Some(VarKind.OutParameter)
+        | _ -> None
      
-      let ghostToSpecPar = 
-        let ghostToSpecPar' (v:Variable) =
-          match v.Type with
-            | GhostType(originalType, isOut) -> 
-              let v' = { v.UniqueCopy() with Type = originalType; Kind = if isOut then VarKind.OutParameter else VarKind.SpecParameter }
+      let ghostToSpecPars = 
+        let ghostToSpecPar (v:Variable) kind =
+          match kind with
+            | VarKind.Parameter -> v
+            | _ ->
+              let v' = { v.UniqueCopy() with Kind = kind }
               specVarMap.Add(v, v')
               v'
-            | _ -> v
+
+        let rec rewritePars acc kind = function
+          | [] -> List.rev acc
+          | (p:Variable) :: ps ->
+            match p.Type with
+              | GhostMarkerType(kind) -> rewritePars acc kind ps
+              | _ -> rewritePars ((ghostToSpecPar p kind)::acc) kind ps
 
         function 
-          | Top.FunctionDecl(fn) -> fn.Parameters <- List.map ghostToSpecPar' fn.Parameters;
+          | Top.FunctionDecl(fn) -> fn.Parameters <- rewritePars [] VarKind.Parameter fn.Parameters;
           | _ -> ()
         
-      let rewriteGhostParOccurrences self = function
+      decls |> List.iter ghostToSpecPars
 
-        // remove the wrapper calls to CreateGhost{Out} and the implicit conversions when using the ghost arguments
+      // to make the calls to functions with ghost and out parameters work, we add dummy instances for the markers
+      // we remove those here
 
-        | Call(ec, { FriendlyName = StartsWith "VCC::CreateGhost" }, [], [arg]) -> Some(self arg)
-        | Call(ec, { Parent = Some({Name = StartsWith "VCC::Ghost"}); FriendlyName = Contains "::operator "}, [], [AddrOf(_, arg)]) ->
-          Some(self arg)
+      let removeHelperInstances self = function
+        | Call(ec, fn, t, args) -> 
+          let rec loop acc seenOut = function
+            | [] -> List.rev acc
+            | (Call(_, {FriendlyName = "VCC::GhostOut::Instance"}, [], []))::args -> loop acc true args
+            | (Call(_, {FriendlyName = "VCC::Ghost::Instance"}, [], []))::args -> loop acc false args
+            | arg :: args -> 
+              let arg' = if seenOut then Macro(arg.Common, "out", [self arg]) else self arg
+              loop (arg'::acc) seenOut args
+          Some(Call(ec, fn, t, loop [] false args))
+
         | _ -> None
-
-      decls |> List.iter ghostToSpecPar
 
       decls 
       |> List.map collectGhostFields
       |> deepMapExpressions collectGhostStmts 
       |> deepMapExpressions substVars
-      |> deepMapExpressions rewriteGhostParOccurrences
+      |> deepMapExpressions removeHelperInstances
 
     // ============================================================================================================    
 
