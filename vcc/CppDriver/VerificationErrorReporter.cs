@@ -44,19 +44,99 @@ namespace Microsoft.Research.Vcc.Cpp
       this.errorReported = true;
     }
 
-    public override void OnUnreachableCode(Implementation impl)
-    {
-      OnVerificationFinished(currentFunction, "smoke");
-
-      Utils.Log(String.Format("Verification of '{0}' found unreachable code", this.currentFunction));
-      this.AnyErrorReported = true;
-      this.errorReported = true;
-    }
-
     public override void OnWarning(string msg)
     {
       OnVerificationFinished(currentFunction, "warning");
       Utils.Log(String.Format("Verification of '{0}' gave warning: {1}", this.currentFunction, msg));
+    }
+
+    public override void OnUnreachableCode(Implementation impl)
+    {
+
+      if (HasRequiresFalse(impl)) return;
+
+      bool hasIFUnreachable = false;
+      var unreachableMasters = new Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr>(new List<IdentifierExpr>());
+      var unreachableChildren = new Microsoft.FSharp.Collections.FSharpSet<IdentifierExpr>(new List<IdentifierExpr>());
+      for (int i = impl.Blocks.Count - 1; i >= 0; i--)
+      {
+          Block b = impl.Blocks[i];
+          if (HasAssertFalse(b))
+          {
+              foreach (var cmd in b.Cmds)
+              {
+                  PredicateCmd pred = cmd as PredicateCmd;
+                  if (pred != null)
+                  {
+                      NAryExpr nary = pred.Expr as NAryExpr;
+                      if (nary != null)
+                      {
+                          FunctionCall f = nary.Fun as FunctionCall;
+                          if (f != null && f.Func.Name == "$expect_unreachable_master")
+                          {
+                              unreachableMasters = unreachableMasters.Add(f.Func.InParams.Last() as IdentifierExpr);
+                              hasIFUnreachable = true;
+                          }
+                          else if (f != null && f.Func.Name == "$expect_unreachable_child")
+                          {
+                              unreachableChildren = unreachableChildren.Add(f.Func.InParams.Last() as IdentifierExpr);
+                              hasIFUnreachable = true;
+                          }
+                      }
+                  }
+              }
+          }
+      }
+
+      bool hasRealUnreachable = false;
+      foreach (var id in unreachableChildren)
+      {
+          if (!unreachableMasters.Contains(id))
+            hasRealUnreachable = true;
+      }
+
+      if (!hasRealUnreachable && hasIFUnreachable)
+      {
+        this.EndFunction();
+        return;
+      }
+
+      var traceTokens = new List<IToken>();
+
+      for (int i = impl.Blocks.Count - 1; i >= 0; i--) {
+        Block b = impl.Blocks[i];
+        foreach (var cmd in b.Cmds) {
+          PredicateCmd pred = cmd as PredicateCmd;
+          if (pred != null) {
+            NAryExpr nary = pred.Expr as NAryExpr;
+            if (nary != null) {
+              FunctionCall f = nary.Fun as FunctionCall;
+              if (f != null && f.Func.Name == "$expect_unreachable") return;   // Just restoring what existed. This is keeping some potentially easy to let through soundness warnings...
+            }
+          }
+        }
+
+        if (!IsTokenWithoutLocation(b.TransferCmd.tok))
+          traceTokens.Add(b.TransferCmd.tok);
+        else {
+          for (int j = b.Cmds.Length - 1; j >= 0; j--)
+          {
+            if (!IsTokenWithoutLocation(b.Cmds[j].tok))
+            {
+              traceTokens.Add(b.Cmds[j].tok);
+              break;
+            }
+          }
+        }
+      }
+
+
+      OnVerificationFinished(currentFunction, "succeeded");
+      Utils.Log(String.Format("Verification of '{0}' succeeded.", this.currentFunction));
+      this.ReportUnreachable(traceTokens);
+
+      this.AnyErrorReported = true;
+      this.errorReported = true;
     }
 
     public void StartFunction(string functionName)
@@ -86,19 +166,46 @@ namespace Microsoft.Research.Vcc.Cpp
       }
     }
 
-    private void ReportError(IToken tok, int errno, string fmt, params object[] args)
+    private void ReportError(IToken tok, int errno, bool isWarning, string fmt, params object[] args)
     {
       var msg = args.Length > 0 ? String.Format(fmt, args) : fmt;
       
       EventHandler<ErrorReportedEventArgs> temp = ErrorReported;
       if (temp != null)
       {
-        temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.filename, false, tok.line, tok.col, errno, msg, false)));
+        temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.filename, isWarning, tok.line, tok.col, errno, msg, false)));
       }
 
-      Utils.Log(String.Format("{0}({1},{2}): error VC{3:0000}: {4}", tok.filename, tok.line, tok.col, errno, msg));
+      Utils.Log(String.Format("{0}({1},{2}): {3} VC{4:0000}: {5}", tok.filename, tok.line, tok.col, (isWarning ? "warning" : "error"), errno, msg));
     }
 
+    private void ReportUnreachable(IList<IToken> traceTokens)
+    {
+      if (traceTokens.Count == 0)
+      {
+        ReportError(new BoogieToken.Token(Token.NoToken), 9100, true, "Found unreachable code, but cannot figure out where it is.");
+      }
+      else
+      {
+        ReportError(traceTokens[0], 9100, true, "found unreachable code, possible soundness violation, please check the axioms or add an explicit assert(false)");
+
+        var prevFile = traceTokens[0].filename;
+        var prevLine = traceTokens[0].line;
+        var prevCol = traceTokens[0].col;
+
+        for (int i = traceTokens.Count - 1; i > 0; i--)
+        {
+          if (traceTokens[i].col == prevCol && traceTokens[i].line == prevLine && traceTokens[i].filename == prevFile)
+            continue;
+
+          ReportError(traceTokens[i], 9101, true, "trace to unreachable location");
+
+          prevFile = traceTokens[i].filename;
+          prevLine = traceTokens[i].line;
+          prevCol = traceTokens[i].col;
+        }
+      }
+    }
 
     private void ReportCounterexample(Counterexample ce, string message)
     {
@@ -157,7 +264,7 @@ namespace Microsoft.Research.Vcc.Cpp
     private void ReportOutcomeAssertFailed(IToken assertTok, string kind, string comment)
     {
       var errnoAndMsg = GetErrorNumber(assertTok.val, 9500);
-      ReportError(assertTok, errnoAndMsg.Item1, "{0}{2} '{1}' did not verify.", kind, errnoAndMsg.Item2, comment);
+      ReportError(assertTok, errnoAndMsg.Item1, false, "{0}{2} '{1}' did not verify.", kind, errnoAndMsg.Item2, comment);
       ReportAllRelated(assertTok);
     }
 
@@ -173,7 +280,7 @@ namespace Microsoft.Research.Vcc.Cpp
 
       if (this.reportedCallFailures.Add(callTok))
       {
-        ReportError(callTok, 9502, "Call '{0}' did not verify{1}.", RemoveWhiteSpace(callTok.val), comment);
+        ReportError(callTok, 9502, false,  "Call '{0}' did not verify{1}.", RemoveWhiteSpace(callTok.val), comment);
       }
 
       ReportRelated(reqTok, "Precondition: '{0}'.", reqMsg);
@@ -190,13 +297,13 @@ namespace Microsoft.Research.Vcc.Cpp
 
       if (errnoAndMsg.Item1 == -1)
       {
-        ReportError(retTok, 9501, "Post condition{0} '{1}' did not verify.", comment, msg);
+        ReportError(retTok, 9501, false, "Post condition{0} '{1}' did not verify.", comment, msg);
         ReportRelated(ensTok, "Location of post condition.");
         ReportAllRelated(ensTok);
       }
       else
       {
-        ReportError(retTok, errnoAndMsg.Item1, errnoAndMsg.Item2);
+        ReportError(retTok, errnoAndMsg.Item1, false, errnoAndMsg.Item2);
       }      
     }
 
@@ -212,7 +319,7 @@ namespace Microsoft.Research.Vcc.Cpp
 
     private void ReportRelated(IToken tok, string fmt, params string[] args)
     {
-      ReportError(tok, 9599, "(related information) " + fmt, args);
+      ReportError(tok, 9599, false, "(related information) " + fmt, args);
     }
 
     public static string RemoveWhiteSpace(string str)
@@ -232,6 +339,36 @@ namespace Microsoft.Research.Vcc.Cpp
       } 
         
       return Tuple.Create(_default, msg);
+    }
+
+    private static bool HasRequiresFalse(Implementation impl)
+    {
+      foreach (Requires req in impl.Proc.Requires)
+      {
+        LiteralExpr f = req.Condition as LiteralExpr;
+        if (f != null && f.IsFalse) return true;
+      }
+
+      return false;
+    }
+
+    private static bool HasAssertFalse(Block b)
+    {
+      foreach (var cmd in b.Cmds)
+      {
+        PredicateCmd pred = cmd as PredicateCmd;
+        if (pred != null)
+        {
+          LiteralExpr f = pred.Expr as LiteralExpr;
+          if (f != null && f.IsFalse) return true;
+        }
+      }
+      return false;
+    }
+
+    private static bool IsTokenWithoutLocation(IToken t)
+    {
+      return String.IsNullOrEmpty(t.filename) || t.filename == "<no file>";
     }
   }
 }

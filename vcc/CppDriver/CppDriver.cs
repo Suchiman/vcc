@@ -27,15 +27,14 @@ namespace Microsoft.Research.Vcc.Cpp
 
         public CppDriver(string vccArgs, string[] pipeOperations)
         {
-            // Register VccppOptions as CommandLineOption
+            //// Register VccppOptions as CommandLineOption
             VccppOptions vccOptions = new VccppOptions(pipeOperations);
-            VccppOptions.Install(vccOptions);
 
             // Parse arguments
             if (!String.IsNullOrEmpty(vccArgs))
             {
                 var vccArgsArr = vccArgs.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                if (!CommandLineOptions.Clo.Parse(vccArgsArr))
+                if (!vccOptions.Parse(vccArgsArr))
                 {
                     throw new ArgumentException("Unsupported switch, aborting.");
                 }
@@ -89,7 +88,7 @@ namespace Microsoft.Research.Vcc.Cpp
             return BoogieAST.trProgram(boogieDecls);
         }
 
-        private static void InstallBoogieOptions()
+        private void InstallBoogieOptions()
         {
             var options = new[]
                       {
@@ -103,10 +102,12 @@ namespace Microsoft.Research.Vcc.Cpp
                         "/z3opt:QI_EAGER_THRESHOLD=1000",
                         "/z3opt:CASE_SPLIT=5"
                       };
-
+          
             var clo = new CommandLineOptions();
             bool parseRes = clo.Parse(options);
-            System.Diagnostics.Debug.Assert(parseRes, "Wrong Boogie parameters.");
+            System.Diagnostics.Debug.Assert(parseRes, "Invalid preset Boogie parameters.");
+            parseRes = clo.Parse(new List<string>(this.env.VccppOptions.BoogieOptions).ToArray());
+            System.Diagnostics.Debug.Assert(parseRes, "Invalid user Boogie parameters.");
 
             clo.RunningBoogieFromCommandLine = false;
             CommandLineOptions.Install(clo);

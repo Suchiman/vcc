@@ -68,7 +68,7 @@
             this.pipeOperations.AddRange(pipeOperations);
             RunTestSuiteMultiThreaded = -1;
             WarningLevel = 1;
-            PointerSize = 64;
+            PointerSize = 32;
             TerminationLevel = 1;
         }
 
@@ -80,7 +80,7 @@
 
                 case "a":
                 case "aggressivepruning":
-                    bool AggressivePruning = ParseBool(ps.args[ps.i]);
+                    this.AggressivePruning = true;
                     return true;
                 case "b":
                 case "boogie":
@@ -160,7 +160,7 @@
                     return true;
                 case "ii":
                 case "ignoreincludes":
-                    this.IgnoreIncludes = ps.args[ps.i];
+                    this.IgnoreIncludes = ps.i < ps.args.Length ? ps.args[ps.i] : "";
                     return true;
                 case "keepppoutput":
                     this.KeepPreprocessorFiles = ParseBool(ps.args[ps.i]);
