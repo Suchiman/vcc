@@ -1,18 +1,18 @@
-﻿using System.Windows.Forms;
-
-namespace Microsoft.Research.Vcc.VSPackage
+﻿namespace Microsoft.Research.Vcc.VSPackage
 {
-  public partial class CustomVerifyForm : Form
-  {
-    public CustomVerifyForm(string text)
-    {
-      InitializeComponent();
-      this.textBox1.Text = text;
-    }
+    using System.Windows.Forms;
 
-    public string Arguments
+    public partial class CustomVerifyForm : Form
     {
-      get { return this.textBox1.Text; }
+        public CustomVerifyForm(string text)
+        {
+            InitializeComponent();
+            this.textBox1.Text = text;
+        }
+
+        public string Arguments
+        {
+            get { return this.textBox1.Text; }
+        }
     }
-  }
 }

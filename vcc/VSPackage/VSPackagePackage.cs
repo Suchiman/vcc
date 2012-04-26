@@ -1,16 +1,16 @@
-﻿using System;
-using System.Diagnostics;
-using System.Globalization;
-using System.Runtime.InteropServices;
-using System.ComponentModel.Design;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Shell.Interop;
-using System.IO;
-using System.Text.RegularExpressions;
-
-namespace Microsoft.Research.Vcc.VSPackage
+﻿namespace Microsoft.Research.Vcc.VSPackage
 {
+    using System;
+    using System.ComponentModel.Design;
+    using System.Diagnostics;
+    using System.Globalization;
+    using System.IO;
+    using System.Runtime.InteropServices;
+    using System.Text.RegularExpressions;
+    using Microsoft.VisualStudio;
+    using Microsoft.VisualStudio.Shell;
+    using Microsoft.VisualStudio.Shell.Interop;
+
     /// <summary>
     /// This is the class that implements the package exposed by this assembly.
     ///
@@ -21,15 +21,15 @@ namespace Microsoft.Research.Vcc.VSPackage
     /// IVsPackage interface and uses the registration attributes defined in the framework to 
     /// register itself and its components with the shell.
     /// </summary>
-    // This attribute tells the PkgDef creation utility (CreatePkgDef.exe) that this class is
-    // a package.
+    //// This attribute tells the PkgDef creation utility (CreatePkgDef.exe) that this class is
+    //// a package.
     [PackageRegistration(UseManagedResourcesOnly = true)]
-    // This attribute is used to register the informations needed to show the this package
-    // in the Help/About dialog of Visual Studio.
+    //// This attribute is used to register the informations needed to show the this package
+    //// in the Help/About dialog of Visual Studio.
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
-    // This attribute is needed to let the shell know that this package exposes some menus.
+    //// This attribute is needed to let the shell know that this package exposes some menus.
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    // This attribute makes sure this package is loaded and initialized when a solution exists
+    //// This attribute makes sure this package is loaded and initialized when a solution exists
     [ProvideOptionPage(typeof(VccOptionPage), "VCC", "General", 101, 106, true)]
     [ProvideAutoLoad("{f1536ef8-92ec-443c-9ed7-fdadf150da82}")]
     [ProvideToolWindow(typeof(BvdToolWindow))]
@@ -45,6 +45,7 @@ namespace Microsoft.Research.Vcc.VSPackage
                 return this.GetDialogPage(typeof(VccOptionPage)) as VccOptionPage;
             }
         }
+
         /// <summary>
         ///     here the parameters of the last call of Vcc are stored
         /// </summary>
@@ -62,9 +63,13 @@ namespace Microsoft.Research.Vcc.VSPackage
         public VSPackagePackage()
         {
             Trace.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this));
-            if (Instance != null) throw new InvalidOperationException();
+            if (Instance != null)
+            {
+                throw new InvalidOperationException();
+            }
+
             Instance = this;
-            LastArguments = LastFilename = String.Empty;
+            LastArguments = LastFilename = string.Empty;
         }
 
         #region Commands
@@ -78,7 +83,11 @@ namespace Microsoft.Research.Vcc.VSPackage
         {
             if (OptionPage != null)
             {
-                if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
+                if (!VSIntegration.DocumentsSavedCheck(OptionPage))
+                {
+                    return;
+                }
+
                 VCCLauncher.CustomVerify(VSIntegration.StartFileName, OptionPage);
             }
         }
@@ -87,7 +96,11 @@ namespace Microsoft.Research.Vcc.VSPackage
         {
             if (OptionPage != null)
             {
-                if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
+                if (!VSIntegration.DocumentsSavedCheck(OptionPage))
+                {
+                    return;
+                }
+
                 VCCLauncher.VerifyThis(VSIntegration.StartFileName, VSIntegration.ActiveFileFullName, VSIntegration.CurrentLine, OptionPage);
             }
         }
@@ -137,7 +150,11 @@ namespace Microsoft.Research.Vcc.VSPackage
         {
             if (OptionPage != null)
             {
-                if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
+                if (!VSIntegration.DocumentsSavedCheck(OptionPage))
+                {
+                    return;
+                }
+
                 VCCLauncher.VerifyFile(VSIntegration.StartFileName, OptionPage);
             }
         }
@@ -151,7 +168,11 @@ namespace Microsoft.Research.Vcc.VSPackage
         {
             if (OptionPage != null)
             {
-                if (!VSIntegration.DocumentsSavedCheck(OptionPage)) return;
+                if (!VSIntegration.DocumentsSavedCheck(OptionPage))
+                {
+                    return;
+                }
+
                 VCCLauncher.VerifyFileWithoutIncludes(VSIntegration.StartFileName, VSIntegration.ActiveFileFullName, OptionPage);
             }
         }
@@ -207,13 +228,12 @@ namespace Microsoft.Research.Vcc.VSPackage
         #region BeforeQueryStatusHandlers
         //// All the handlers that handle the appearance of menus and menu entries are here
 
-
         /// <summary>
         ///     Verify Menu
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        static void VerifyMenu_BeforeQueryStatus(object sender, EventArgs e)
+        private static void VerifyMenu_BeforeQueryStatus(object sender, EventArgs e)
         {
             if (sender != null)
             {
@@ -226,7 +246,7 @@ namespace Microsoft.Research.Vcc.VSPackage
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        static void Cancel_BeforeQueryStatus(object sender, EventArgs e)
+        private static void Cancel_BeforeQueryStatus(object sender, EventArgs e)
         {
             if (sender != null)
             {
@@ -248,7 +268,7 @@ namespace Microsoft.Research.Vcc.VSPackage
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        static void ShowErrorModel_BeforeQueryStatus(object sender, EventArgs e)
+        private static void ShowErrorModel_BeforeQueryStatus(object sender, EventArgs e)
         {
             if (sender != null)
             {
@@ -263,18 +283,26 @@ namespace Microsoft.Research.Vcc.VSPackage
             }
         }
 
-        static void ReVerify_BeforeQueryStatus(object sender, EventArgs e)
+        private static void ReVerify_BeforeQueryStatus(object sender, EventArgs e)
         {
             var cmd = sender as OleMenuCommand;
-            if (cmd == null) return;
-            cmd.Enabled = !VCCLauncher.VCCRunning && !String.IsNullOrEmpty(LastFilename);
+            if (cmd == null)
+            {
+                return;
+            }
+
+            cmd.Enabled = !VCCLauncher.VCCRunning && !string.IsNullOrEmpty(LastFilename);
             cmd.Visible = VSIntegration.IsCodeFile;
         }
 
-        static void CheckCodeFileAndVccNotRunning(object sender, EventArgs e)
+        private static void CheckCodeFileAndVccNotRunning(object sender, EventArgs e)
         {
             var cmd = sender as OleMenuCommand;
-            if (cmd == null) return;
+            if (cmd == null)
+            {
+                return;
+            }
+
             cmd.Enabled = !VCCLauncher.VCCRunning;
             cmd.Visible = VSIntegration.IsCodeFile;
         }
@@ -284,7 +312,7 @@ namespace Microsoft.Research.Vcc.VSPackage
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        static void VerifyFile_BeforeQueryStatus(object sender, EventArgs e)
+        private static void VerifyFile_BeforeQueryStatus(object sender, EventArgs e)
         {
             if (sender != null)
             {
@@ -298,7 +326,7 @@ namespace Microsoft.Research.Vcc.VSPackage
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        static void VerifyFileWithoutIncludes_BeforeQueryStatus(object sender, EventArgs e)
+        private static void VerifyFileWithoutIncludes_BeforeQueryStatus(object sender, EventArgs e)
         {
             if (sender != null)
             {
@@ -316,7 +344,10 @@ namespace Microsoft.Research.Vcc.VSPackage
                 var menuCommandID = new CommandID(GuidList.GuidVSPackageCmdSet, (int)cmdId);
                 var menuCommand = new OleMenuCommand(invokeHandler, menuCommandID);
                 if (beforeQueryStatusHandler != null)
+                {
                     menuCommand.BeforeQueryStatus += beforeQueryStatusHandler;
+                }
+
                 mcs.AddCommand(menuCommand);
             }
         }
@@ -335,21 +366,21 @@ namespace Microsoft.Research.Vcc.VSPackage
             if (null != mcs)
             {
                 //// Create the commands for the menu items.
-                this.RegisterCommand(mcs, VerifyActiveFile, VerifyFile_BeforeQueryStatus, PkgCmdIDList.cmdidVerifyActiveFile, PkgCmdIDList.cmdidContextVerifyActiveFile);
-                this.RegisterCommand(mcs, VerifyActiveFileWithoutIncludes, VerifyFileWithoutIncludes_BeforeQueryStatus, PkgCmdIDList.cmdidVerifyActiveFileWithoutIncludes, PkgCmdIDList.cmdidContextVerifyActiveFileWithoutIncludes);
-                this.RegisterCommand(mcs, ReVerify, ReVerify_BeforeQueryStatus, PkgCmdIDList.cmdidReVerify, PkgCmdIDList.cmdidContextReVerify);
-                this.RegisterCommand(mcs, VerifyThis, CheckCodeFileAndVccNotRunning, PkgCmdIDList.cmdidVerifyThis, PkgCmdIDList.cmdidContextVerifyThis);
-                this.RegisterCommand(mcs, CustomVerify, CheckCodeFileAndVccNotRunning, PkgCmdIDList.cmdidCustomVerify, PkgCmdIDList.cmdidContextCustomVerify);
-                this.RegisterCommand(mcs, Cancel, Cancel_BeforeQueryStatus, PkgCmdIDList.cmdidCancel, PkgCmdIDList.cmdidContextCancel);
-                this.RegisterCommand(mcs, Options, null, PkgCmdIDList.cmdidOptions);
-                this.RegisterCommand(mcs, ShowErrorModel, ShowErrorModel_BeforeQueryStatus, PkgCmdIDList.cmdidShowErrorModel);
-                this.RegisterCommand(mcs, null, VerifyMenu_BeforeQueryStatus, PkgCmdIDList.cmdidVerifyMenu);
-                this.RegisterCommand(mcs, InsertForall, null, PkgCmdIDList.cmdidMathSymbolForall);
-                this.RegisterCommand(mcs, InsertExists, null, PkgCmdIDList.cmdidMathSymbolExists);
-                this.RegisterCommand(mcs, InsertLambda, null, PkgCmdIDList.cmdidMathSymbolLambda);
-                this.RegisterCommand(mcs, InsertIn, null, PkgCmdIDList.cmdidMathSymbolIn);
-                this.RegisterCommand(mcs, InsertIntersection, null, PkgCmdIDList.cmdidMathSymbolIntersection);
-                this.RegisterCommand(mcs, InsertUnion, null, PkgCmdIDList.cmdidMathSymbolUnion);
+                this.RegisterCommand(mcs, VerifyActiveFile, VerifyFile_BeforeQueryStatus, PkgCmdIDList.CmdidVerifyActiveFile, PkgCmdIDList.CmdidContextVerifyActiveFile);
+                this.RegisterCommand(mcs, VerifyActiveFileWithoutIncludes, VerifyFileWithoutIncludes_BeforeQueryStatus, PkgCmdIDList.CmdidVerifyActiveFileWithoutIncludes, PkgCmdIDList.CmdidContextVerifyActiveFileWithoutIncludes);
+                this.RegisterCommand(mcs, ReVerify, ReVerify_BeforeQueryStatus, PkgCmdIDList.CmdidReVerify, PkgCmdIDList.CmdidContextReVerify);
+                this.RegisterCommand(mcs, VerifyThis, CheckCodeFileAndVccNotRunning, PkgCmdIDList.CmdidVerifyThis, PkgCmdIDList.CmdidContextVerifyThis);
+                this.RegisterCommand(mcs, CustomVerify, CheckCodeFileAndVccNotRunning, PkgCmdIDList.CmdidCustomVerify, PkgCmdIDList.CmdidContextCustomVerify);
+                this.RegisterCommand(mcs, Cancel, Cancel_BeforeQueryStatus, PkgCmdIDList.CmdidCancel, PkgCmdIDList.CmdidContextCancel);
+                this.RegisterCommand(mcs, Options, null, PkgCmdIDList.CmdidOptions);
+                this.RegisterCommand(mcs, ShowErrorModel, ShowErrorModel_BeforeQueryStatus, PkgCmdIDList.CmdidShowErrorModel);
+                this.RegisterCommand(mcs, null, VerifyMenu_BeforeQueryStatus, PkgCmdIDList.CmdidVerifyMenu);
+                this.RegisterCommand(mcs, InsertForall, null, PkgCmdIDList.CmdidMathSymbolForall);
+                this.RegisterCommand(mcs, InsertExists, null, PkgCmdIDList.CmdidMathSymbolExists);
+                this.RegisterCommand(mcs, InsertLambda, null, PkgCmdIDList.CmdidMathSymbolLambda);
+                this.RegisterCommand(mcs, InsertIn, null, PkgCmdIDList.CmdidMathSymbolIn);
+                this.RegisterCommand(mcs, InsertIntersection, null, PkgCmdIDList.CmdidMathSymbolIntersection);
+                this.RegisterCommand(mcs, InsertUnion, null, PkgCmdIDList.CmdidMathSymbolUnion);
             }
         }
 

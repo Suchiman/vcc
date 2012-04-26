@@ -44,6 +44,7 @@
             {
                 return this.dimAnnotations;
             }
+            
             set
             {
                 if (this.dimAnnotations != value)
