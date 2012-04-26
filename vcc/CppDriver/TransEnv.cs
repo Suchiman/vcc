@@ -8,6 +8,7 @@ namespace Microsoft.Research.Vcc.Cpp
         public event EventHandler<ErrorReportedEventArgs> ErrorReportedEvent;
 
         private bool errorReported;
+        private readonly VccppOptions options;
 
         public override bool ErrorReported
         {
@@ -21,12 +22,18 @@ namespace Microsoft.Research.Vcc.Cpp
 
         public override int PointerSizeInBytes
         {
-            get { return 4; }
+            get { return this.options.PointerSize / 8; }
+        }
+
+        public VccppOptions VccppOptions
+        {
+          get { return this.options; }
         }
 
         public TransEnv(VccppOptions vccppOptions)
             : base(vccppOptions)
         {
+            this.options = vccppOptions;
         }
 
         public override void Error(Token tok, int code, string msg, FSharp.Core.FSharpOption<Token> related)
