@@ -1,22 +1,21 @@
-﻿using System;
-using System.Diagnostics;
-using System.Linq;
-using EnvDTE;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using System.Windows.Forms;
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.TextManager.Interop;
-using System.Collections.Generic;
-
-namespace Microsoft.Research.Vcc.VSPackage
+﻿namespace Microsoft.Research.Vcc.VSPackage
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Windows.Forms;
+    using EnvDTE;
+    using Microsoft.VisualStudio;
+    using Microsoft.VisualStudio.Shell;
+    using Microsoft.VisualStudio.Shell.Interop;
+    using Microsoft.VisualStudio.TextManager.Interop;
+
     /// <summary>
     ///     This class handles interaction with Visual Studio
     /// </summary>
     internal static class VSIntegration
     {
-        private static readonly Lazy<DTE> _dte = new Lazy<DTE>(() => (DTE)Package.GetGlobalService(typeof(DTE)));
+        private static readonly Lazy<DTE> dte = new Lazy<DTE>(() => (DTE)Package.GetGlobalService(typeof(DTE)));
 
         private static readonly Dictionary<string, List<Tuple<int, string>>> errorLines =
           new Dictionary<string, List<Tuple<int, string>>>(StringComparer.OrdinalIgnoreCase);
@@ -28,7 +27,7 @@ namespace Microsoft.Research.Vcc.VSPackage
         /// </summary>
         internal static DTE DTE
         {
-            get { return _dte.Value; }
+            get { return dte.Value; }
         }
 
         internal static void UpdateStatus(string text, bool animationOn)
@@ -39,7 +38,7 @@ namespace Microsoft.Research.Vcc.VSPackage
 
         #region Outputpane
 
-        private static readonly Lazy<IVsOutputWindowPane> _pane = new Lazy<IVsOutputWindowPane>(() =>
+        private static readonly Lazy<IVsOutputWindowPane> pane = new Lazy<IVsOutputWindowPane>(() =>
         {
             IVsOutputWindow outputwindow = Package.GetGlobalService(typeof(SVsOutputWindow)) as IVsOutputWindow;
             Guid guidVerificationPane = new Guid("{1EE5916F-A3C7-403C-89D8-58C61285688F}");
@@ -48,15 +47,14 @@ namespace Microsoft.Research.Vcc.VSPackage
             outputwindow.CreatePane(ref guidVerificationPane, "Verification", 1, 1);
             outputwindow.GetPane(ref guidVerificationPane, out result);
             return result;
-        }
-        );
+        } );
 
         /// <summary>
         ///     This object represents the Verification Outputpane.
         /// </summary>
         private static IVsOutputWindowPane VerificationOutputpane
         {
-            get { return _pane.Value; }
+            get { return pane.Value; }
         }
 
         internal static void ClearAndShowPane()
@@ -99,7 +97,7 @@ namespace Microsoft.Research.Vcc.VSPackage
         /// <returns>the name of the active document with path</returns>
         internal static string ActiveFileFullName
         {
-            get { return DTE.ActiveDocument != null ? DTE.ActiveDocument.FullName : String.Empty; }
+            get { return DTE.ActiveDocument != null ? DTE.ActiveDocument.FullName : string.Empty; }
         }
 
         internal static string StartFileName
@@ -107,7 +105,7 @@ namespace Microsoft.Research.Vcc.VSPackage
             get
             {
                 if (ActiveFileFullName.EndsWith(".h", StringComparison.OrdinalIgnoreCase)
-                  && !String.IsNullOrWhiteSpace(VSPackagePackage.Instance.OptionPage.MasterFile))
+                  && !string.IsNullOrWhiteSpace(VSPackagePackage.Instance.OptionPage.MasterFile))
                 {
                     return VSPackagePackage.Instance.OptionPage.MasterFile;
                 }
@@ -116,14 +114,13 @@ namespace Microsoft.Research.Vcc.VSPackage
             }
         }
 
-
         /// <summary>
         ///     Returns the name of the active document without path
         /// </summary>
         /// <returns>the name of the active document without path</returns>
         internal static string ActiveFileName
         {
-            get { return DTE.ActiveDocument != null ? DTE.ActiveDocument.Name : String.Empty; }
+            get { return DTE.ActiveDocument != null ? DTE.ActiveDocument.Name : string.Empty; }
         }
 
         /// <summary>
@@ -165,15 +162,17 @@ namespace Microsoft.Research.Vcc.VSPackage
         }
 
         public static event EventHandler<ErrorLinesChangedEventArgs> ErrorLinesChanged;
-
-
+        
         #endregion
 
         #region document saving
 
         internal static bool DocumentsSavedCheck(VccOptionPage options)
         {
-            if (DTE.Documents.Cast<Document>().All(document => document.Saved)) return true;
+            if (DTE.Documents.Cast<Document>().All(document => document.Saved)) 
+            {
+                return true;
+            }
 
             if (options.SaveMode == SaveMode.Automatically)
             {
@@ -203,7 +202,6 @@ namespace Microsoft.Research.Vcc.VSPackage
 
         // this just helps with underlining just the code, no preceding whitespaces or comments
         // private static readonly Regex CodeLine = new Regex(@"(?<whitespaces>(\s*))(?<code>.*?)(?<comment>\s*(//|/\*).*)?$");
-
         internal static void ClearErrorsAndMarkers()
         {
             errorListProvider.Tasks.Clear();
@@ -255,11 +253,14 @@ namespace Microsoft.Research.Vcc.VSPackage
             }
 
             errorLinesInDocument.Add(Tuple.Create(line, text));
-            if (!text.StartsWith("(related", StringComparison.Ordinal)) linesWithModels.Add(Tuple.Create(document.ToUpperInvariant(), line));
+            if (!text.StartsWith("(related", StringComparison.Ordinal))
+            {
+                linesWithModels.Add(Tuple.Create(document.ToUpperInvariant(), line));
+            }
+
             OnErrorLinesChanged(document);
         }
-
-
+        
         internal static void errorTask_Navigate(object sender, EventArgs e)
         {
             if (sender != null)
@@ -274,12 +275,14 @@ namespace Microsoft.Research.Vcc.VSPackage
                     {
                         return;
                     }
+
                     IVsWindowFrame windowFrame;
                     VisualStudio.OLE.Interop.IServiceProvider serviceProvider;
                     IVsUIHierarchy hierachy;
                     uint itemid;
                     Guid logicalView = VSConstants.LOGVIEWID_Code;
-                    uiShellOpenDocument.OpenDocumentViaProject(errorTask.Document,
+                    uiShellOpenDocument.OpenDocumentViaProject(
+                                                              errorTask.Document,
                                                                ref logicalView,
                                                                out serviceProvider,
                                                                out hierachy,
@@ -289,6 +292,7 @@ namespace Microsoft.Research.Vcc.VSPackage
                     {
                         return;
                     }
+
                     object docData;
                     windowFrame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out docData);
 
@@ -315,6 +319,7 @@ namespace Microsoft.Research.Vcc.VSPackage
                     {
                         return;
                     }
+
                     textManager.NavigateToLineAndColumn(buffer,
                                                         ref logicalView,
                                                         errorTask.Line,

@@ -1,19 +1,19 @@
-﻿using System;
-
-namespace Microsoft.Research.Vcc.VSPackage
+﻿namespace Microsoft.Research.Vcc.VSPackage
 {
-  class ErrorLinesChangedEventArgs : EventArgs
-  {
-    private readonly string fileName;
+    using System;
 
-    public ErrorLinesChangedEventArgs(string fileName)
+    internal class ErrorLinesChangedEventArgs : EventArgs
     {
-      this.fileName = fileName;
-    }
+        private readonly string fileName;
 
-    public string FileName
-    {
-      get { return this.fileName; }
+        public ErrorLinesChangedEventArgs(string fileName)
+        {
+            this.fileName = fileName;
+        }
+
+        public string FileName
+        {
+            get { return this.fileName; }
+        }
     }
-  }
 }

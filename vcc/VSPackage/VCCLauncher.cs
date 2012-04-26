@@ -1,13 +1,13 @@
 ﻿namespace Microsoft.Research.Vcc.VSPackage
 {
     using System;
+    using System.Globalization;
     using System.IO;
     using System.Reflection;
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Windows.Forms;
     using Microsoft.Win32;
-    using System.Globalization;
 
     /// <summary>
     ///     This class is used to start VCC.exe with the correct parameters and to get the results from VCC.exe
@@ -18,10 +18,40 @@
         private static NotifyIcon notifyIcon;
         private static readonly Regex VCCErrorRegEx =
             new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)(\s)?:\s(((error\s(.*?):)\s(?<errormessage>(.*)))|(?<errormessage>\(Location of symbol related to previous error.\)))");
+        
         private static readonly Regex VCCWarningRegEx =
             new Regex(@"(?<path>(.*?))\(((?<line>([0-9]+))|(?<line>([0-9]+)),(?<column>([0-9]+)))\)(\s)?:(\swarning\s(.*?):)\s(?<errormessage>(.*))");
 
         internal static bool VCCRunning { get; private set; }
+
+        /// <summary>
+        ///     This string contains the Path of the Vcc-Executable.
+        ///     User Input in Tools/Options/Vcc > Registry Entry > "vcc.exe"
+        /// </summary>
+        private static string VccPath
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(VSPackagePackage.Instance.OptionPage.VccExecutableFolder))
+                {
+                    using (var key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft Research\Vcc", false))
+                    {
+                        if (key != null)
+                        {
+                            return key.GetValue("vccExecutablePath", "vcc.exe") as string;
+                        }
+                        else
+                        {
+                            return "vcc.exe";
+                        }
+                    }
+                }
+                else
+                {
+                    return Path.Combine(VSPackagePackage.Instance.OptionPage.VccExecutableFolder, "vcc.exe");
+                }
+            }
+        }
 
         internal static string GetVccVersion()
         {
@@ -29,52 +59,10 @@
             return assembly.GetName().Version.ToString();
         }
 
-        private static string GetVSCOMNTOOLS()
-        {
-            string Version = VSIntegration.DTE.Version;      //returns something like 8.0
-            string CleanVersionTag = Version.Replace(".", "");
-            string VSDir = Environment.GetEnvironmentVariable(String.Format(CultureInfo.InvariantCulture, "VS{0}COMNTOOLS", CleanVersionTag));
-            return VSDir;
-        }
-
-        private static string GetCLPath(string ActivePlatform)
-        {
-            // TODO: remove this first part when everyone switches to dev11 and Ext\VS11 is removed
-            string cl11 = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "..\\..\\..\\..\\..\\..\\..\\Ext\\VS11\\cl.exe"));
-            if (File.Exists(cl11))
-            {
-                return cl11;
-            }
-
-            string vsToolDir = GetVSCOMNTOOLS();
-            if (!String.IsNullOrEmpty(vsToolDir))
-            {
-                string CL = (ActivePlatform == "x64") ? "VC\\bin\\x86_amd64\\cl.exe" : "VC\\bin\\cl.exe";
-                return vsToolDir.ToUpperInvariant().Replace("COMMON7\\TOOLS\\", CL);
-            }
-            else return null;
-        }
-
-        private static string GetArgumentsFromOptions(VccOptionPage options, bool respectCustomFlag)
-        {
-            string result = !respectCustomFlag || options.UseAdditionalCommandlineArguments ?
-                options.AdditionalCommandlineArguments :
-                string.Empty;
-
-            if (options.ShowZ3Inspector)
-            {
-                result += " /i";
-            }
-
-            result += " /bvd";
-
-            return result;
-        }
-
         internal static void VerifyThis(string filename, string currentFile, int line, VccOptionPage options)
         {
             string addArguments = GetArgumentsFromOptions(options, true);
-            addArguments += String.Format(CultureInfo.InvariantCulture, " /loc:\"{0}\":{1} ", currentFile, line);
+            addArguments += string.Format(CultureInfo.InvariantCulture, " /loc:\"{0}\":{1} ", currentFile, line);
             LaunchVCC(filename, addArguments);
         }
 
@@ -100,48 +88,6 @@
             string addArguments = GetArgumentsFromOptions(options, true);
             addArguments += " /ii:" + currentFile;
             LaunchVCC(filename, addArguments);
-        }
-
-        /// <summary>
-        ///     This string contains the Path of the Vcc-Executable.
-        ///     User Input in Tools/Options/Vcc > Registry Entry > "vcc.exe"
-        /// </summary>
-        private static string VccPath
-        {
-            get
-            {
-                if (String.IsNullOrWhiteSpace(VSPackagePackage.Instance.OptionPage.VccExecutableFolder))
-                {
-                    using (var key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft Research\Vcc", false))
-                    {
-                        if (key != null)
-                        {
-                            return key.GetValue("vccExecutablePath", "vcc.exe") as string;
-                        }
-                        else
-                        {
-                            return "vcc.exe";
-                        }
-                    }
-                }
-                else
-                {
-                    return Path.Combine(VSPackagePackage.Instance.OptionPage.VccExecutableFolder, "vcc.exe");
-                }
-            }
-        }
-
-        private static void StartVccThread(String filename, string clPath, string clArgs, string vccargs, bool keepTemp)
-        {
-            vccThread = new Thread(() =>
-            {
-                VCCRunning = true;
-                int exitCode = VccppMain.ProcessFile(filename, clPath, clArgs, vccargs, keepTemp);
-                vccProcess_Exited(exitCode);
-            });
-
-            vccThread.Start();
-            vccThread.Join(); //TODO: fix output window text output when threads are not joined to unblock UI. e.g. using invoking, but it seems not to be available for the pane.
         }
 
         internal static void LaunchVCC(string filename, string vccargs)
@@ -192,12 +138,71 @@
                     vccThread.Abort();
                 }
                 catch
-                { }
+                {
+                }
                 finally
                 {
                     vccProcess_Exited(-1);
                 }
             }
+        }
+
+        private static string GetVSCOMNTOOLS()
+        {
+            string Version = VSIntegration.DTE.Version;      // returns something like 8.0
+            string CleanVersionTag = Version.Replace(".", string.Empty);
+            string VSDir = Environment.GetEnvironmentVariable(string.Format(CultureInfo.InvariantCulture, "VS{0}COMNTOOLS", CleanVersionTag));
+            return VSDir;
+        }
+
+        private static string GetCLPath(string ActivePlatform)
+        {
+            // TODO: remove this first part when everyone switches to dev11 and Ext\VS11 is removed
+            string cl11 = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "..\\..\\..\\..\\..\\..\\..\\Ext\\VS11\\cl.exe"));
+            if (File.Exists(cl11))
+            {
+                return cl11;
+            }
+
+            string vsToolDir = GetVSCOMNTOOLS();
+            if (!string.IsNullOrEmpty(vsToolDir))
+            {
+                string CL = (ActivePlatform == "x64") ? "VC\\bin\\x86_amd64\\cl.exe" : "VC\\bin\\cl.exe";
+                return vsToolDir.ToUpperInvariant().Replace("COMMON7\\TOOLS\\", CL);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private static string GetArgumentsFromOptions(VccOptionPage options, bool respectCustomFlag)
+        {
+            string result = !respectCustomFlag || options.UseAdditionalCommandlineArguments ?
+                options.AdditionalCommandlineArguments :
+                string.Empty;
+
+            if (options.ShowZ3Inspector)
+            {
+                result += " /i";
+            }
+
+            result += " /bvd";
+
+            return result;
+        }
+
+        private static void StartVccThread(string filename, string clPath, string clArgs, string vccargs, bool keepTemp)
+        {
+            vccThread = new Thread(() =>
+            {
+                VCCRunning = true;
+                int exitCode = VccppMain.ProcessFile(filename, clPath, clArgs, vccargs, keepTemp);
+                vccProcess_Exited(exitCode);
+            });
+
+            vccThread.Start();
+            vccThread.Join(); // TODO: fix output window text output when threads are not joined to unblock UI. e.g. using invoking, but it seems not to be available for the pane.
         }
 
         private static void vccProcess_Exited(int exitCode)
@@ -255,7 +260,7 @@
         private static void vccProcess_OutputDataReceived(object sender, VccppEventArgs e)
         {
             //// Write Output from VCC to Verification Outputpane
-            if (e != null && !String.IsNullOrEmpty(e.Message))
+            if (e != null && !string.IsNullOrEmpty(e.Message))
             {
                 VSIntegration.WriteToPane(e.Message);
 
@@ -266,7 +271,7 @@
                     VSIntegration.AddErrorToErrorList(
                       match.Groups["path"].Value,
                       match.Groups["errormessage"].Value,
-                      Int32.Parse(match.Groups["line"].Value, CultureInfo.InvariantCulture),
+                      int.Parse(match.Groups["line"].Value, CultureInfo.InvariantCulture),
                       VisualStudio.Shell.TaskErrorCategory.Error);
                 }
                 else if ((match = VCCWarningRegEx.Match(e.Message)).Success)
@@ -275,7 +280,7 @@
                     VSIntegration.AddErrorToErrorList(
                       match.Groups["path"].Value,
                       match.Groups["errormessage"].Value,
-                      Int32.Parse(match.Groups["line"].Value, CultureInfo.InvariantCulture),
+                      int.Parse(match.Groups["line"].Value, CultureInfo.InvariantCulture),
                       VisualStudio.Shell.TaskErrorCategory.Warning);
                 }
             }
