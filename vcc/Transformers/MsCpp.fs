@@ -829,6 +829,12 @@ namespace Microsoft.Research.Vcc
         | Prim(ec, Op(op, Checked), args) -> Some(Prim(ec, Op(op, Unchecked), List.map self args))
         | _ -> None
 
+      let (|StringLiteral|_|) = function
+        | Macro(_, "string", [UserData(_, (:? string as str))])
+        | Cast(_, _, Macro(_, "string", [UserData(_, (:? string as str))]))
+        | Macro(_, "implicit_cast", [Cast(_, _, Macro(_, "string", [UserData(_, (:? string as str))]))]) -> Some str
+        | _ -> None
+
       function
         | Call(ec, {FriendlyName = "VCC::Assert"}, [], [arg]) -> 
           Some(Assert(ec, self arg, []))
@@ -840,9 +846,14 @@ namespace Microsoft.Research.Vcc
           Some(Old(ec, Macro({ec with Type = Type.MathState}, "prestate", []), self arg))
         | Call(ec, {FriendlyName = StartsWith "VCC::Unchecked"}, [], [arg]) ->
           Some((self arg).SelfMap(toUnchecked))
+        | Call(ec, { FriendlyName = StartsWith "VCC::Labeled"}, [], [StringLiteral(str); expr]) ->
+          Some(Macro(ec, "lbl_" + str, [Expr.Bogus; self expr]))
         | Call(ec, {FriendlyName = SpecialCallTo(tgt)}, [], args)  ->
           Some(Macro(ec, tgt, List.map self args))
         | _ -> None
+
+    // ============================================================================================================    
+
 
     // ============================================================================================================    
 
@@ -1054,8 +1065,6 @@ namespace Microsoft.Research.Vcc
         | Macro(ec, "do", _) -> helper.Oops(ec.Token, "unexpected do-while loop structure"); false
         | Macro(ec, "while", [ Macro(lec, "loop_contract", loopContract); cond; Block(bec, stmts, None)]) -> true
         | Macro(ec, "while", _) -> helper.Oops(ec.Token, "unexpected while loop structure"); false
-        | Call(ec, { FriendlyName = StartsWith "VCC::CreateGhost" }, [], [_]) -> true
-        | Call(ec, { FriendlyName = StartsWith "VCC::CreateGhost" }, _, _) -> helper.Oops(ec.Token, "unexpected ghost or out argument structure"); false
         | _ -> true
 
       decls |> deepVisitExpressions checkLoopStructure
