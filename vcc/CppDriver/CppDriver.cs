@@ -88,10 +88,10 @@ namespace Microsoft.Research.Vcc.Cpp
             return BoogieAST.trProgram(boogieDecls);
         }
 
-        private void InstallBoogieOptions()
+        private void InstallBoogieOptions(bool bvLemma, bool skipSmoke)
         {
-            var options = new[]
-                      {
+            var options = new List<string> 
+            {
                         "/errorLimit:10",
                         "/typeEncoding:m",
                         "/proverMemoryLimit:0",
@@ -100,15 +100,28 @@ namespace Microsoft.Research.Vcc.Cpp
                         "/prover:SMTLib",
                         "/z3opt:/memory:300",
                         "/z3opt:QI_EAGER_THRESHOLD=1000",
-                        "/z3opt:CASE_SPLIT=5"
-                      };
-          
-            var clo = new CommandLineOptions();
-            bool parseRes = clo.Parse(options);
-            System.Diagnostics.Debug.Assert(parseRes, "Invalid preset Boogie parameters.");
-            parseRes = clo.Parse(new List<string>(this.env.VccppOptions.BoogieOptions).ToArray());
-            System.Diagnostics.Debug.Assert(parseRes, "Invalid user Boogie parameters.");
+            };
 
+            options.AddRange(this.env.VccppOptions.BoogieOptions);
+
+            if (bvLemma)
+            {
+                options.Add("/proverOpt:OPTIMIZE_FOR_BV=true");
+                options.Add("/z3opt:CASE_SPLIT=1");
+            }
+            else
+            {
+                options.Add("/z3opt:CASE_SPLIT=5");
+            }
+
+            if (skipSmoke)
+            {
+                options.RemoveAll(opt => opt.StartsWith("/smoke", StringComparison.OrdinalIgnoreCase));
+            }
+
+            var clo = new CommandLineOptions();
+            bool parseRes = clo.Parse(options.ToArray());
+            System.Diagnostics.Debug.Assert(parseRes, "Invalid Boogie parameters.");
             clo.RunningBoogieFromCommandLine = false;
             CommandLineOptions.Install(clo);
         }
@@ -149,6 +162,22 @@ namespace Microsoft.Research.Vcc.Cpp
             return true;
         }
 
+        private static string GetStringAttrValue(Implementation impl, string attrName)
+        {
+            return impl.FindStringAttribute(attrName) ?? impl.Proc.FindStringAttribute(attrName);
+        }
+
+        private static bool HasBvLemmaCheckAttr(Implementation impl)
+        {
+            return GetStringAttrValue(impl, "vcc_bv_lemma_check") != null;
+        }
+
+        private static bool HasSkipSmokeAttr(Implementation impl)
+        {
+            return GetStringAttrValue(impl, "vcc_skip_smoke") != null;
+        }
+
+
         public bool Verify(FSharpList<CAST.Top> decls, string reference, bool dumpAstBeforeTransformations = false)
         {
             if (dumpAstBeforeTransformations)
@@ -182,7 +211,7 @@ namespace Microsoft.Research.Vcc.Cpp
                 verifierInput.TopLevelDeclarations.AddRange(prelude.TopLevelDeclarations);
                 verifierInput.TopLevelDeclarations.AddRange(program.TopLevelDeclarations);
 
-                InstallBoogieOptions();
+                InstallBoogieOptions(false, false);
 
                 // prepare for verification
                 if (verifierInput.Resolve(this.env) > 0) return false;
@@ -196,6 +225,7 @@ namespace Microsoft.Research.Vcc.Cpp
                     var impl = decl as Implementation;
                     if (impl != null)
                     {
+                        InstallBoogieOptions(HasBvLemmaCheckAttr(impl), HasSkipSmokeAttr(impl));
                         var vcGen = new VCGen(verifierInput, null, false);
                         errorReporter.StartFunction(impl.Name);
                         vcGen.VerifyImplementation(impl, program, errorReporter);
