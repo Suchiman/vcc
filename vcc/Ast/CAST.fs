@@ -120,6 +120,7 @@ module Microsoft.Research.Vcc.CAST
     | Spec =                  0x08
     | Virtual =               0x10
     | AcceptsExtraArguments = 0x20
+    | Ctor =                  0x40
 
   let PointerSizeInBytes = ref 8
 
@@ -768,6 +769,8 @@ module Microsoft.Research.Vcc.CAST
     member this.IsVolatile = this.Flags.HasFlag(Flags.Volatile)
 
     member this.IsVirtual = this.Flags.HasFlag(Flags.Virtual)
+
+    member this.IsCtor = this.Flags.HasFlag(Flags.Ctor)
 
     member this.InParameters = [ for p in this.Parameters do if p.Kind <> VarKind.OutParameter then yield p ]
     
