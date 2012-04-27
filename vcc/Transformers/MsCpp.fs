@@ -211,7 +211,7 @@ namespace Microsoft.Research.Vcc
 
     let rewriteMaps self =
 
-      // rewrite map accesses and assignments
+      // rewrite map accesses, assignments, and initialization
 
       let (|MapGet|_|) = function
         | Deref(ec, Call(_, { FriendlyName = n }, [], [Macro(_, "&", [m]); idx])) 
@@ -309,6 +309,11 @@ namespace Microsoft.Research.Vcc
 
       | Macro(_, "comma", [Macro(_, "=", [Ref(_, v); expr]); Ref(_, v')]) when v.Name = v'.Name ->
         // TODO: compare variable directly and not by name once the AST convertor re-uses variables for ALLOTEMPS
+        Some(self expr)
+
+      // remove the structure that is created for conversion from pointers to Object
+
+      | Macro(_, "&", [Deref(_, Call(_, {FriendlyName = "VCC::Object::Object"}, [], [Macro(_, "currentobject", []); expr]))]) -> 
         Some(self expr)
 
       | _ -> None
@@ -1212,6 +1217,25 @@ namespace Microsoft.Research.Vcc
       
     // ============================================================================================================    
 
+    let removeInitOfBuiltinTypes self = 
+
+      let builtinTypes = specialTypesMap |> Map.toSeq |> Seq.map fst |> Set.ofSeq |> Set.add "VCC::Map"
+
+      let (|IsBuiltinTypeCtor|_|) = function
+        | Call(_, fn, [], args) when fn.IsCtor && Set.contains (nongeneric fn.FriendlyName) builtinTypes -> Some args
+        | _ -> None
+        
+      function
+        | Macro(ec, "init", [lhs; AddrOf(_, Deref(_, IsBuiltinTypeCtor(args)))]) ->
+          match args with
+            | [] -> die()
+            | [_] ->Some(Skip(ec))
+            | [_; AddrOf(_, rhs)] -> Some(Macro(ec, "init", [lhs; self rhs]))
+            | _ -> None
+        | _ -> None
+
+    // ============================================================================================================    
+
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
     helper.AddTransformer ("cpp-check-ast-structure", TransHelper.Decl checkAstStructure)
@@ -1219,6 +1243,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-remove-temps", TransHelper.Decl removeTemps)
     helper.AddTransformer ("cpp-globals-init", TransHelper.Decl rewriteGlobalsInitialization)
     helper.AddTransformer ("cpp-special-args", TransHelper.Decl specialArgumentHandling)
+    helper.AddTransformer ("cpp-builtin-type-init", TransHelper.Expr removeInitOfBuiltinTypes)
     helper.AddTransformer ("cpp-vararg-casts", TransHelper.Expr removeVarargCasts)
     helper.AddTransformer ("cpp-special-types", TransHelper.Decl rewriteSpecialTypes)
     helper.AddTransformer ("cpp-set", TransHelper.Expr rewriteSets)
