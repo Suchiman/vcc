@@ -877,6 +877,13 @@ namespace Microsoft.Research.Vcc
           Some((self arg).SelfMap(toUnchecked))
         | Call(ec, { FriendlyName = StartsWith "VCC::Labeled"}, [], [StringLiteral(str); expr]) ->
           Some(Macro(ec, "lbl_" + str, [Expr.Bogus; self expr]))
+        | Call(ec, ({ FriendlyName = StartsWith "VCC::Is"} as fn), [], [arg]) ->
+          match fn.Body with 
+            | Some (Block(_, VarDecl(_, v, _) :: _, _)) -> 
+              Some(Macro(ec, "_vcc_is", [self arg; typeExpr v.Type.Deref]))
+            | _ -> 
+              helper.Oops(ec.Token, "Unexpected body structure of '" + fn.Name + "'")
+              None
         | Call(ec, {FriendlyName = SpecialCallTo(tgt)}, [], args)  ->
           Some(Macro(ec, tgt, List.map self args))
         | _ -> None
