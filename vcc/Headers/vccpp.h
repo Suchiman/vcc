@@ -228,7 +228,7 @@ namespace VCC
     template<class T> bool Inv2(T);
     template<class T> bool Inv2s(State, State, T);
     template<class T> bool Inrangephysptr(T);
-    template<class T, class V> bool Is(V);
+    template<class T, class V> bool Is(V) { T *p; return true; } // dummy body to allow retrieval of instance type T
     template<class T> bool Isarray(T, size_t);
     template<class T> bool Isghost(T);
     void IsolateProof();
