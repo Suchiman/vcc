@@ -67,6 +67,8 @@ namespace Microsoft.Research.Vcc.Cpp
 
         public override void Warning(Token tok, int code, string msg, FSharp.Core.FSharpOption<Token> related)
         {
+            if (tok.SuppressWarning(code)) return;
+
             EventHandler<ErrorReportedEventArgs> temp = ErrorReportedEvent;
             if (temp != null)
             {
