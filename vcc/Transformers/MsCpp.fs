@@ -328,9 +328,11 @@ namespace Microsoft.Research.Vcc
 
       // remove the structure that is created for conversion and copy constructors for built-in verification types
 
-      | AddrOf(_, Deref(_, Call(_, fn, [], [Macro(_, "currentobject", []); expr]))) 
+      | AddrOf(ec, Deref(_, Call(_, fn, [], [Macro(_, "currentobject", []); expr]))) 
           when fn.IsCtor && (Set.contains (fn.FriendlyName) specialTypeCtors || nongeneric fn.FriendlyName = "VCC::Map") ->
-        Some(self expr)
+        match expr with
+          | AddrOf(ecExpr, expr') when ec.Type = ecExpr.Type -> Some(self expr')
+          | _ -> Some(self expr)
 
       | _ -> None
 
@@ -559,6 +561,7 @@ namespace Microsoft.Research.Vcc
         let findContracts' (bc:BlockContract, invs) = function
           | Call(ec, {FriendlyName = StartsWith "VCC::Requires"}, [], [arg]) ->  { bc with Requires = arg :: bc.Requires }, invs
           | Call(ec, {FriendlyName = StartsWith "VCC::Ensures"}, [], [arg]) ->   { bc with Ensures = arg :: bc.Ensures }, invs
+          | Call(ec, {FriendlyName = StartsWith "VCC::Returns"}, [], [arg]) as returns ->   { bc with Ensures = returns :: bc.Ensures}, invs
           | Call(ec, {FriendlyName = StartsWith "VCC::Reads"}, [], args) ->      { bc with Reads = args @ bc.Reads }, invs
           | Call(ec, {FriendlyName = StartsWith "VCC::Writes"}, [], args) ->     { bc with Writes = args @ bc.Writes }, invs
           | Call(ec, {FriendlyName = StartsWith "VCC::Decreases"}, [], args) ->  { bc with Decreases = args @ bc.Decreases }, invs
@@ -580,6 +583,7 @@ namespace Microsoft.Research.Vcc
         let isNoContract = function
           | Call(ec, {FriendlyName = StartsWith "VCC::Requires"}, [], [_])         
           | Call(ec, {FriendlyName = StartsWith "VCC::Ensures"}, [], [_])          
+          | Call(ec, {FriendlyName = StartsWith "VCC::Returns"}, [], [_])
           | Call(ec, {FriendlyName = StartsWith "VCC::Reads"}, [], _) 
           | Call(ec, {FriendlyName = StartsWith "VCC::Writes"}, [], _)
           | Call(ec, {FriendlyName = StartsWith "VCC::Decreases"}, [], _) 
@@ -863,9 +867,11 @@ namespace Microsoft.Research.Vcc
           Some(Assume(ec, self arg))
         | Call(ec, {FriendlyName = StartsWith "VCC::Result"}, [], []) ->
           Some(Result(ec))
+        | Call(ec, {FriendlyName = StartsWith "VCC::Returns"}, [], [expr]) ->
+          Some(Expr.Prim({ec with Type = Type.Bool}, Op("==", CheckedStatus.Unchecked), [Result(ec); self expr]))
         | Call(ec, {FriendlyName = StartsWith "VCC::Old"}, [], [arg]) ->
           Some(Old(ec, Macro({ec with Type = Type.MathState}, "prestate", []), self arg))
-        | Call(ec, {FriendlyName = NonGenericIs "VCC::At" }, [], [AddrOf(_, state); expr]) ->
+        | Call(ec, {FriendlyName = NonGenericIs "VCC::At" }, [], [state; expr]) ->
           Some(Old(ec, self state, self expr))
         | Call(ec, {FriendlyName = StartsWith "VCC::Unchecked"}, [], [arg]) ->
           Some((self arg).SelfMap(toUnchecked))
