@@ -66,12 +66,14 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Mutable",             "_vcc_mutable"
                                                     "VCC::Mutablearray",        "_vcc_is_mutable_array"
                                                     "VCC::Notshared",           "_vcc_not_shared"
+                                                    "VCC::Now",                 "_vcc_current_state"
                                                     "VCC::Objectroot",          "_vcc_is_object_root"
                                                     "VCC::Owner",               "_vcc_owner"
                                                     "VCC::Owns",                "_vcc_owns"
                                                     "VCC::Programentrypoint",   "_vcc_program_entry_point"
                                                     "VCC::ReadsHavoc",          "_vcc_reads_havoc"
                                                     "VCC::Span",                "_vcc_span"
+                                                    "VCC::Starthere",           "_vcc_start_here"
                                                     "VCC::Threadlocal",         "_vcc_thread_local2"
                                                     "VCC::Threadlocalarray",    "_vcc_is_thread_local_array"
                                                     "VCC::Union",               "_vcc_set_union"
@@ -121,6 +123,17 @@ namespace Microsoft.Research.Vcc
                                       "VCC::State",     Type.MathState
                                     ] 
 
+  let specialTypeNames = specialTypesMap |> Map.toSeq |> Seq.map fst |> Set.ofSeq 
+
+  let specialTypeCtors = Set.ofList [
+                                      "VCC::Claim::Claim"
+                                      "VCC::Integer::Integer"
+                                      "VCC::Natural::Natural"
+                                      "VCC::Object::Object"
+                                      "VCC::Set::Set"
+                                      "VCC::State::State"
+                                    ]
+
   let sanitizeFullName (fullName : string) =
     let s = new System.Text.StringBuilder(fullName)
     s.Replace(' ', '#') |> ignore
@@ -147,6 +160,8 @@ namespace Microsoft.Research.Vcc
   let basename (name:string) =
     let startPos = name.LastIndexOf("::")
     if startPos = -1 then name else name.Substring(startPos + 2)
+
+  let (|NonGenericIs|_|) name0 name1 = if nongeneric name1 = name0 then Some() else None
 
   let (|SpecialCallTo|_|) name = Map.tryFind (nongeneric name) specialFunctionMap
 
@@ -301,7 +316,7 @@ namespace Microsoft.Research.Vcc
 
       // also, when passing structs, extra temporary variables are introduced, which we als remove here
 
-      | Macro(_, "&", [Deref(ec, Call(_, fn, [], args))])
+      | AddrOf(_, Deref(ec, Call(_, fn, [], args)))
       | Deref(ec, Call(_, fn, [], args))
       | Macro(_, "implicit_cast", [Cast(_, _, Deref(ec, Call(_, fn, [], args)))]) 
         when Set.contains (nongeneric fn.FriendlyName) functionsReturningsClassValues ->
@@ -311,9 +326,10 @@ namespace Microsoft.Research.Vcc
         // TODO: compare variable directly and not by name once the AST convertor re-uses variables for ALLOTEMPS
         Some(self expr)
 
-      // remove the structure that is created for conversion from pointers to Object
+      // remove the structure that is created for conversion and copy constructors for built-in verification types
 
-      | Macro(_, "&", [Deref(_, Call(_, {FriendlyName = "VCC::Object::Object"}, [], [Macro(_, "currentobject", []); expr]))]) -> 
+      | AddrOf(_, Deref(_, Call(_, fn, [], [Macro(_, "currentobject", []); expr]))) 
+          when fn.IsCtor && (Set.contains (fn.FriendlyName) specialTypeCtors || nongeneric fn.FriendlyName = "VCC::Map") ->
         Some(self expr)
 
       | _ -> None
@@ -849,6 +865,8 @@ namespace Microsoft.Research.Vcc
           Some(Result(ec))
         | Call(ec, {FriendlyName = StartsWith "VCC::Old"}, [], [arg]) ->
           Some(Old(ec, Macro({ec with Type = Type.MathState}, "prestate", []), self arg))
+        | Call(ec, {FriendlyName = NonGenericIs "VCC::At" }, [], [AddrOf(_, state); expr]) ->
+          Some(Old(ec, self state, self expr))
         | Call(ec, {FriendlyName = StartsWith "VCC::Unchecked"}, [], [arg]) ->
           Some((self arg).SelfMap(toUnchecked))
         | Call(ec, { FriendlyName = StartsWith "VCC::Labeled"}, [], [StringLiteral(str); expr]) ->
@@ -1217,21 +1235,22 @@ namespace Microsoft.Research.Vcc
       
     // ============================================================================================================    
 
-    let removeInitOfBuiltinTypes self = 
-
-      let builtinTypes = specialTypesMap |> Map.toSeq |> Seq.map fst |> Set.ofSeq |> Set.add "VCC::Map"
+    let removeInitOrAssignOfBuiltinTypes self = 
 
       let (|IsBuiltinTypeCtor|_|) = function
-        | Call(_, fn, [], args) when fn.IsCtor && Set.contains (nongeneric fn.FriendlyName) builtinTypes -> Some args
+        | Call(_, fn, [], args) when fn.IsCtor && (Set.contains (fn.FriendlyName) specialTypeCtors || nongeneric fn.FriendlyName = "VCC::Map") -> Some args
         | _ -> None
         
       function
         | Macro(ec, "init", [lhs; AddrOf(_, Deref(_, IsBuiltinTypeCtor(args)))]) ->
           match args with
             | [] -> die()
-            | [_] ->Some(Skip(ec))
+            | [_] -> Some(Skip(ec))
             | [_; AddrOf(_, rhs)] -> Some(Macro(ec, "init", [lhs; self rhs]))
             | _ -> None
+        | Deref(ec, Call(_, {FriendlyName = EndsWith "operator="; Parent = Some td}, [], [AddrOf(_, lhs); rhs])) 
+            when Set.contains td.Name specialTypeNames ->
+          Some(Macro(ec, "=", [self lhs; self rhs]))
         | _ -> None
 
     // ============================================================================================================    
@@ -1243,7 +1262,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-remove-temps", TransHelper.Decl removeTemps)
     helper.AddTransformer ("cpp-globals-init", TransHelper.Decl rewriteGlobalsInitialization)
     helper.AddTransformer ("cpp-special-args", TransHelper.Decl specialArgumentHandling)
-    helper.AddTransformer ("cpp-builtin-type-init", TransHelper.Expr removeInitOfBuiltinTypes)
+    helper.AddTransformer ("cpp-builtin-type-init", TransHelper.Expr removeInitOrAssignOfBuiltinTypes)
     helper.AddTransformer ("cpp-vararg-casts", TransHelper.Expr removeVarargCasts)
     helper.AddTransformer ("cpp-special-types", TransHelper.Decl rewriteSpecialTypes)
     helper.AddTransformer ("cpp-set", TransHelper.Expr rewriteSets)
