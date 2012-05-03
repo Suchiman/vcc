@@ -967,6 +967,30 @@ namespace Microsoft.Research.Vcc
           Top.TypeDecl(td)
         | d -> d
         
+      // references to spec fields in invariants without qualifying 'this' are represented as references to 
+      // a global variable; here, we rewrite them into the proper field access
+
+      let fixupReferencesInInvariants = function
+        | Top.TypeDecl(td) -> 
+          let fixupReference _ = function
+            | Ref(ec, ({ Kind = VarKind.Global } as v)) ->
+              let idx = v.Name.LastIndexOf("::")
+              if idx > 0 && not (v.Name.StartsWith("VCC::")) then
+                let fieldName = v.Name.Substring(idx + 2)
+                match List.tryFind (fun (f : Field) -> f.Name = fieldName) td.Fields with
+                  | Some fld ->
+                    if (not fld.IsSpec) then 
+                      helper.Oops(ec.Token, "unexpected reference to static field '" + v.Name + "' in invariant")
+                    Some(Deref(ec, Dot({ec with Type = Type.MkPtr(fld.Type, true)}, This({ec with Type = Type.MkPtrToStruct(td)}), fld)))
+                  | None ->
+                    helper.Oops(ec.Token, "unexpected reference to unknown field '" + v.Name + "' in invariant")
+                    None
+              else None
+            | _ -> None
+          td.Invariants <- List.map (fun (e:Expr) -> e.SelfMap(fixupReference)) td.Invariants
+          Top.TypeDecl(td)
+        | d -> d
+
       // spec blocks in code are marked by an initial local variable decl for a variable named VCCBeginGhost and
       // ended by a similar declaration of a local with name VCCEndGhost; take everything between two such
       // declarations and make them 'spec'
@@ -1057,6 +1081,7 @@ namespace Microsoft.Research.Vcc
 
       decls 
       |> List.map collectGhostFields
+      |> List.map fixupReferencesInInvariants
       |> deepMapExpressions collectGhostStmts 
       |> deepMapExpressions substVars
       |> deepMapExpressions removeHelperInstances
