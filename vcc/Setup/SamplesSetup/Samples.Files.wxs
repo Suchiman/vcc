@@ -488,6 +488,7 @@
         <File Id="fil95C08D3006921E2F337892168DB1272F00FC6824" Name="blobify-03" />
         <File Id="fil3808B4AF3AAD19BCD95A44549C916D93F0E3742E" Name="blobify-04" />
         <File Id="fil8B4ADB86A04866E98279F41522173DDA91EE4CA9" Name="blobify-05" />
+        <File Id="filA407DAB24D978BC86D40F0C9B666138EF40F2882" Name="blobify-06" />
         <File Id="filD0A7637C112FB0E72EC13F4A6B1DEEEBBC7F5682" Name="blobify-ghost-assignment-00" />
         <File Id="fil49BCF4AA8A37C2F55A4D03935EE7A4B7A5EFCEA1" Name="blobify-ghost-assignment-01" />
         <File Id="fil52492D1B8842CF23C2689D6ABF89A83B587460B3" Name="blobify-wrap-blobs" />
