@@ -100,8 +100,8 @@ namespace Microsoft.Research.Vcc
         match top with
           | Top.FunctionDecl { Name = ( "malloc" | "free" ) } -> ()
           | t -> if used.Add t then walkTop cb t
-      | (false, _) ->
-        helper.Panic (System.String.Format ("pruning: cannot find {0} : {1}", o, o.GetType()))
+      | (false, _) -> ()
+        
 
     let fnByName = new Dict<_,_>()
     for d in decls do
