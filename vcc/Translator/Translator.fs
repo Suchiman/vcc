@@ -394,6 +394,7 @@ namespace Microsoft.Research.Vcc
                 match e'.Type with
                   | C.Type.Bool ->
                     bCall "$bool_to_int" [self e']
+                  | C.Type.Volatile(C.Type.Integer _)
                   | C.Type.Integer _
                   | C.Type.MathInteger _ -> self e'
                   | C.Type.ObjectT
