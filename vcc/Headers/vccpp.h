@@ -35,20 +35,9 @@ namespace VCC
       bool operator!=(Thread);
     };
     
-    class Claim {
-    public:
-      Claim();
-      Claim(const Claim&);
-      Claim(const volatile Claim&);
-      Claim operator=(const volatile Claim&);
-      bool operator==(Claim);
-      bool operator==(void*);
-      volatile bool operator==(Claim) volatile;
-      bool operator!=(Claim);
-      bool operator!=(void*);
-      volatile bool operator!=(Claim) volatile;
-      Claim operator=(Claim) const volatile;
-    };
+    class ClaimT { };
+
+	typedef ClaimT *Claim;
 
     class Integer {
     public:
@@ -110,13 +99,11 @@ namespace VCC
       Object(void*);
       bool operator==(Object) volatile;
       bool operator==(void*) volatile;
-      bool operator==(Claim) volatile;
       bool operator==(Set) volatile;
       bool operator==(State) volatile;
       bool operator==(Thread) volatile;
       bool operator!=(Object) volatile;
       bool operator!=(void*) volatile;
-      bool operator!=(Claim) volatile;
       bool operator!=(Set) volatile;
       bool operator!=(State) volatile;
       bool operator!=(Thread) volatile;
@@ -293,13 +280,13 @@ namespace VCC
 
     bool Matchulong(unsigned __int64) {
       _(pure)
-      _(ensures \result == true)
+      _(ensures \result<bool> == true)
       return true;
     };
 
     bool Matchlong(__int64) {
       _(pure)
-      _(ensures \result == true)
+      _(ensures \result<bool> == true)
       return true;
     };
 

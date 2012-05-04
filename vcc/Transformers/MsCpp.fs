@@ -23,7 +23,6 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Domain"
                                                     "VCC::Extent"
                                                     "VCC::Inter"
-                                                    "VCC::Makeclaim"
                                                     "VCC::Now"
                                                     "VCC::Owns"
                                                     "VCC::Span"
@@ -53,6 +52,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Claims",              "_vcc_claims"
                                                     "VCC::Closed",              "_vcc_closed"
                                                     "VCC::Depends",             "_vcc_depends"
+                                                    "VCC::Destroyclaim",        "_vcc_unclaim"
                                                     "VCC::Disjoint",            "_vcc_set_disjoint"
                                                     "VCC::Extent",              "_vcc_extent"
                                                     "VCC::Extentfresh",         "_vcc_extent_is_fresh"
@@ -62,6 +62,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::In0",                 "_vcc_set_in0"
                                                     "VCC::Inter",               "_vcc_set_intersection"
                                                     "VCC::Mallocroot",          "_vcc_is_malloc_root"
+                                                    "VCC::Makeclaim",           "_vcc_claim"
                                                     "VCC::Mine",                "_vcc_keeps"
                                                     "VCC::Mutable",             "_vcc_mutable"
                                                     "VCC::Mutablearray",        "_vcc_is_mutable_array"
@@ -78,6 +79,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Threadlocalarray",    "_vcc_is_thread_local_array"
                                                     "VCC::Union",               "_vcc_set_union"
                                                     "VCC::Universe",            "_vcc_set_universe"
+                                                    "VCC::Upgradeclaim",        "_vcc_upgrade_claim"
                                                     "VCC::Valid",               "_vcc_typed2"
                                                     "VCC::Wrapped",             "_vcc_wrapped"
                                                     "VCC::Writable",            "_vcc_writable"
@@ -115,11 +117,10 @@ namespace Microsoft.Research.Vcc
 
 
   let specialTypesMap = Map.ofList  [
-                                      "VCC::Claim",     Type.Claim
+                                      "VCC::ClaimT",    Type.Claim
                                       "VCC::Integer",   Type.MathInteger MathIntKind.Signed
                                       "VCC::Natural",   Type.MathInteger MathIntKind.Unsigned
                                       "VCC::Object",    Type.ObjectT
-                                      "VCC::Set",       Type.PtrSet
                                       "VCC::State",     Type.MathState
                                     ] 
 
@@ -1174,9 +1175,11 @@ namespace Microsoft.Research.Vcc
       // turn types from the VCC:: namespace into their CAST counterparts
 
       let typeSubst self = function
-        | Type.Ref({Name = IsSpecialType(t')})
-        | Type.PhysPtr(Type.Ref({Name = IsSpecialType(t')})) ->
+        | Type.Ref({Name = IsSpecialType(t')}) ->
           Some(t')
+        | Type.Ref({Name = "VCC::Set"})
+        | Ptr(Type.Ref({Name = "VCC::Set"})) ->
+          Some(Type.PtrSet)
         | Type.Ref(td) when td.Name.StartsWith("VCC::Map") ->
           match td.Fields with
             | [ { Name = "_from_member_"; Type = Ptr(fromType) }; { Name = "_to_member_"; Type = Ptr(toType) } ] -> Some(Type.Map(self fromType, self toType))

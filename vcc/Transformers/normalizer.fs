@@ -58,7 +58,7 @@ namespace Microsoft.Research.Vcc
         match e.Type with
           | Ptr _ | ObjectT | Claim -> Some (self e)
           | _ -> None
-      | Expr.Cast ({Type = Ptr(t1) } as ec, cs, Expr.Cast ({ Type = (ObjectT | Ptr(Type.Ref(_) | Void)) }, _, e')) when t1 <> Void -> Some (self (Cast(ec, cs, e')))
+      | Expr.Cast ({ Type = Ptr(t1) } as ec, cs, Expr.Cast ({ Type = (ObjectT | Ptr(Type.Ref(_) | Void)) }, _, e')) when t1 <> Void -> Some (self (Cast(ec, cs, e')))
       | Expr.Cast ({ Type = t1 }, (Processed|Unchecked), Expr.Cast (_, (Processed|Unchecked), e')) when e'.Type = t1 -> Some (self e')
       | Expr.Cast ({ Type = Bool }, _, Expr.Cast (_, _, e')) when e'.Type = Bool -> Some (self e')
       | Expr.Cast ({ Type = PtrSoP(_, isSpec) } as c, _, Expr.IntLiteral (_, ZeroBigInt)) -> 
@@ -76,7 +76,8 @@ namespace Microsoft.Research.Vcc
           None 
       | Expr.Cast ({ Type = MathInteger Signed}, _, expr) when expr.Type._IsInteger -> Some(self(expr))
       | Expr.Cast ({ Type = MathInteger Unsigned}, _, Expr.IntLiteral (c, n)) when n >= bigint.Zero -> Some(Expr.IntLiteral(c,n))
-      | Expr.Cast(ec, _, This(tc)) when inGroupInvariant && ec.Type = tc.Type -> 
+      | Expr.Cast ({ Type = Volatile(t) }, _, expr) when not t._IsPtr -> Some(self expr) // 'volatile' applying to anything but pointers are removed
+      | Expr.Cast (ec, _, This(tc)) when inGroupInvariant && ec.Type = tc.Type -> 
         None // Do not remove this cast because the type of 'this' will change later on
       | Expr.Cast (_, _, e') as e ->
         match e'.Type, e.Type with
@@ -309,7 +310,8 @@ namespace Microsoft.Research.Vcc
         let errorIfNotPtrToStruct (expr : Expr) =
           match expr.Type with
             | Ptr(Volatile(Type.Ref(_))) 
-            | Ptr(Type.Ref(_)| Claim) 
+            | Ptr(Type.Ref(_)) 
+            | Type.Claim
             | Type.ObjectT -> ()
             | t -> helper.Error(expr.Token, 9668, "'" + expr.Token.Value + "' has non-admissible type '" + t.ToString() + "' for atomic")
         List.iter errorIfNotPtrToStruct objs
