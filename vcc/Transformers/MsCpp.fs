@@ -42,12 +42,13 @@ namespace Microsoft.Research.Vcc
                                         ]
 
   let specialFunctionMap = Map.ofList [
-                                                    "VCC::Activeclaim",         "_vcc_active_claim"
+                                                    "VCC::Activeclaim",         "_vcc_valid_claim"
                                                     "VCC::Addr",                "_vcc_addr"
                                                     "VCC::Addreq",              "_vcc_addr_eq"
                                                     "VCC::Approves",            "_vcc_approves"
                                                     "VCC::Array",               "_vcc_as_array"
                                                     "VCC::Arrayrange",          "_vcc_array_range"
+                                                    "VCC::Claimable",           "_vcc_is_claimable"
                                                     "VCC::Claimcount",          "_vcc_ref_cnt"
                                                     "VCC::Claims",              "_vcc_claims"
                                                     "VCC::Closed",              "_vcc_closed"
@@ -134,6 +135,17 @@ namespace Microsoft.Research.Vcc
                                       "VCC::Set::Set"
                                       "VCC::State::State"
                                     ]
+
+  let customAttrs = Map.ofList  [
+                                  "VCC::Pure",          CAST.AttrIsPure
+                                  "VCC::FrameAxiom",    CAST.AttrFrameaxiom
+                                  "VCC::NoReadsCheck",  CAST.AttrNoReadsCheck
+                                  "VCC::AtomicInline",  CAST.AttrAtomicInline
+                                ]
+
+  let (|IsCustomAttr|_|) s = Map.tryFind s customAttrs
+
+
 
   let sanitizeFullName (fullName : string) =
     let s = new System.Text.StringBuilder(fullName)
@@ -566,10 +578,8 @@ namespace Microsoft.Research.Vcc
           | Call(ec, {FriendlyName = StartsWith "VCC::Reads"}, [], args) ->      { bc with Reads = args @ bc.Reads }, invs
           | Call(ec, {FriendlyName = StartsWith "VCC::Writes"}, [], args) ->     { bc with Writes = args @ bc.Writes }, invs
           | Call(ec, {FriendlyName = StartsWith "VCC::Decreases"}, [], args) ->  { bc with Decreases = args @ bc.Decreases }, invs
-          | Call(ec, {FriendlyName = StartsWith "VCC::Pure"}, [], []) ->         { bc with CustomAttr = VccAttr(CAST.AttrIsPure, "") :: bc.CustomAttr}, invs
-          | Call(ec, {FriendlyName = StartsWith "VCC::FrameAxiom"}, [], []) ->   { bc with CustomAttr = VccAttr(CAST.AttrFrameaxiom, "") :: bc.CustomAttr}, invs
-          | Call(ec, {FriendlyName = StartsWith "VCC::NoReadsCheck"}, [], []) -> { bc with CustomAttr = VccAttr(CAST.AttrNoReadsCheck, "") :: bc.CustomAttr}, invs
           | Call(ec, {FriendlyName = StartsWith "VCC::Invariant"}, [], [arg]) -> bc, (arg :: invs)
+          | Call(ec, {FriendlyName = IsCustomAttr(attr) }, [], []) ->            { bc with CustomAttr = VccAttr(attr, "") :: bc.CustomAttr}, invs
           | _ -> bc, invs
 
         let (found, invs) = List.fold findContracts' (BlockContract.Empty, []) stmts
@@ -588,10 +598,8 @@ namespace Microsoft.Research.Vcc
           | Call(ec, {FriendlyName = StartsWith "VCC::Reads"}, [], _) 
           | Call(ec, {FriendlyName = StartsWith "VCC::Writes"}, [], _)
           | Call(ec, {FriendlyName = StartsWith "VCC::Decreases"}, [], _) 
-          | Call(ec, {FriendlyName = StartsWith "VCC::Pure"}, [], [])
           | Call(ec, {FriendlyName = StartsWith "VCC::Invariant"}, [], [_])
-          | Call(ec, {FriendlyName = StartsWith "VCC::FrameAxiom"}, [], [])
-          | Call(ec, {FriendlyName = StartsWith "VCC::NoReadsCheck"}, [], [])
+          | Call(ec, {FriendlyName = IsCustomAttr(_) }, [], [])
             ->  false
           | _ -> true
         List.filter isNoContract
@@ -1296,6 +1304,23 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let normalizeSignatures self =
+      let selfs = List.map self
+      function
+        | Macro(ec, "_vcc_claim", [Macro(es, "set", []); prop]) -> Some(Macro(ec, "_vcc_claim", [Macro(es, "_vcc_set_empty", []); self prop]))
+        | Macro(ec, "_vcc_claim", [Macro(_, "set", elems); prop]) -> Some(Macro(ec, "_vcc_claim", selfs elems @ [prop]))
+        | Macro(ec, "_vcc_unclaim", [cl; Macro(_, "set", elems)]) -> Some(Macro(ec, "_vcc_unclaim", selfs (cl :: elems)))
+        | Macro(ec, "_vcc_unclaim", [Macro(es, "set", []); prop]) -> Some(Macro(ec, "_vcc_unclaim", [Macro(es, "_vcc_set_empty", []); self prop]))
+        | Macro(ec, "_vcc_upgrade_claim", [Macro(_, "set", claimsSet); prop]) -> Some(Macro(ec, "_vcc_upgrade_claim", selfs (claimsSet @ [prop])))
+        | Macro(ec, "_vcc_is_claimable", [e]) -> Some(Macro(ec, "_vcc_is_claimable", [Macro({e.Common with Type = Type.TypeIdT}, "_vcc_typeof", [self e])]))
+//        | Macro(ec, "\\havoc_others", [e]) -> 
+//          let e' = self e
+//          Some(Macro(ec, "_vcc_havoc_others", [e'; Macro({e'.Common with Type = Type.TypeIdT}, "_vcc_typeof", [e'])]))
+        | _ -> None
+      
+
+    // ============================================================================================================    
+
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
     helper.AddTransformer ("cpp-check-ast-structure", TransHelper.Decl checkAstStructure)
@@ -1330,6 +1355,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-remove-decls", TransHelper.Decl removeSpecialDecls)
     helper.AddTransformer ("cpp-despecialize-alloc", TransHelper.Decl despecializeAlloc)
     helper.AddTransformer ("cpp-assignment-to-stmts", TransHelper.Expr makeAssignmentsIntoStmts)
+    helper.AddTransformer ("cpp-signatures", TransHelper.Expr normalizeSignatures)
     helper.AddTransformer ("cpp-declare-parameters", TransHelper.Decl addDeclarationsForParameters)
 
     helper.AddTransformer ("cpp-end", TransHelper.DoNothing)

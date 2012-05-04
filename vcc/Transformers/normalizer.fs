@@ -287,7 +287,7 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
     
     let handleClaims self = function
-      | Call (c, ({ Name = ("_vcc_claim"|"_vcc_upgrade_claim" as name) } as fn), _, args) ->
+      | CallMacro (c, ("_vcc_claim"|"_vcc_upgrade_claim" as name), [], args) ->
         match List.rev args with
           | [_] ->
             helper.Error(c.Token, 9710, "claim(...) requires at least one object and a claimed property")
@@ -300,18 +300,17 @@ namespace Microsoft.Research.Vcc
             helper.Oops (c.Token, "no arguments to claim")
             None
             
-      | Call (c, { Name = "_vcc_unclaim" }, _, args) ->
+      | CallMacro (c, "_vcc_unclaim", _, args) ->
         Some (Stmt (c, Macro (c, "unclaim", List.map self args)))
 
-      | Call (c, { Name = "_vcc_begin_update" }, _, args) ->
+      | CallMacro (c, "_vcc_begin_update", _, args) ->
         Some (Stmt (c, Macro (c, "begin_update", List.map self args)))
         
       | Atomic (c, objs, body) -> 
         let errorIfNotPtrToStruct (expr : Expr) =
           match expr.Type with
             | Ptr(Volatile(Type.Ref(_))) 
-            | Ptr(Type.Ref(_)) 
-            | Type.Claim
+            | Ptr(Type.Ref(_)|Type.Claim)
             | Type.ObjectT -> ()
             | t -> helper.Error(expr.Token, 9668, "'" + expr.Token.Value + "' has non-admissible type '" + t.ToString() + "' for atomic")
         List.iter errorIfNotPtrToStruct objs
@@ -542,7 +541,7 @@ namespace Microsoft.Research.Vcc
       let inlines = gdict()
       let isntInline = function
         | Top.FunctionDecl fd ->
-          if hasCustomAttr "atomic_inline" fd.CustomAttr then
+          if hasCustomAttr AttrAtomicInline fd.CustomAttr then
             if fd.IsPure then
               helper.Error(fd.Token, 9667, "Pure function '" + fd.Name + "' cannot be inlined.")
               true
