@@ -123,6 +123,7 @@ namespace Microsoft.Research.Vcc
                                       "VCC::Natural",   Type.MathInteger MathIntKind.Unsigned
                                       "VCC::Object",    Type.ObjectT
                                       "VCC::State",     Type.MathState
+                                      "VCC::ThreadT",   Type.ThreadIdT
                                     ] 
 
   let specialTypeNames = specialTypesMap |> Map.toSeq |> Seq.map fst |> Set.ofSeq 
@@ -815,7 +816,7 @@ namespace Microsoft.Research.Vcc
       let splitBody = function
         | Block(ec, stmts, None) ->
           let rec loop triggers = function
-            | [Return(_, Some expr)] -> 
+            | Return(_, Some expr) :: _ -> 
               expr, List.rev triggers
             | Call(ec, {FriendlyName = "VCC::Trigger"}, [], args) :: ((_ :: _) as stmts) ->
               loop (args::triggers) stmts
@@ -895,6 +896,7 @@ namespace Microsoft.Research.Vcc
               None
         | Call(ec, {FriendlyName = SpecialCallTo(tgt)}, [], args)  ->
           Some(Macro(ec, tgt, List.map self args))
+        | Ref(ec, {Name = "VCC::Me"}) -> Some(Macro(ec, "_vcc_me", []))
         | _ -> None
 
     // ============================================================================================================    
