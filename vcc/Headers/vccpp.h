@@ -29,12 +29,10 @@ void free(void*, VCC::Ghost, size_t);
 
 namespace VCC
 {
-    class Thread {
-    public:
-      bool operator==(Thread);
-      bool operator!=(Thread);
-    };
+    class ThreadT { };
     
+	typedef ThreadT *Thread;
+
     class ClaimT { };
 
 	typedef ClaimT *Claim;
@@ -101,12 +99,10 @@ namespace VCC
       bool operator==(void*) volatile;
       bool operator==(Set) volatile;
       bool operator==(State) volatile;
-      bool operator==(Thread) volatile;
       bool operator!=(Object) volatile;
       bool operator!=(void*) volatile;
       bool operator!=(Set) volatile;
       bool operator!=(State) volatile;
-      bool operator!=(Thread) volatile;
       Object operator=(void*);
       operator void*() const;
     };
@@ -158,7 +154,7 @@ namespace VCC
     template<class T> Integer Addr(T);
     template<class T1, class T2> bool Addreq(T1, T2);
     template<class T> T* Allocarray(size_t);
-    template<class T> void Always(T, bool);
+    bool Always(Claim, bool);
     template<class T> bool Alwaysbyclaim(Claim, T);
     template<class T> T* Alloc();
     template<class T1, class T2> bool Approves(T1, T2);

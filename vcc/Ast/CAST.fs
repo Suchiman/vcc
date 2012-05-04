@@ -485,6 +485,7 @@ module Microsoft.Research.Vcc.CAST
     static member MathStruct = Type.Math "struct"
     static member MathState = Type.Math "\\state"
     static member FieldT = Type.Math "field_t"
+    static member ThreadIdT = Type.Math "\\thread_id"
     static member Byte = Type.Integer IntKind.UInt8
     static member MathStructFor td = 
       Type.Ref(
