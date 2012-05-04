@@ -151,8 +151,15 @@
         {
             get
             {
+                string result = String.Empty;
                 SelectedItem sitem = DTE.SelectedItems.Item(1);
-                return sitem.ProjectItem.ConfigurationManager.ActiveConfiguration.PlatformName;
+                
+                if (sitem.ProjectItem != null)
+                {
+                    result = sitem.ProjectItem.ConfigurationManager.ActiveConfiguration.PlatformName;
+                }
+
+                return result;
             }
         }
 
