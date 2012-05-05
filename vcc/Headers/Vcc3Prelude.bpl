@@ -3282,6 +3282,7 @@ procedure $split_blob(p:$ptr, off:int);
   ensures $mutable_root($s, $address_root($addr(p) + off, $blob_type($sizeof_object(p) - off)));
   ensures $owns($s, $address_root($addr(p) + off, $blob_type($sizeof_object(p) - off))) == $set_empty();
   ensures $modifies(old($s), $s, $set_singleton(p));
+  ensures $timestamp_post_strict(old($s), $s);
 
 procedure $join_blobs(a:$ptr, b:$ptr);
   // writes a, b
