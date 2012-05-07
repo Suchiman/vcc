@@ -79,6 +79,7 @@ namespace Microsoft.Research.Vcc
         | Quant (c, ({ Kind = Lambda } as q)) ->
           let (domain, range) =
             match c.Type with
+              | Ptr(Map(d, r))
               | Type.Map (d, r) -> (d, r)
               | _ -> helper.Die()
          

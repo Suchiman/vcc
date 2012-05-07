@@ -2208,8 +2208,8 @@ namespace Microsoft.Research.Vcc
         let is_claimable = ref false
         let owns_set_is_volatile = ref false
           
-        List.iter (function C.VccAttr ("claimable", _) -> is_claimable := true
-                          | C.VccAttr ("volatile_owns", _) -> owns_set_is_volatile := true
+        List.iter (function C.VccAttr (C.AttrClaimable, _) -> is_claimable := true
+                          | C.VccAttr (C.AttrVolatileOwns, _) -> owns_set_is_volatile := true
                           | _ -> ()) td.CustomAttr
             
         let isNoLemmaInvariant = function

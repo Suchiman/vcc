@@ -16,6 +16,9 @@ module Microsoft.Research.Vcc.CAST
   type Unique = uint64
   
   [<Literal>]
+  let AttrClaimable = "claimable"
+
+  [<Literal>]
   let AttrAtomicInline = "atomic_inline"
 
   [<Literal>]
