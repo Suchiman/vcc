@@ -35,7 +35,7 @@ namespace VCC
 
     class ClaimT { };
 
-	typedef ClaimT *Claim;
+    typedef ClaimT *Claim;
 
     class Integer {
     public:
@@ -165,6 +165,7 @@ namespace VCC
     void AssumeCorrect();
     template<class T> T At(State, T t);
     void Atomic(...);
+    bool AtomicObject(unsigned __int64);
     template<class T> TypeLockageFunctor<T> AtomicOp(...);
     template<class T> TypeLockageFunctor<T> AtomicRead(...);
     template<class T> void BeginGhostAtomic(T);
@@ -296,6 +297,23 @@ namespace VCC
     template<class T> void Unwrap(T o, ...)
     {
       VCC::Writes(o);
+    }
+
+    // prototypes for internal functions
+    void SetClosedOwner(Object obj, Object owner) 
+    {
+      VCC::Writes(obj);
+      VCC::Requires(VCC::AtomicObject(1));
+    }
+
+    void GiveupClosedOwner(Object obj, Object owner)
+    {
+      VCC::Requires(VCC::AtomicObject(1));
+    }
+
+    void SetOwns(Object obj, Object owner)
+    {
+      VCC::Writes(VCC::Span(obj));
     }
 
     // special variables
