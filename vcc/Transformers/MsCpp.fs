@@ -61,7 +61,9 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Fresh",               "_vcc_is_fresh"
                                                     "VCC::In",                  "_vcc_set_in"
                                                     "VCC::In0",                 "_vcc_set_in0"
+                                                    "VCC::Inrangephysptr",      "_vcc_in_range_phys_ptr"
                                                     "VCC::Inter",               "_vcc_set_intersection"
+                                                    "VCC::Isghost",             "_vcc_is_ghost_ptr"
                                                     "VCC::Mallocroot",          "_vcc_is_malloc_root"
                                                     "VCC::Makeclaim",           "_vcc_claim"
                                                     "VCC::Mine",                "_vcc_keeps"
@@ -543,6 +545,15 @@ namespace Microsoft.Research.Vcc
         | Top.FunctionDecl({FriendlyName = EndsWith("::VCCDynamicOwns"); Parent = Some(td)}) ->
           td.CustomAttr <- VccAttr(CAST.AttrDynamicOwns, "") :: td.CustomAttr
           false
+        | Top.FunctionDecl({FriendlyName = EndsWith("::VCCVolatileOwns"); Parent = Some(td)}) ->
+          td.CustomAttr <- VccAttr(CAST.AttrVolatileOwns, "") :: td.CustomAttr
+          false
+        | Top.FunctionDecl({FriendlyName = EndsWith("::VCCClaimable"); Parent = Some(td)}) ->
+          td.CustomAttr <- VccAttr(CAST.AttrClaimable, "") :: td.CustomAttr
+          false
+        | Top.FunctionDecl({FriendlyName = EndsWith("::VCCPrimitive"); Parent = Some(td)}) ->
+          td.CustomAttr <- VccAttr(CAST.AttrPrimitive, "") :: td.CustomAttr
+          false
         | Top.FunctionDecl({FriendlyName = Contains("::VCCInvariant"); Parent = Some(td); Body = body}) as fn ->
           match body with
             | Some(Block(_, [Return(_, Some(inv))], None)) ->
@@ -871,6 +882,8 @@ namespace Microsoft.Research.Vcc
         | _ -> None
 
       function
+        | Call(ec, {FriendlyName = SpecialCallTo(tgt)}, [], args)  ->
+          Some(Macro(ec, tgt, List.map self args))
         | Call(ec, {FriendlyName = "VCC::Assert"}, [], [arg]) -> 
           Some(Assert(ec, self arg, []))
         | Call(ec, {FriendlyName = "VCC::Assume"}, [], [arg]) -> 
@@ -894,8 +907,6 @@ namespace Microsoft.Research.Vcc
             | _ -> 
               helper.Oops(ec.Token, "Unexpected body structure of '" + fn.Name + "'")
               None
-        | Call(ec, {FriendlyName = SpecialCallTo(tgt)}, [], args)  ->
-          Some(Macro(ec, tgt, List.map self args))
         | Ref(ec, {Name = "VCC::Me"}) -> Some(Macro(ec, "_vcc_me", []))
         | _ -> None
 
