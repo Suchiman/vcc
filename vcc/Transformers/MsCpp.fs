@@ -396,6 +396,7 @@ namespace Microsoft.Research.Vcc
 
         | Macro(ec, "init", [lhs; Macro(_, "array_init", Skip(_) :: args)]) ->         
           match lhs.Type with
+            | Ptr(_)
             | Type.Array(_,_) -> 
               let assignIdx idx (arg:Expr) = 
                 Expr.Macro({ec with Type = Type.Void}, "=", [Expr.Deref({lhs.Common with Type = arg.Type}, Index(lhs.Common, lhs, mkInt idx)); arg])
