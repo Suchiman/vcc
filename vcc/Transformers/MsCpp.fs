@@ -730,6 +730,7 @@ namespace Microsoft.Research.Vcc
               else
                 fn.Body <- None // we should have picked up the contracts by now
                 fn.Name <- name'
+                fn.Flags <- fn.Flags ||| Flags.Spec
                 fn.FriendlyName <- name'
                 representatives.Add(name, fn)
                 true
