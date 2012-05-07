@@ -57,7 +57,7 @@ let init (helper:TransHelper.TransEnv) =
           | Call(ec, ({Name = "\\mine"} as fn), [], args) -> Some(Call(ec, fn, [], Expr.This({ec with Type = Type.MkPtrToStruct(td)}) :: List.map self args))
           | _ -> None
         deepMapExpressions normalizeMine [decl] |> List.head
-      | Top.FunctionDecl({Name = ("\\set_closed_owner"|"\\giveup_closed_owner"|"\\set_owns")} as fn) as decl -> 
+      | Top.FunctionDecl({Name = ("_vcc_set_closed_owner"|"_vcc_giveup_closed_owner"|"_vcc_set_owns")} as fn) as decl -> 
         fnMap.Add(fn.Name, fn)
         decl
       | decl -> decl
@@ -114,7 +114,7 @@ let init (helper:TransHelper.TransEnv) =
           | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]); 
                             CallMacro(_, ("\\set_add_element"|"\\set_remove_element" as setOp), [], 
                                   [Macro(_, "_vcc_owns", [e1']); e2] )]) when inAtomic  -> 
-              let fn = if setOp = "\\set_add_element" then fnMap.["\\set_closed_owner"] else fnMap.["\\giveup_closed_owner"]
+              let fn = if setOp = "\\set_add_element" then fnMap.["_vcc_set_closed_owner"] else fnMap.["_vcc_giveup_closed_owner"]
               Some(Call({ec with Type = Type.Void}, fn, [], [self e2; self e1]))
           | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]) as ownsSet; 
                             CallMacro (_, "\\set_remove_element", [], [Macro(_, "_vcc_owns", [e1']); e2]) as newOwns]) ->
@@ -122,10 +122,10 @@ let init (helper:TransHelper.TransEnv) =
             let e2 = self e2
             let tok = afmte 8026 "{0} is not in {1}->\\owns before trying to remove it" [e2; e1]            
             let check = Expr.MkAssert (Expr.Macro (tok, "_vcc_set_in", [e2; ownsSet]))
-            let update = Call({ec with Type = Type.Void}, fnMap.["\\set_owns"], [], [e1; self newOwns])
+            let update = Call({ec with Type = Type.Void}, fnMap.["_vcc_set_owns"], [], [e1; self newOwns])
             Some (Expr.MkBlock [check; update])
           | Macro(ec, "=", [Macro(_, "_vcc_owns", [e1]); e2]) -> 
-            Some(Call({ec with Type = Type.Void}, fnMap.["\\set_owns"], [], [self e1; self e2]))
+            Some(Call({ec with Type = Type.Void}, fnMap.["_vcc_set_owns"], [], [self e1; self e2]))
           | _ -> None
       let doDecl = function
         | Top.FunctionDecl f when f.Body.IsSome ->

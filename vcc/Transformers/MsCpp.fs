@@ -47,13 +47,16 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Addreq",              "_vcc_addr_eq"
                                                     "VCC::Approves",            "_vcc_approves"
                                                     "VCC::Array",               "_vcc_as_array"
+                                                    "VCC::Arraymembers",        "_vcc_array_members"
                                                     "VCC::Arrayrange",          "_vcc_array_range"
+                                                    "VCC::AtomicObject",        "_vcc_is_atomic_obj"
                                                     "VCC::Claimable",           "_vcc_is_claimable"
                                                     "VCC::Claimcount",          "_vcc_ref_cnt"
                                                     "VCC::Claims",              "_vcc_claims"
                                                     "VCC::Closed",              "_vcc_closed"
                                                     "VCC::Depends",             "_vcc_depends"
                                                     "VCC::Destroyclaim",        "_vcc_unclaim"
+                                                    "VCC::Diff",                "_vcc_set_difference"
                                                     "VCC::Disjoint",            "_vcc_set_disjoint"
                                                     "VCC::Extent",              "_vcc_extent"
                                                     "VCC::Extentfresh",         "_vcc_extent_is_fresh"
@@ -92,8 +95,11 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Alloc",               "_vcc_spec_alloc"
                                                     "VCC::Allocarray",          "_vcc_spec_alloc_array"
                                                     "VCC::Free",                "_vcc_free"
+                                                    "VCC::GiveupClosedOwner",   "_vcc_giveup_closed_owner"
                                                     "VCC::Matchlong",           "_vcc_match_long"
                                                     "VCC::Matchulong",          "_vcc_match_ulong"
+                                                    "VCC::SetClosedOwner",      "_vcc_set_closed_owner"
+                                                    "VCC::SetOwns",             "_vcc_set_owns"
                                                     "VCC::Unwrap",              "_vcc_unwrap"
                                                     "VCC::Wrap",                "_vcc_wrap"
                                                   ]
@@ -388,10 +394,17 @@ namespace Microsoft.Research.Vcc
 
       function
 
-        | Macro(ec, "init", [arr; Macro(_, "array_init", Skip(_) :: args)]) ->         
-          let assignIdx idx (arg:Expr) = 
-            Expr.Macro({ec with Type = Type.Void}, "=", [Expr.Deref({arr.Common with Type = arg.Type}, Index(arr.Common, arr, mkInt idx)); arg])
-          Some(Expr.MkBlock(List.mapi assignIdx (List.map self args)))
+        | Macro(ec, "init", [lhs; Macro(_, "array_init", Skip(_) :: args)]) ->         
+          match lhs.Type with
+            | Type.Array(_,_) -> 
+              let assignIdx idx (arg:Expr) = 
+                Expr.Macro({ec with Type = Type.Void}, "=", [Expr.Deref({lhs.Common with Type = arg.Type}, Index(lhs.Common, lhs, mkInt idx)); arg])
+              Some(Expr.MkBlock(List.mapi assignIdx (List.map self args)))
+            | Type.Ref(td) ->
+              Some(Expr.MkBlock(List.map self args))
+            | _ -> 
+              helper.Oops(lhs.Token, "unexpected type '" + lhs.Type.ToString() + "' for initialized object")
+              None
 
         | Macro(ec, "init", [_; Skip(_)]) -> Some(Skip(ec))
 
