@@ -80,6 +80,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Owns",                "_vcc_owns"
                                                     "VCC::Programentrypoint",   "_vcc_program_entry_point"
                                                     "VCC::ReadsHavoc",          "_vcc_reads_havoc"
+                                                    "VCC::Retype",              "_vcc_retype"
                                                     "VCC::Shalloweq",           "_vcc_shallow_struct_eq"
                                                     "VCC::Span",                "_vcc_span"
                                                     "VCC::Starthere",           "_vcc_start_here"
