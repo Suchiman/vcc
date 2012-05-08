@@ -897,7 +897,7 @@ namespace Microsoft.Research.Vcc
         | _ -> None
 
       function
-        | Call(ec, {FriendlyName = SpecialCallTo(tgt)}, [], args)  ->
+        | Call(ec, {FriendlyName = SpecialCallTo(tgt)}, [], args) ->
           Some(Macro(ec, tgt, List.map self args))
         | Call(ec, {FriendlyName = "VCC::Assert"}, [], [arg]) -> 
           Some(Assert(ec, self arg, []))
@@ -922,6 +922,9 @@ namespace Microsoft.Research.Vcc
             | _ -> 
               helper.Oops(ec.Token, "Unexpected body structure of '" + fn.Name + "'")
               None
+        | Call(ec, {FriendlyName = StartsWith "VCC::Unchanged" }, [], [arg]) ->
+          let arg' = self arg
+          Some(Prim(ec, Op("==", CheckedStatus.Unchecked), [arg'; Old(arg.Common, Macro({ec with Type = Type.MathState}, "prestate", []), arg')]))
         | Ref(ec, {Name = "VCC::Me"}) -> Some(Macro(ec, "_vcc_me", []))
         | _ -> None
 
