@@ -259,7 +259,7 @@ namespace Microsoft.Research.Vcc
 
       let (|MapGet|_|) = function
         | Deref(ec, Call(_, { FriendlyName = n }, [], [Macro(_, "&", [m]); idx])) 
-            when n.StartsWith("VCC::Map") && n.EndsWith("operator[]") ->          
+            when n.StartsWith("VCC::Map") && n.EndsWith("operator[]") ->
           Some(ec, m, idx)
         | _ -> None
 
@@ -279,6 +279,17 @@ namespace Microsoft.Research.Vcc
       function
         | Call (ec, { FriendlyName = "VCC::Object::operator==" }, [], [arg0; arg1]) ->
           Some(Prim(ec, Op("==", CheckedStatus.Checked), [self arg0; self arg1]))
+        | _ -> None
+
+    // ============================================================================================================    
+
+    let rewriteIntegers self =
+
+      // rewrite integer operators
+
+      function
+        | Call (ec, ({ FriendlyName = "VCC::Integer::operator int" } ), [], [arg0]) ->
+          Some(arg0)
         | _ -> None
 
     // ============================================================================================================        
@@ -1383,6 +1394,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-set", TransHelper.Expr rewriteSets)
     helper.AddTransformer ("cpp-map", TransHelper.Expr rewriteMaps)
     helper.AddTransformer ("cpp-object", TransHelper.Expr rewriteObjects)
+    helper.AddTransformer ("cpp-integer", TransHelper.Expr rewriteIntegers)
     helper.AddTransformer ("cpp-remove-object-copying", TransHelper.Expr removeObjectCopyOperations)
     helper.AddTransformer ("cpp-blocks", TransHelper.Expr normalizeBlocks)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
