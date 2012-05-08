@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Boogie;
+using System.Collections.Generic;
 
 namespace Microsoft.Research.Vcc.Cpp
 {
@@ -9,6 +10,7 @@ namespace Microsoft.Research.Vcc.Cpp
 
         private bool errorReported;
         private readonly VccppOptions options;
+        private HashSet<string> seenErrors = new HashSet<string>();
 
         public override bool ErrorReported
         {
@@ -38,16 +40,21 @@ namespace Microsoft.Research.Vcc.Cpp
 
         public override void Error(Token tok, int code, string msg, FSharp.Core.FSharpOption<Token> related)
         {
-            errorReported = true;
-            EventHandler<ErrorReportedEventArgs> temp = ErrorReportedEvent;
-            if (temp != null)
+            var output = String.Format("{0}({1},{2}): error VC{3:0000}: {4}", tok.Filename, tok.Line, tok.Column, code, msg);
+
+            if (seenErrors.Add(output))
             {
-                temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.Filename, false, tok.Line, tok.Column, code, msg, false)));
+                errorReported = true;
+                EventHandler<ErrorReportedEventArgs> temp = ErrorReportedEvent;
+                if (temp != null)
+                {
+                  temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.Filename, false, tok.Line, tok.Column, code, msg, false)));
+                }
+
+                Utils.Log(output);
+
+                this.ReportRelated(false, related);
             }
-
-            Utils.Log(String.Format("{0}({1},{2}): error VC{3:0000}: {4}", tok.Filename, tok.Line, tok.Column, code, msg));
-
-            this.ReportRelated(false, related);
 
         }
 
@@ -69,16 +76,19 @@ namespace Microsoft.Research.Vcc.Cpp
         {
             if (tok.SuppressWarning(code)) return;
 
-            EventHandler<ErrorReportedEventArgs> temp = ErrorReportedEvent;
-            if (temp != null)
+            var output = String.Format("{0}({1},{2}): warning VC{3:0000}: {4}", tok.Filename, tok.Line, tok.Column, code, msg);
+            if (seenErrors.Add(output))
             {
-                temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.Filename, true, tok.Line, tok.Column, code, msg, false)));
+                EventHandler<ErrorReportedEventArgs> temp = ErrorReportedEvent;
+                if (temp != null)
+                {
+                  temp(this, new ErrorReportedEventArgs(new ErrorDetails(tok.Filename, true, tok.Line, tok.Column, code, msg, false)));
+                }
+
+                Utils.Log(String.Format("{0}({1},{2}): warning VC{3:0000}: {4}", tok.Filename, tok.Line, tok.Column, code, msg));
+
+                this.ReportRelated(true, related);
             }
-
-            Utils.Log(String.Format("{0}({1},{2}): warning VC{3:0000}: {4}", tok.Filename, tok.Line, tok.Column, code, msg));
-
-            this.ReportRelated(true, related);
-
         }
 
         private void ReportRelated(bool isWarning, FSharp.Core.FSharpOption<Token> related)
