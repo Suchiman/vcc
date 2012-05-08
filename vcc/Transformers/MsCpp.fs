@@ -288,11 +288,22 @@ namespace Microsoft.Research.Vcc
       // rewrite integer operators
 
       function
-        | Call (ec, ({ FriendlyName = "VCC::Integer::operator int" } ), [], [arg0]) ->
-          Some(arg0)
+        | Call (ec, { FriendlyName = "VCC::Integer::operator int" }, [], [arg]) ->
+          Some(self arg)
         | _ -> None
 
     // ============================================================================================================        
+
+    let rewriteTypeLockageFunctor self =
+
+      // rewrite type lockage functor operator
+
+      function
+        | Call (ec, { FriendlyName = StartsWith "VCC::TypeLockageFunctor" }, [], [arg0; arg1]) ->
+          Some(self arg1)
+        | _ -> None
+
+    // ============================================================================================================    
 
     let rewriteSets self = 
 
@@ -1395,6 +1406,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-map", TransHelper.Expr rewriteMaps)
     helper.AddTransformer ("cpp-object", TransHelper.Expr rewriteObjects)
     helper.AddTransformer ("cpp-integer", TransHelper.Expr rewriteIntegers)
+    helper.AddTransformer ("cpp-typelockagefunctor", TransHelper.Expr rewriteTypeLockageFunctor)
     helper.AddTransformer ("cpp-remove-object-copying", TransHelper.Expr removeObjectCopyOperations)
     helper.AddTransformer ("cpp-blocks", TransHelper.Expr normalizeBlocks)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)
