@@ -270,6 +270,17 @@ namespace Microsoft.Research.Vcc
           Some(Macro(ec, "=", [self lhs; self rhs]))
         | _ -> None
 
+    // ============================================================================================================    
+
+    let rewriteObjects self =
+
+      // rewrite object equality
+
+      function
+        | Call (ec, { FriendlyName = "VCC::Object::operator==" }, [], [arg0; arg1]) ->
+          Some(Prim(ec, Op("==", CheckedStatus.Checked), [self arg0; self arg1]))
+        | _ -> None
+
     // ============================================================================================================        
 
     let rewriteSets self = 
@@ -1371,6 +1382,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-special-types", TransHelper.Decl rewriteSpecialTypes)
     helper.AddTransformer ("cpp-set", TransHelper.Expr rewriteSets)
     helper.AddTransformer ("cpp-map", TransHelper.Expr rewriteMaps)
+    helper.AddTransformer ("cpp-object", TransHelper.Expr rewriteObjects)
     helper.AddTransformer ("cpp-remove-object-copying", TransHelper.Expr removeObjectCopyOperations)
     helper.AddTransformer ("cpp-blocks", TransHelper.Expr normalizeBlocks)
     helper.AddTransformer ("cpp-contracts", TransHelper.Decl collectContracts)

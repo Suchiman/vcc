@@ -107,7 +107,7 @@ namespace Microsoft.Research.Vcc
         else if ctx.IsPure then
           match p1.Type, p2.Type with
             | Ptr(t1), Ptr(t2) ->
-              if t1 <> t2 then
+              if (t1 <> t2) && (t1 <> ObjectT) && (t2 <> ObjectT) then
                 helper.Warning (c.Token, 9124, "pointers of different types (" + t1.ToString() + " and " + t2.ToString() + ") are never equal in pure context")
               Some (Expr.Macro (c, name + "_pure", [self p1; self p2]))
             | ObjectT, Ptr(_)
