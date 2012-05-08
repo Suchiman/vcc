@@ -77,6 +77,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Mutablearray",        "_vcc_is_mutable_array"
                                                     "VCC::Notshared",           "_vcc_not_shared"
                                                     "VCC::Now",                 "_vcc_current_state"
+                                                    "VCC::Nonprimitiveptr",     "_vcc_is_non_primitive_ptr"
                                                     "VCC::Objectroot",          "_vcc_is_object_root"
                                                     "VCC::Owner",               "_vcc_owner"
                                                     "VCC::Owns",                "_vcc_owns"
