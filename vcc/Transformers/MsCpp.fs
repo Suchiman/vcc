@@ -60,6 +60,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Destroyclaim",        "_vcc_unclaim"
                                                     "VCC::Diff",                "_vcc_set_difference"
                                                     "VCC::Disjoint",            "_vcc_set_disjoint"
+                                                    "VCC::Embedding",           "_vcc_emb"
                                                     "VCC::Extent",              "_vcc_extent"
                                                     "VCC::Extentfresh",         "_vcc_extent_is_fresh"
                                                     "VCC::Extentmutable",       "_vcc_extent_mutable"
