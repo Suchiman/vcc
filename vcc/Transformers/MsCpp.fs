@@ -294,13 +294,13 @@ namespace Microsoft.Research.Vcc
 
     let rewriteIntegers self =
 
-      // rewrite integer operators
+      // rewrite integer operators and constructor
 
       function
         | Call (ec, { FriendlyName = "VCC::Integer::operator int" }, [], [arg]) ->
           Some(self arg)
-        | Call (ec, { FriendlyName = StartsWith "VCC::Integer::Integer" }, [], [arg0; arg1]) when arg1.Common.Type._IsInteger ->
-          Some(Cast(ec, CheckedStatus.Checked, self arg1))
+        | Call (ec, { FriendlyName = StartsWith "VCC::Integer::Integer" }, [], [arg0; arg1]) ->
+          Some(Cast({ ec with Type = Type.MathInteger MathIntKind.Signed }, CheckedStatus.Checked, self arg1))
         | _ -> None
 
     // ============================================================================================================        
