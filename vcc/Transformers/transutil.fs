@@ -317,7 +317,7 @@ namespace Microsoft.Research.Vcc
     let (neg, byteCount) =
       match byteCount with
         | Prim (c, (Op("-", _) as op), [e]) -> (fun e -> Prim (c, op, [e])), e
-        | e -> (fun x -> x), e
+        | e -> id, e
     let elts =
       match byteCount with
         | IntLiteral (c, allocSz) when (allocSz % typeSz) = zero ->

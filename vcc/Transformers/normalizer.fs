@@ -168,7 +168,7 @@ namespace Microsoft.Research.Vcc
     let makeQuantifiedVarsUnique (expr:Expr) =
       let aux self = function
         | Quant(ec, qd) ->
-          let vs', replace = Variable.UniqueCopies (fun x -> x) qd.Variables
+          let vs', replace = Variable.UniqueCopies id qd.Variables
           let qd' = { qd with Variables = vs';
                               Triggers = List.map (List.map(replace)) qd.Triggers;
                               Condition = Option.map replace qd.Condition;
@@ -295,7 +295,7 @@ namespace Microsoft.Research.Vcc
           | x :: xs ->
             if (x.Type._IsPtr) then
               helper.Error(x.Token, 9711, "claimed property must not be of pointer type")
-            Some (self (Macro (c, name.Replace("_vcc_", ""), Expr.Pure (x.Common, convertToBool (fun x -> x) x) :: (List.rev xs))))
+            Some (self (Macro (c, name.Replace("_vcc_", ""), Expr.Pure (x.Common, convertToBool id x) :: (List.rev xs))))
           | _ -> 
             helper.Oops (c.Token, "no arguments to claim")
             None
@@ -922,7 +922,7 @@ namespace Microsoft.Research.Vcc
           | Call (ec, m, targs, args) as call
           | Macro(_, "ite", [Cast(_, _, (Call(ec, m, targs, args) as call)); BoolLiteral(_, true); BoolLiteral(_, false)]) ->
             let m' = m.Specialize(targs, false)
-            let subst = inlineCall "_(" (fun x -> x) (Call({ec with Type=m'.RetType}, m', [], args))
+            let subst = inlineCall "_(" id (Call({ec with Type=m'.RetType}, m', [], args))
             let substs = List.map subst
             { c with Requires = c.Requires @ substs m'.Requires; 
                      Ensures = c.Ensures @ substs m'.Ensures;

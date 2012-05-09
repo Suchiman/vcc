@@ -199,6 +199,11 @@ namespace Microsoft.Research.Vcc
   let (|AddrOf|_|) = function
     | Macro(ec, "&", [arg]) -> Some(ec, arg)
     | _ -> None
+
+  let mkSpecWhenRequired lhs init =
+    match lhs with
+      | Ref(_, v) when v.IsSpec -> Expr.SpecCode(init)
+      | _ -> init
           
   //============================================================================================================    
 
@@ -440,16 +445,16 @@ namespace Microsoft.Research.Vcc
             | Type.Array(_,_) -> 
               let assignIdx idx (arg:Expr) = 
                 Expr.Macro({ec with Type = Type.Void}, "=", [Expr.Deref({lhs.Common with Type = arg.Type}, Index(lhs.Common, lhs, mkInt idx)); arg])
-              Some(Expr.MkBlock(List.mapi assignIdx (List.map self args)))
+              Some(mkSpecWhenRequired lhs (Expr.MkBlock(List.mapi assignIdx (List.map self args))))
             | Type.Ref(td) ->
-              Some(Expr.MkBlock(List.map self args))
+              Some(mkSpecWhenRequired lhs (Expr.MkBlock(List.map self args)))
             | _ -> 
               helper.Oops(lhs.Token, "unexpected type '" + lhs.Type.ToString() + "' for initialized object")
               None
 
         | Macro(ec, "init", [_; Skip(_)]) -> Some(Skip(ec))
 
-        | Macro(ec, "init", [lhs; rhs]) -> Some(Macro(ec, "=", [self lhs; self rhs]))
+        | Macro(ec, "init", [lhs; rhs]) -> Some(mkSpecWhenRequired lhs (Macro(ec, "=", [self lhs; self rhs])))
         
         | Macro(ec, "dot", [e0; UserData(_, field)]) ->
           match field with
@@ -530,11 +535,11 @@ namespace Microsoft.Research.Vcc
 
       let replaceDeclsAndAllocate self = function
         | VarDecl(ec, ({Type = Array(t, n)} as v), attr) as decl ->
-          let ptrType = Type.PhysPtr(t) // TODO: could be spec ptr
+          let ptrType = Type.MkPtr(t, v.IsSpec)
           let vptr = Variable.CreateUnique v.Name ptrType v.Kind
           let vptrRef = Expr.Ref({ec with Type=v.Type}, vptr)
-          let stackAlloc = Expr.Macro({ ec with Type = ptrType }, "stack_allocate_array", [mkInt n; Expr.False])
-          let assign = Expr.Macro(ec, "=", [vptrRef; stackAlloc])
+          let stackAlloc = Expr.Macro({ ec with Type = ptrType }, "stack_allocate_array", [mkInt n; (if vptr.IsSpec then Expr.True else Expr.False)])
+          let assign = mkSpecWhenRequired (mkRef vptr) (Expr.Macro(ec, "=", [vptrRef; stackAlloc]))
           varSubst.Add(v, mkRef vptr)
           Some(Expr.Macro(ec, "fake_block", [VarDecl(ec, vptr, attr); assign]))
         | _ -> None
@@ -1325,7 +1330,7 @@ namespace Microsoft.Research.Vcc
         | _ -> None
 
       let despecializeDecl = function
-        | Top.FunctionDecl({Name = IsSpecAlloc()} as alloc) ->
+        | Top.FunctionDecl({FriendlyName = IsSpecAlloc()} as alloc) ->
           let tv = { Name = "T" } : TypeVariable
           alloc.RetType <- Type.SpecPtr(TypeVar(tv))
           alloc.TypeParameters <- [tv]
@@ -1392,6 +1397,35 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================    
 
+    let ghostPtr decls = 
+
+      let ptrToSpecType _ = function
+        | PhysPtr(Type.Ref(td)) when td.IsSpec -> Some(SpecPtr(Type.Ref(td)))
+        | _ -> None
+    
+      let retypeRefs self (e:Expr) =
+        match e.Type with
+          | PhysPtr(t) -> 
+            match e with
+              | AddrOf(_, Ref(_, { Kind = (VarKind.SpecGlobal|VarKind.SpecLocal)})) -> Some(e.WithType(Type.MkPtr(t, true)))
+              | Dot(ec, expr, field) ->
+                let (expr':Expr) = self expr
+                Some(Dot({ec with Type = Type.MkPtr(t, field.IsSpec || expr'.Type._IsSpecPtr)}, expr', field))
+              | Index(ec, expr, idx) ->
+                let expr' = self expr
+                Some(Index({ec with Type = Type.MkPtr(t, expr'.Type._IsSpecPtr)}, expr', self idx))
+              | Macro(ec, "ptr_addition", [expr; offset]) ->
+                let expr' = self expr
+                Some(Macro({ec with Type = Type.MkPtr(t, expr'.Type._IsSpecPtr)}, "ptr_addition", [expr'; self offset]))
+              | Call(ec, fn, ts, args) when fn.RetType._IsSpecPtr ->
+                Some(Call({ec with Type = Type.MkPtr(t, true)}, fn, ts, List.map self args))
+              | _ -> None
+          | _ -> None
+
+      decls |> deepRetype ptrToSpecType |> deepMapExpressions retypeRefs
+
+    // ============================================================================================================    
+
     helper.AddTransformer ("cpp-begin", TransHelper.DoNothing)
 
     helper.AddTransformer ("cpp-check-ast-structure", TransHelper.Decl checkAstStructure)
@@ -1430,6 +1464,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-despecialize-alloc", TransHelper.Decl despecializeAlloc)
     helper.AddTransformer ("cpp-assignment-to-stmts", TransHelper.Expr makeAssignmentsIntoStmts)
     helper.AddTransformer ("cpp-signatures", TransHelper.Expr normalizeSignatures)
+    helper.AddTransformer ("cpp-ghost-ptr", TransHelper.Decl ghostPtr)
     helper.AddTransformer ("cpp-declare-parameters", TransHelper.Decl addDeclarationsForParameters)
 
     helper.AddTransformer ("cpp-end", TransHelper.DoNothing)

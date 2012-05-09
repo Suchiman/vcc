@@ -283,11 +283,18 @@ namespace Microsoft.Research.Vcc
         transformers.Add td
       
       member this.ApplyTransformers (decls : list<CAST.Top>) =
+
+        let checkCalls self = function
+          | CAST.Call(_, fn, targs, args) ->
+            if fn.TypeParameters.Length <> targs.Length then this.Die()
+            None
+          | _ -> None
+
         let apply = function
           | Expr f -> CAST.deepMapExpressions f
           | ExprCtx f -> CAST.deepMapExpressionsCtx f
           | Decl f -> f
-          | DoNothing -> (fun x -> x)
+          | DoNothing -> id
         let rec aux i decls =
           if i >= transformers.Count then 
             decls

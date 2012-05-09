@@ -377,6 +377,11 @@ module Microsoft.Research.Vcc.CAST
         | PhysPtr _ -> true
         | _ -> false
         
+    member this._IsSpecPtr = 
+      match this with
+        | SpecPtr _ -> true
+        | _ -> false
+
     member this.IsPtrTo td =
       match this with 
         | SpecPtr td'
@@ -832,7 +837,7 @@ module Microsoft.Research.Vcc.CAST
         this.Writes <- ses this.Writes;
         this.Variants <- ses this.Variants;
         this.Reads <- ses this.Reads;
-        this.TypeParameters <- [];
+        this.TypeParameters <- this.TypeParameters;
         this.Body <- if includeBody then Option.map se this.Body else None
         this
         
@@ -1148,6 +1153,8 @@ module Microsoft.Research.Vcc.CAST
         | Pure (_, a) -> Pure (ec, a)
         | UserData(_, a) -> UserData(ec, a)
         | SizeOf(_, a) -> SizeOf (ec, a)
+
+    member this.WithType t = this.WithCommon({this.Common with Type = t})
 
     member this.Visit (ispure : bool, f: ExprCtx -> Expr -> bool) : unit =
       let rec visit ctx e =
