@@ -31,11 +31,11 @@ namespace VCC
 {
     class ThreadT { };
     
-	typedef ThreadT *Thread;
+    typedef ThreadT __declspec("System.Diagnostics.Contracts.CodeContract.SpecPointerAttr") *Thread;
 
     class ClaimT { };
 
-    typedef ClaimT *Claim;
+    typedef ClaimT __declspec("System.Diagnostics.Contracts.CodeContract.SpecPointerAttr") *Claim;
 
     class Integer {
     public:
