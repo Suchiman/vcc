@@ -250,6 +250,8 @@ namespace Microsoft.Research.Vcc
 
       function
         | IntLiteral(ec, i) when ec.Type = Type.Bool -> Some(BoolLiteral(ec, i.IsOne))
+        | Macro(_, "implicit_cast", [Cast(ec, _, IntLiteral(_, i))])
+        | Cast(ec, _, IntLiteral(_, i))
         | IntLiteral(ec, i) when ec.Type._IsPtr && i.IsZero -> Some(Macro(ec, "null", []))
         | Macro(ic, "implicit_cast", [Cast(ec, cs, e)]) when ec.Type._IsInteger ->
           let e' = self e
@@ -258,6 +260,10 @@ namespace Microsoft.Research.Vcc
           else 
             Some(Macro(ic, "implicit_cast", [Cast(ec, cs, e')]))
 
+        | Macro(ic, "implicit_cast", [Cast(ec, cs, e)]) ->
+          match ec.Type, e.Type with
+            | PtrSoP(t0, _), PtrSoP(t1, _) when t0 = t1 -> Some(self e)
+            | _ -> None
         | _ -> None
 
     // ============================================================================================================    
@@ -1405,14 +1411,18 @@ namespace Microsoft.Research.Vcc
 
     let ghostPtr decls = 
 
-      let ptrToSpecType _ = function
+      let ptrToSpecType self = function
         | PhysPtr(Type.Ref(td)) when td.IsSpec -> Some(SpecPtr(Type.Ref(td)))
+        | PhysPtr(SpecPtr(t)) -> Some(SpecPtr(SpecPtr(self t)))
+        | PhysPtr(Type.Claim) -> Some(SpecPtr(Type.Claim))
         | _ -> None
     
       let retypeRefs self (e:Expr) =
         match e.Type with
           | PhysPtr(t) -> 
             match e with
+              | Ref(ec, v) when v.Type._IsSpecPtr ->
+                Some(Ref({ec with Type = Type.SpecPtr(t)}, v))
               | AddrOf(_, Ref(_, { Kind = (VarKind.SpecGlobal|VarKind.SpecLocal)})) -> Some(e.WithType(Type.MkPtr(t, true)))
               | Dot(ec, expr, field) ->
                 let (expr':Expr) = self expr
@@ -1425,10 +1435,42 @@ namespace Microsoft.Research.Vcc
                 Some(Macro({ec with Type = Type.MkPtr(t, expr'.Type._IsSpecPtr)}, "ptr_addition", [expr'; self offset]))
               | Call(ec, fn, ts, args) when fn.RetType._IsSpecPtr ->
                 Some(Call({ec with Type = Type.MkPtr(t, true)}, fn, ts, List.map self args))
+              | Macro(ec, ("_vcc_claim"|"_vcc_me"|"_vcc_upgrade_claim" as m), args) ->
+                Some(Macro({ec with Type = Type.SpecPtr(t)}, m, List.map self args))
+              | Macro(ec, "=", [lhs; rhs]) ->
+                let lhs' = self lhs
+                Some(Macro({ec with Type = Type.MkPtr(t,lhs'.Type._IsSpecPtr)}, "=", [lhs'; self rhs]))
               | _ -> None
           | _ -> None
 
-      decls |> deepRetype ptrToSpecType |> deepMapExpressions retypeRefs
+      let errorForImplicitConversion self = 
+
+        let reportError t = function
+          | Macro(_, "null", []) -> true
+          | expr ->
+            match t, expr.Type with
+              | PhysPtr(_), SpecPtr(_) 
+              | SpecPtr(_), PhysPtr(_) -> 
+                helper.Error(expr.Token, 37, "Cannot implicitly convert expression '" + expr.Token.Value + "' of type '" + expr.Type.ToString() + "' to '" + t.ToString() + "'")
+                false
+              | _ -> true
+
+        function
+          | Macro(ec, "=", [lhs; rhs]) -> reportError lhs.Type rhs
+          | _ -> true
+
+      decls 
+      |> deepRetype ptrToSpecType 
+      |> deepMapExpressions retypeRefs 
+      |> deepVisitExpressions errorForImplicitConversion
+      
+      decls
+
+    // ============================================================================================================    
+
+    let removeIndirections self = function
+      | AddrOf(_, Deref(_, e)) -> Some(self e)
+      | _ -> None
 
     // ============================================================================================================    
 
@@ -1454,14 +1496,15 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-field-attributes", TransHelper.Decl rewriteFieldAttributes)
     helper.AddTransformer ("cpp-ghost", TransHelper.Decl rewriteGhost)
     helper.AddTransformer ("cpp-assign-ops", TransHelper.Expr rewriteAssignOps)
+    helper.AddTransformer ("cpp-stack-arrays", TransHelper.Decl handleStackArrays)
     helper.AddTransformer ("cpp-rewrite-casts", TransHelper.Expr rewriteCasts)
     helper.AddTransformer ("cpp-ptr-arithmetic", TransHelper.Expr rewritePtrArithmetic)
     helper.AddTransformer ("cpp-quantifiers", TransHelper.Decl rewriteQuantifiers)
-    helper.AddTransformer ("cpp-stack-arrays", TransHelper.Decl handleStackArrays)
     helper.AddTransformer ("cpp-rewrite-functions", TransHelper.Expr rewriteSpecialFunctions)
     helper.AddTransformer ("cpp-rewrite-block-decorators", TransHelper.Expr rewriteBlockDecorators)
     helper.AddTransformer ("cpp-rewrite-functions-with-contracts", TransHelper.Decl rewriteSpecialFunctionsWithContracts)
     helper.AddTransformer ("cpp-rewrite-macros", TransHelper.Expr rewriteExtraMacros)
+    helper.AddTransformer ("cpp-indirection", TransHelper.Expr removeIndirections)
     helper.AddTransformer ("cpp-retype-macros", TransHelper.Expr retypeMacros)
     helper.AddTransformer ("cpp-bool-conversion", TransHelper.Expr insertBoolConversion)
     helper.AddTransformer ("cpp-rewrite-ops", TransHelper.Expr rewriteExtraOps)
