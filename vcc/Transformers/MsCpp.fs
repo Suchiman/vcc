@@ -60,6 +60,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Destroyclaim",        "_vcc_unclaim"
                                                     "VCC::Diff",                "_vcc_set_difference"
                                                     "VCC::Disjoint",            "_vcc_set_disjoint"
+                                                    "VCC::Domain",              "_vcc_domain"
                                                     "VCC::Embedding",           "_vcc_emb"
                                                     "VCC::Extent",              "_vcc_extent"
                                                     "VCC::Extentfresh",         "_vcc_extent_is_fresh"
@@ -98,6 +99,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Universe",            "_vcc_set_universe"
                                                     "VCC::Upgradeclaim",        "_vcc_upgrade_claim"
                                                     "VCC::Valid",               "_vcc_typed2"
+                                                    "VCC::Vdomain",             "_vcc_vdomain"
                                                     "VCC::Wrapped",             "_vcc_wrapped"
                                                     "VCC::Writable",            "_vcc_writable"
                                       ]
@@ -264,6 +266,7 @@ namespace Microsoft.Research.Vcc
           match ec.Type, e.Type with
             | PtrSoP(t0, _), PtrSoP(t1, _) when t0 = t1 -> Some(self e)
             | _ -> None
+        //| Macro(ic, "implicit_cast", [Cast(ec, cs, e)]) when ec.Type.IsPtr && e.Type.IsPtr -> Some(self e)
         | _ -> None
 
     // ============================================================================================================    
@@ -482,7 +485,7 @@ namespace Microsoft.Research.Vcc
               if not (Type.ConversionIsLossless(expr.Type, ec.Type)) then
                 helper.Error(ec.Token, 37, "Cannot implicitly convert expression '" + expr.Token.Value + "' of type '" + expr.Type.ToString() + "' to '" + ec.Type.ToString() + "'")
             | _ -> ()
-          Some(self cast)
+          if expr.Type.IsPtr then Some(self expr) else Some(self cast)
 
         | Macro(ec, "comma", args) -> Some(Macro(ec, "fake_block", List.map self args))
 

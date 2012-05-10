@@ -62,15 +62,8 @@ let init (helper:TransHelper.TransEnv) =
         decl
       | decl -> decl
 
-    let removeMagicEntities = 
-      let isNotMagic = function 
-        | Top.Global({Name = "\\me"}, _) 
-        | Top.TypeDecl({Name = "\\TypeState"}) -> false
-        | _ -> true
-      List.filter isNotMagic
-
     let normalizeInDomain self = function
-      | Call(ec, {Name = "\\set_in"}, [], [e1; Call(_, {Name = "\\domain"}, [], [e2])]) ->          
+      | Macro(ec, "_vcc_set_in", [e1; Macro(_, "_vcc_domain", [e2])]) ->          
         let uncasted =
           match e2 with
             | Cast ({ Type = Type.ObjectT }, _, e) -> e
@@ -80,7 +73,7 @@ let init (helper:TransHelper.TransEnv) =
             | Ptr Claim -> "_vcc_in_claim_domain"
             | _ -> "_vcc_in_domain"
         Some(Macro(ec, name, [self e1; self e2]))
-      | Call(ec, {Name = "\\set_in"}, [], [e1; Call(_, {Name = "\\vdomain"}, [], [e2])]) -> 
+      | Macro(ec, "_vcc_set_in", [e1; Macro(_, "_vcc_vdomain", [e2])]) -> 
         Some(Macro(ec, "_vcc_in_vdomain", [self e1; self e2]))
       | _ -> None
 
@@ -282,13 +275,11 @@ let init (helper:TransHelper.TransEnv) =
     deepMapExpressions normalizeSignatures >> 
     (fun decls -> List.iter mapFromNewSyntax decls; decls)>> 
     deepMapExpressions normalizeMacros >>
-    removeMagicEntities >>
     deepMapExpressions normalizeMisc >> 
     deepMapExpressions rewriteBvAssertAsBvLemma >>
     deepMapExpressions handleExpressionLabels >>
     deepMapExpressions (normalizeCastLike false) >>
     deepMapExpressions normalizeUnwrapping
-
 
 
   // ============================================================================================================  
