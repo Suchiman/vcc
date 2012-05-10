@@ -1070,7 +1070,7 @@ namespace Microsoft.Research.Vcc
       let fixupReferencesInInvariants = function
         | Top.TypeDecl(td) -> 
           let fixupReference _ = function
-            | Ref(ec, ({ Kind = VarKind.Global } as v)) ->
+            | Ref(ec, ({ Kind = (VarKind.Global|VarKind.SpecGlobal) } as v)) ->
               let idx = v.Name.LastIndexOf("::")
               if idx > 0 && not (v.Name.StartsWith("VCC::")) then
                 let fieldName = v.Name.Substring(idx + 2)
@@ -1451,12 +1451,15 @@ namespace Microsoft.Research.Vcc
             match t, expr.Type with
               | PhysPtr(_), SpecPtr(_) 
               | SpecPtr(_), PhysPtr(_) -> 
-                helper.Error(expr.Token, 37, "Cannot implicitly convert expression '" + expr.Token.Value + "' of type '" + expr.Type.ToString() + "' to '" + t.ToString() + "'")
+                helper.Error(expr.Token, 37, "Cannot convert expression '" + expr.Token.Value + "' of type '" + expr.Type.ToString() + "' to '" + t.ToString() + "'")
                 false
               | _ -> true
 
         function
-          | Macro(ec, "=", [lhs; rhs]) -> reportError lhs.Type rhs
+          | Macro(_, "=", [lhs; rhs]) -> reportError lhs.Type rhs
+//          | Call(_, fn, [], args) -> List.iter2 (fun (p:Variable) e -> reportError p.Type e |> ignore) fn.Parameters args; true
+//          | Cast(ec, _, expr) -> reportError ec.Type expr
+            
           | _ -> true
 
       decls 
