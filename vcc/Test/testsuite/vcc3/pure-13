@@ -5,7 +5,7 @@ struct A {
   int y;
 };
 
-_(pure) bool f1(struct A*a)
+_(pure) \bool f1(struct A*a)
   _(reads a)
   _(returns a->x < a->y);
 
@@ -14,7 +14,7 @@ struct B {
   _(invariant \mine(a))
 };
 
-_(pure) bool f2(struct B*b)
+_(pure) \bool f2(struct B*b)
   _(reads b)
   _(returns b->a->x < b->a->y);
 
@@ -39,7 +39,7 @@ struct ABS {
  
 #ifdef VERIFY
 _(pure)
-bool AbsConcRel(struct ABS *abs, struct CONC *conc)
+\bool AbsConcRel(struct ABS *abs, struct CONC *conc)
  _(reads abs, conc)
  _(returns abs->a == conc->a &&
       abs->core.RIP == conc->RIP &&

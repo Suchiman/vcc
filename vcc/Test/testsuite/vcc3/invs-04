@@ -1,6 +1,6 @@
 #include "vcc.h"
 
-_(ghost _(pure) bool a_is_increasing(\state s1, \state s2, struct S *s)
+_(ghost _(pure) \bool a_is_increasing(\state s1, \state s2, struct S *s)
     _(returns \at(s1,s->a) <= \at(s2,s->a)))
 
 struct S {

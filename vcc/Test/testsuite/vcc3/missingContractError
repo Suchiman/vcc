@@ -6,7 +6,7 @@ typedef struct sti{
         unsigned int a[10];
         unsigned int b;
 } sti;
-_(ghost _(pure) bool test(struct sti p) 
+_(ghost _(pure) \bool test(struct sti p) 
   _(ensures \result == (p->b == 1))) // should be p.b, we expect a real error here
 
 void foo(__inout sti* p, sti p1)

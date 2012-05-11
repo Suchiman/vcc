@@ -73,11 +73,11 @@ void loop_inv_may_fail()
 }
 
 
-_(ghost _(pure) bool f1(int x)
+_(ghost _(pure) \bool f1(int x)
   _(reads \universe())
   _(returns x > 0);) 
 
-_(ghost _(pure) bool f2(int x)
+_(ghost _(pure) \bool f2(int x)
   _(reads \universe()) ;) 
 
 _(axiom \forall int x; {f1(x)} f1(x) ==> f2(x))

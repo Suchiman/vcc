@@ -1,6 +1,6 @@
 #include "vcc.h"
 
-_(pure) bool Length(int *x)
+_(pure) \bool Length(int *x)
     _(ensures \result == *x > 0);
 
 void foo()

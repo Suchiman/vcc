@@ -38,7 +38,7 @@ void baz2()
 }
 
 
-_(logic bool And(bool a, bool b) = (a && b);)
+_(logic \bool And(\bool a, \bool b) = (a && b);)
 
 void foo2()
 {
@@ -54,40 +54,40 @@ struct Node {
 
 #define NULL 0
 
-_(logic bool nextClosed(bool S[struct Node *]) = (\forall struct Node *n; S[n] && n->next != NULL ==> S[n->next] && n->next->d < n->d);)
+_(logic \bool nextClosed(\bool S[struct Node *]) = (\forall struct Node *n; S[n] && n->next != NULL ==> S[n->next] && n->next->d < n->d);)
 
-void testQ(_(ghost bool s[struct Node *]))
+void testQ(_(ghost \bool s[struct Node *]))
 {
   _(assert nextClosed(s))
 }
 
-void testQ2(_(ghost bool s[struct Node *]))
+void testQ2(_(ghost \bool s[struct Node *]))
 {
   _(assert {:split} nextClosed(s))
 }
 
-_(logic bool nextClosed2(bool S[struct Node *]) = ({:split} \forall struct Node *n; S[n] && n->next != NULL ==> S[n->next] && n->next->d < n->d);)
+_(logic \bool nextClosed2(\bool S[struct Node *]) = ({:split} \forall struct Node *n; S[n] && n->next != NULL ==> S[n->next] && n->next->d < n->d);)
 
-void testQ3(_(ghost bool s[struct Node *]))
+void testQ3(_(ghost \bool s[struct Node *]))
 {
   _(assert nextClosed2(s))
 }
 
 
-_(logic bool nextClosed3(bool S[struct Node *]) = ((\forall struct Node *n; S[n] && n->next != NULL ==> S[n->next] && n->next->d < n->d) &&
+_(logic \bool nextClosed3(\bool S[struct Node *]) = ((\forall struct Node *n; S[n] && n->next != NULL ==> S[n->next] && n->next->d < n->d) &&
   \forall struct Node *n; S[n] && n->prev != NULL ==> S[n->prev] && n->prev->d < n->d);)
 
-void testQN(_(ghost bool s[struct Node *]))
+void testQN(_(ghost \bool s[struct Node *]))
 {
   _(assert nextClosed3(s))
 }
 
-void testQN2(_(ghost bool s[struct Node *]))
+void testQN2(_(ghost \bool s[struct Node *]))
 {
   _(assert {:split} nextClosed3(s))
 }
 
-`
+\bool
 Verification of foo failed.
 testcase(6,12) : error VC9500: Assertion 'a > b' did not verify.
 testcase(6,21) : error VC9500: Assertion 'b > c' did not verify.
@@ -134,4 +134,4 @@ testcase(87,21) : error VC9500: Assertion 'S[n] && n->prev != 0 ==> S[n->prev] i
 testcase(78,3) : error VC9599: (related information) from expansion of 'nextClosed3(s)'.
 testcase(87,21) : error VC9500: Assertion 'S[n] && n->prev != 0 ==> n->prev->d < n->d in \forall struct Node *n; S[n] && n->prev != 0 ==> S[n->prev] && n->prev->d < n->d)' did not verify.
 testcase(78,3) : error VC9599: (related information) from expansion of 'nextClosed3(s)'.
-`
+\bool

@@ -1,7 +1,7 @@
 #include <vcc.h>
 
 typedef struct B {
-     bool c;
+     int c;
 } B;
 
 void bar(B* a)

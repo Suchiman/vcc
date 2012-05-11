@@ -2,7 +2,7 @@
 
 struct S {
   int a;
-  _(ghost bool M[unsigned __int64])
+  _(ghost \bool M[unsigned __int64])
   _(invariant M == \lambda unsigned __int64 x; x < 100 ==> ((struct S *)x \is struct S))
 };
 

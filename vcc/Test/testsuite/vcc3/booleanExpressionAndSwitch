@@ -1,7 +1,7 @@
 #include <vcc.h>
 
 
-//static bool __vcModifies(void* p, size_t length){ return 0;  }
+//static \bool __vcModifies(void* p, size_t length){ return 0;  }
 
 void CorExpressionTestOk(int a,int b) { int result;
   result = a>0?1:-1;
@@ -78,11 +78,12 @@ int SwitchTestOk(int x){
   }
 }
 
-void ImplTestOk(bool b, bool c)
+_(void ImplTestOk(\bool b, \bool c)
 {
    // binding strength and direction of implication
     _(assert b ==> c ==> b && c)
 }
+)
 `
 Verification of CorExpressionTestOk succeeded.
 Verification of CandExpressionTestOk succeeded.

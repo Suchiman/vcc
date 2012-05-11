@@ -21,7 +21,7 @@ typedef struct _BITMAP {
   _(invariant \mine((unsigned[Size/32])Buffer))
 
   // public abstraction
-  _(ghost bool BM[unsigned]) // unsigned --> {true, false}
+  _(ghost \bool BM[unsigned]) // unsigned --> {true, false}
   _(invariant \forall unsigned i; i < Size ==>
         (BM[i] <==> BIT_SELECT(Buffer[i/32], i%32)))
 

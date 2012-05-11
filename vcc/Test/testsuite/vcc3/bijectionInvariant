@@ -8,7 +8,7 @@ typedef unsigned __int64 UINT64, *PUINT64;
 typedef void VOID, *PVOID;
 
 
-_(ghost _(pure) bool IsBijectiveMap(UINT64 *map, UINT64 count)
+_(ghost _(pure) \bool IsBijectiveMap(UINT64 *map, UINT64 count)
   _(reads \universe())
   _(ensures \result == \forall UINT64 j; \match_ulong(j) && 0 <= j && j < count ==> \exists UINT64 k; \match_ulong(k) && map[k] == j))
 

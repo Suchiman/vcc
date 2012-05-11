@@ -4,6 +4,7 @@
 #define FALSE 0
 #define TRUE !0
 typedef unsigned UINT;
+typedef int bool;
 
 #define approvesClientFields(a) \approves(a, ticket) && \approves(a, flag) && \approves(a, checked) \
     && \approves(a, max) && \approves(a, waiting)

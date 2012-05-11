@@ -1,8 +1,8 @@
 #include <vcc.h>
 
-bool bar();
+int bar();
 
-void foo(bool b) 
+void foo(int b) 
 _(requires b)
 {
 

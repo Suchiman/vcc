@@ -2,7 +2,7 @@
 
 typedef _(claimable) struct A {
 
-        volatile bool a;
+        volatile int a;
         _(invariant a)
 } *PA;
 
