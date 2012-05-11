@@ -10,7 +10,7 @@
    volatile int v;
 
    
-   _(ghost _(:g) volatile bool map[unsigned int])
+   _(ghost _(:g) volatile \bool map[unsigned int])
 
    _(invariant \mine(\this::g))
    
@@ -69,7 +69,7 @@ int test(struct Struct *s)
 _(claimable) struct Struct1
  {
    int value;
-   _(ghost volatile bool map[unsigned int])
+   _(ghost volatile \bool map[unsigned int])
 };
  
   int test1(struct Struct1 *s _(ghost \claim c))

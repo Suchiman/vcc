@@ -3,13 +3,13 @@
 _(dynamic_owns)
 typedef struct _Foo2
 {
-    bool Flag;
+    int Flag;
 } Foo2;
 
 _(dynamic_owns)
 typedef struct _Foo
 {
-    bool Flag;
+    int Flag;
 } Foo;
 
 _(dynamic_owns)

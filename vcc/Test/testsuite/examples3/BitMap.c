@@ -3,7 +3,7 @@
 typedef unsigned __int64 UINT64;
 typedef unsigned __int32 UINT32;
 
-_(ghost typedef bool BITMAP[UINT64])
+_(ghost typedef \bool BITMAP[UINT64])
 
 
 _(ghost _(pure) BITMAP ToBm64(UINT64 n);) 
@@ -52,12 +52,12 @@ _(ghost _(pure) BITMAP Bm32SymmetricDiff(BITMAP bm1, BITMAP bm2)
 
 
 
-_(ghost _(pure) bool Bm64SpecialValue(UINT64 bm)
+_(ghost _(pure) \bool Bm64SpecialValue(UINT64 bm)
   _(ensures \result == \true);)
 
 
 
-_(ghost _(pure) bool Bm32SpecialValue(UINT32 bm)
+_(ghost _(pure) \bool Bm32SpecialValue(UINT32 bm)
   _(ensures \result == \true);)
 
 

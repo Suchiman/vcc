@@ -5,11 +5,11 @@ struct A {
   _(invariant \old(x) <= x)
 };
 
-_(abstract bool Q(int x0, int x1))
+_(abstract \bool Q(int x0, int x1))
 
-_(def bool lemma(\state s0, struct A *a) { return Q(\at(s0, a->x), a->x); })
+_(def \bool lemma(\state s0, struct A *a) { return Q(\at(s0, a->x), a->x); })
 
-_(abstract bool lemmaProof(\state s0, \state s1, struct A *a)
+_(abstract \bool lemmaProof(\state s0, \state s1, struct A *a)
   _(requires \inv2s(s0, s1, a))
   _(ensures \at(s1, lemma(s0, a))))
 

@@ -2,7 +2,7 @@
 
 typedef struct s1{
     int dummy;
-    _(ghost volatile bool b[int];)
+    _(ghost volatile \bool b[int];)
     _(invariant \approves(\this->\owner, b))
 } s1;
 

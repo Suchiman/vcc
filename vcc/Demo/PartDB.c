@@ -5,6 +5,8 @@
 #define MAXPART 64
 #define ISSET(n, v) (((v) & (1ULL << (n))) != 0)
 
+typedef int bool;
+
 typedef _(claimable) struct _Partition {
   bool active;
 

@@ -1,15 +1,15 @@
 #include "vcc.h"
 
 
-_(bool \macro_foo(int a)
+_(\bool \macro_foo(int a)
   _(requires a > 0)
   _(ensures a > 1))
 
-_(bool \macro_foo2(int a)
+_(\bool \macro_foo2(int a)
   _(requires a > 0)
   _(ensures a > 1))
 
-_(bool \macro_bar(int x, int y)
+_(\bool \macro_bar(int x, int y)
   _(foo x)
   _(foo2 y))
 

@@ -1,6 +1,6 @@
 #include "vcc.h"
 
-template<typename T> bool foo(T *x)
+template<typename T> int foo(T *x)
     _(writes \array_range(x,sizeof(T)/4));
 
 vcc_attr("no_infer", "weak_out_param")

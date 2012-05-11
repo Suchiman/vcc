@@ -14,7 +14,7 @@ _(def S f(int a[])
 }
 )
 
-_(def bool g(int a[], S s)
+_(def \bool g(int a[], S s)
 	_(recursive_with f)
 	_(decreases a, s)
 {

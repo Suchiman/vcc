@@ -1,7 +1,7 @@
 
 #include <vcc.h>
 
-bool zero() _(returns 0);
+int zero() _(returns 0);
 
 int foo() {
     if (_(known \false) zero()) {

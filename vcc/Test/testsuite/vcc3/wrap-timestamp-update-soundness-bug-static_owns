@@ -2,12 +2,12 @@
 
 typedef struct _Foo2
 {
-    bool Flag;
+    int Flag;
 } Foo2;
 
 typedef struct _Foo
 {
-    bool Flag;
+    int Flag;
 } Foo;
 
 typedef struct _Bar

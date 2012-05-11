@@ -39,15 +39,15 @@ typedef struct Node {
 
 } Node, *PNode;
 
-_(ghost _(pure) bool intToBool(int ) _(returns \true))
+_(ghost _(pure) \bool intTo\bool(int ) _(returns \true))
 
-_(ghost typedef bool PNodeSet[PNode])
+_(ghost typedef \bool PNodeSet[PNode])
 _(ghost _(pure) PNode mark(PNode p) _(returns p))
-_(ghost _(pure) bool doMark(PNode p) _(returns mark(p) == p))
+_(ghost _(pure) \bool doMark(PNode p) _(returns mark(p) == p))
 
-_(ghost _(pure) bool mark2(PNode p))
+_(ghost _(pure) \bool mark2(PNode p))
 
-#define DEF(F,...) _(logic bool F = {:split} __VA_ARGS__)
+#define DEF(F,...) _(logic \bool F = {:split} __VA_ARGS__)
 
 DEF(rb_lrclosed(struct Tree *t, PNode p, PNode x),
   (\forall PNode n; {mark(n)} t->R[t->root][n] && mark(n)->parent == NULL ==> n == x || n == t->root) &&

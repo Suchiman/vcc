@@ -8,7 +8,7 @@ unsigned int id;
 
 
 _(ghost struct abs_str {
-bool Sset[S_t];
+\bool Sset[S_t];
 
 _(invariant Sset == \lambda S_t s; (s.id < 42))
 } abs;)

@@ -2,7 +2,7 @@
 
 typedef unsigned __int64 UINT64;
 
-typedef bool BITMAP[UINT64];
+_(typedef \bool BITMAP[UINT64];)
 
 
 _(ghost _(pure) BITMAP ToBitMap(UINT64 n);)

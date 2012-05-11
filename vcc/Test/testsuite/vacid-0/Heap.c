@@ -36,9 +36,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 _(ghost typedef \integer intmset[int])
 _(ghost _(pure) unsigned mark(unsigned i) _(returns i))
 
-_(ghost _(pure) bool mark3(unsigned i, int e) _(returns mark(i) >= 0 && mark(2*i+1) >= 0 && mark(2*i+2) >= 0))
+_(ghost _(pure) \bool mark3(unsigned i, int e) _(returns mark(i) >= 0 && mark(2*i+1) >= 0 && mark(2*i+2) >= 0))
 
-#define DEF(F,D) _(logic bool F = {:split} D)
+#define DEF(F,D) _(logic \bool F = {:split} D)
 
 DEF(isHeapExcept(struct Heap *h, unsigned p),
   (\forall unsigned i; {h->sh[mark(i)]} i >= h->len ==> (h->sh[mark(i)] == \lambda int e; (\integer)0)) &&

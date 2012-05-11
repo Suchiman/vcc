@@ -9,7 +9,7 @@ struct Node {
 
 _(dynamic_owns) struct List {
   struct Node *head;
-  _(ghost bool val[int];)
+  _(ghost \bool val[int];)
   _(invariant head != NULL ==> \mine(head))
   _(invariant \forall struct Node *n;
                 \mine(n) ==> n->next == NULL || \mine(n->next))

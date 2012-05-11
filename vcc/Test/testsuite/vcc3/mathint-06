@@ -2,7 +2,7 @@
 
 _(ghost
 
-_(pure) bool foo(\integer x)
+_(pure) \bool foo(\integer x)
 	_(ensures \result == \true)
 	;
 )

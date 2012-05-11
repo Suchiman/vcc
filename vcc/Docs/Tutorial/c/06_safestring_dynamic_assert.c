@@ -9,7 +9,7 @@ struct SafeString {
   _(invariant len < capacity)
   _(invariant content[len] == '\0')
   _(invariant \mine((char[capacity])content))
-  _(ghost bool consistencyFlag; )
+  _(ghost \bool consistencyFlag; )
 };
 /*{append}*/
 void sstr_append_char(struct SafeString *s, char c)

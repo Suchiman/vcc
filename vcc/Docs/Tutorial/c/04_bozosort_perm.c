@@ -1,16 +1,16 @@
 #include "02_rand.c"
 
 /*{begin}*/
-_(logic bool sorted(int *buf, unsigned len) =
+_(logic \bool sorted(int *buf, unsigned len) =
   \forall unsigned i, j; i < j && j < len ==> buf[i] <= buf[j])
 
 _(typedef unsigned perm_t[unsigned]; )
 
-_(logic bool is_permutation(perm_t perm, unsigned len) =
+_(logic \bool is_permutation(perm_t perm, unsigned len) =
   (\forall unsigned i, j;
     i < j && j < len ==> perm[i] != perm[j]))
 
-_(logic bool is_permuted(\state s, int *buf, unsigned len,
+_(logic \bool is_permuted(\state s, int *buf, unsigned len,
                          perm_t perm) =
   \forall unsigned i; i < len ==>
       perm[i] < len && \at(s, buf[ perm[i] ]) == buf[i])

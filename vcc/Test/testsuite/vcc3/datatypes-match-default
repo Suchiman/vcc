@@ -5,7 +5,7 @@ _(datatype D {
 	case B(D x);
 })
 
-_(def bool f(D d)
+_(def \bool f(D d)
 {
 	switch(d) {
 	case B(x): return \false;
@@ -14,7 +14,7 @@ _(def bool f(D d)
 }
 )
 
-_(def bool f_fail1(D d)
+_(def \bool f_fail1(D d)
 {
 	switch(d) {
 	case B(x): return \false;
