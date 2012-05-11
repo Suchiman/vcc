@@ -69,6 +69,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Fullextent",          "_vcc_full_extent"
                                                     "VCC::In",                  "_vcc_set_in"
                                                     "VCC::In0",                 "_vcc_set_in0"
+                                                    "VCC::Indexwithin",         "index_within"
                                                     "VCC::Inv",                 "_vcc_inv"
                                                     "VCC::Inv2",                "_vcc_inv2"
                                                     "VCC::Inv2s",               "_vcc_inv2s"
