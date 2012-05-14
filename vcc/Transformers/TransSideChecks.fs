@@ -107,6 +107,7 @@ namespace Microsoft.Research.Vcc
                 Name = td.Name + "#adm"
                 Parameters = [parm]
                 Ensures = post
+                Variants = [ mkInt 0 ]
                 CustomAttr = VccAttr(AttrIsAdmissibility, "") :: (inheritedAttrs td.CustomAttr)
                 Body = Some body
                 IsProcessed = true }
@@ -141,7 +142,8 @@ namespace Microsoft.Research.Vcc
             let good = Expr.Macro (afmtt f.Token 8002 "state was altered after havoc_others()" [], 
                                  "_vcc_good_for_post_admissibility", [])
             f.Requires <- pre2 :: pre :: f.Requires
-            f.Ensures <- [good] @ admChecks helper p @ f.Ensures)
+            f.Ensures <- [good] @ admChecks helper p @ f.Ensures
+            f.Variants <- [ mkInt 0 ])
             
         | Top.FunctionDecl f when hasCustomAttr "is_unwrap_check" f.CustomAttr ->
           errCheck f (fun td p ->

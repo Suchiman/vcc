@@ -16,6 +16,9 @@ module Microsoft.Research.Vcc.CAST
   type Unique = uint64
 
   [<Literal>]
+  let AttrAtomicInline = "atomic_inline"
+
+  [<Literal>]
   let AttrIsAdmissibility = "is_admissibilitycheck"
 
   [<Literal>]

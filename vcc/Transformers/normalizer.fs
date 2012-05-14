@@ -549,7 +549,7 @@ namespace Microsoft.Research.Vcc
       let inlines = gdict()
       let isntInline = function
         | Top.FunctionDecl fd ->
-          if hasCustomAttr "atomic_inline" fd.CustomAttr then
+          if hasCustomAttr AttrAtomicInline fd.CustomAttr then
             if fd.IsPure then
               helper.Error(fd.Token, 9667, "Pure function '" + fd.Name + "' cannot be inlined.")
               true
