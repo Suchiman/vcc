@@ -626,7 +626,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-linearize", TransHelper.Decl (ToCoreC.linearizeDecls helper))
     helper.AddTransformer ("final-keeps-warning", TransHelper.Decl (List.map theKeepsWarning))
     helper.AddTransformer ("final-dynamic-owns", TransHelper.Decl errorForMissingDynamicOwns)
-    helper.AddTransformer ("final-error-old", TransHelper.Decl errorForResultWhenThereIsNone)
+    helper.AddTransformer ("final-error-result", TransHelper.Decl errorForResultWhenThereIsNone)
     helper.AddTransformer ("final-error-old", TransHelper.Decl errorForOldInOneStateContext)
     helper.AddTransformer ("final-error-pure", TransHelper.Decl errorForStateWriteInPureContext)
     helper.AddTransformer ("final-error-when-claimed", TransHelper.Decl errorForWhenClaimedOutsideOfClaim)
