@@ -129,7 +129,7 @@ let init (helper:TransHelper.TransEnv) =
           | _ -> None
       let doDecl = function
         | Top.FunctionDecl f when f.Body.IsSome ->
-          let isAtomic = hasCustomAttr "atomic_inline" f.CustomAttr
+          let isAtomic = hasCustomAttr AttrAtomicInline f.CustomAttr
           f.Body <- Some (f.Body.Value.SelfMap checkOwnsObjectT)
           f.Body <- Some (f.Body.Value.SelfMap (aux isAtomic))
           Top.FunctionDecl f

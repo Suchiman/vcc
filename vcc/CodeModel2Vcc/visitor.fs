@@ -335,9 +335,10 @@ namespace Microsoft.Research.Vcc
             | _ -> ()
 
           let contractsOnly = contractsOnly && 
-                              not (hasCustomAttr "atomic_inline" decl.CustomAttr) && 
-                              not (List.exists (fun n -> n = decl.Name) requestedFunctions)
-          // make sure that if the current function is explicitly requested or atomic_inline, then process its body
+                              not (hasCustomAttr CAST.AttrAtomicInline decl.CustomAttr) && 
+                              not (List.exists (fun n -> n = decl.Name) requestedFunctions) &&
+                              not (hasCustomAttr CAST.AttrDefinition decl.CustomAttr)
+          // make sure that if the current function is explicitly requested or atomic_inline or def, then process its body
           // coming here again to process the body in a second round does not work.
           
           if body = null || contractsOnly then
