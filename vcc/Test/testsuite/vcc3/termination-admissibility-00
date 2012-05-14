@@ -1,0 +1,29 @@
+#include <vcc.h>
+
+struct S { int a; };
+
+struct T {
+  struct S s;
+  _(invariant s.a == 0)
+};
+
+ _(pure)int  no_return()
+  _(ensures \false)
+{
+  while (1) { }
+  _(assert \false)
+}
+
+_(ghost _(admissibility)
+void adm_T(struct T* p)
+{
+  _(havoc_others p)
+  no_return();
+})
+
+`
+testcase(21,3) : warning VC9315: [possible unsoundness]: termination checking not enabled for function 'no_return'; consider supplying _(decreases ...) clause
+Verification of T#adm succeeded.
+Verification of no_return succeeded.
+Verification of adm_T succeeded.
+`
