@@ -1611,11 +1611,17 @@ namespace Microsoft.Research.Vcc
         let typeToCheck = this.DoType checkIfInstance.TypeToCheck
         let ec = this.ExprCommon checkIfInstance
         match typeToCheck with
-          | C.Ptr(_) -> helper.Warning(ec.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended", None) // TODO update to new syntax, \is
+          | C.Ptr(_) -> helper.Warning(ec.Token, 9107, "'\\is' applied to a pointer type; this is probably not what you intended", None) // TODO update to new syntax, \is
           | _ -> ()
+        let operand = this.DoIExpression checkIfInstance.Operand
+        match operand.Type with 
+          | C.Ptr _ 
+          | C.Type.ObjectT
+          | C.Type.Claim -> ()
+          | t -> helper.Error (operand.Token, 9748, "Cannot apply '\\is' to argument of type '" + operand.Type.ToString() + "'")
         // set also the type in ExprCommon so we prevent pruning of the type
         let typeExpr = C.Expr.UserData({C.ExprCommon.Bogus with Type = typeToCheck}, typeToCheck ) 
-        exprRes <- C.Expr.Macro(ec, "\\is", [this.DoIExpression checkIfInstance.Operand; typeExpr ])
+        exprRes <- C.Expr.Macro(ec, "\\is", [operand; typeExpr ])
 
       member this.Visit (constant:ICompileTimeConstant) : unit =
 
