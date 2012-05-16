@@ -220,6 +220,10 @@ axiom (forall p:$ptr, t:$ctype ::
   // {$addr(p), $phys_ptr_cast(p, t)}
   $addr($phys_ptr_cast(p, t)) == $addr(p));
 
+axiom (forall p:$ptr, t0:$ctype, t1:$ctype ::
+  {$phys_ptr_cast($phys_ptr_cast(p, t0), t1)}
+  $phys_ptr_cast($phys_ptr_cast(p, t0), t1) == $phys_ptr_cast(p, t1));
+
 function $addr0(p:$ptr) : int
   { $unchk_add_ptr($base(p), $field_offset($field(p))) }
 
