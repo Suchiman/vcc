@@ -1668,10 +1668,17 @@ procedure $wrap(o:$ptr, T:$ctype);
 ///////
 
 function $take_over(S:$state, l:$ptr, o:$ptr) : $state;
+function $start_release(S0:$state, S:$state) : $state;
 function $release(S0:$state, S:$state, #l:$ptr, #p:$ptr) : $state;
 
 axiom (forall S:$state, l:$ptr, p:$ptr :: {$take_over(S, l, p)}
   $f_owner($take_over(S, l, p)) == $f_owner(S)[p := l]);
+
+axiom (forall S0,S:$state :: {$start_release(S0, S)}
+  $f_owner($start_release(S0, S)) == $f_owner(S) &&
+  $f_timestamp($start_release(S0, S)) == $f_timestamp(S) &&
+  $current_timestamp($start_release(S0, S)) > $current_timestamp(S)
+  );
 
 axiom (forall S0,S:$state, l:$ptr, p:$ptr :: {$release(S0, S, l, p)}
   $f_owner($release(S0, S, l, p)) == $f_owner(S)[p := $me()] &&
@@ -1688,6 +1695,7 @@ procedure $static_unwrap(o:$ptr, S:$state);
 
   ensures $is_unwrapped(old($s), $s, o);
   ensures $f_owner($s) == $f_owner(S);
+  ensures $current_timestamp($s) == $current_timestamp(S);
   ensures $f_timestamp($s) == $f_timestamp(S)[o := $current_timestamp($s)];
 
 
