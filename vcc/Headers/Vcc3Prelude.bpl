@@ -2202,7 +2202,8 @@ axiom (forall p:$ptr, S1:$state, S2:$state, q:$ptr ::
 
 function $in_claim_domain(p:$ptr, c:$ptr) : bool;
 axiom (forall p:$ptr, c:$ptr :: {$in_claim_domain(p, c)}
-  (forall s:$state :: {$dont_instantiate_state(s)} $valid_claim(s, c) ==> $closed(s, p)) ==>
+  ((forall s:$state, q:$ptr :: {$closed(s, q)} $invok_state(s) && $closed(s, q) ==> $inv2_without_lemmas(s, s, q, $typ(q))) ==>
+   (forall s:$state :: {$dont_instantiate_state(s)} $valid_claim(s, c) ==> $closed(s, p))) ==>
     $in_claim_domain(p, c));
 
 function $by_claim(S:$state, c:$ptr, obj:$ptr, ptr:$ptr) : $ptr
