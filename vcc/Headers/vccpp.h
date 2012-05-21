@@ -41,6 +41,11 @@ namespace VCC
     public:
       Integer();
       Integer(int);
+      Integer(long);
+      Integer(__int64);
+      Integer(unsigned);
+      Integer(unsigned long);
+      Integer(unsigned __int64);
       Integer operator-=(Integer);
       Integer operator+=(Integer);
       operator int() const;
@@ -235,7 +240,6 @@ namespace VCC
     template<class T> bool Objectroot(T);
     template<class T> T Old(T);
     template<class T> bool Onunwrap(T, bool);
-    Integer Plus(Integer, Integer);
     template<class T> T Precise(T);
     template<class T> T ReadOnly(T);
     void ReadsHavoc();
