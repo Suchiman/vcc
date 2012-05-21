@@ -101,6 +101,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Upgradeclaim",        "_vcc_upgrade_claim"
                                                     "VCC::Valid",               "_vcc_typed2"
                                                     "VCC::Vdomain",             "_vcc_vdomain"
+                                                    "VCC::Whenclaimed",         "_vcc_when_claimed"
                                                     "VCC::Wrapped",             "_vcc_wrapped"
                                                     "VCC::Writable",            "_vcc_writable"
                                       ]
