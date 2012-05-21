@@ -166,6 +166,7 @@ namespace Microsoft.Research.Vcc
                                   "VCC::FrameAxiom",    CAST.AttrFrameaxiom
                                   "VCC::NoReadsCheck",  CAST.AttrNoReadsCheck
                                   "VCC::AtomicInline",  CAST.AttrAtomicInline
+                                  "VCC::SkipSmoke",     CAST.AttrSkipSmoke
                                 ]
 
   let (|IsCustomAttr|_|) s = Map.tryFind s customAttrs
