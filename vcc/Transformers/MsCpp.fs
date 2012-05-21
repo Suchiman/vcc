@@ -287,6 +287,9 @@ namespace Microsoft.Research.Vcc
         | Deref(ec, Call(_, { FriendlyName = fname }, [], [Macro(_, "&", [lhs]); Macro(_, "&", [rhs])])) 
             when fname.StartsWith("VCC::Map") && fname.EndsWith("operator=") ->
           Some(Macro(ec, "=", [self lhs; self rhs]))
+        | Call (ec, { FriendlyName = n}, [], [arg0; arg1]) 
+            when n.StartsWith("VCC::Map") && n.EndsWith("operator==") ->
+          Some(Prim(ec, Op("==", CheckedStatus.Checked), [self arg0; self arg1]))
         | _ -> None
 
     // ============================================================================================================    
