@@ -61,6 +61,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Diff",                "_vcc_set_difference"
                                                     "VCC::Disjoint",            "_vcc_set_disjoint"
                                                     "VCC::Domain",              "_vcc_domain"
+                                                    "VCC::Domainupdatedat",     "_vcc_domain_updated_at"
                                                     "VCC::Embedding",           "_vcc_emb"
                                                     "VCC::Extent",              "_vcc_extent"
                                                     "VCC::Extentfresh",         "_vcc_extent_is_fresh"
