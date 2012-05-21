@@ -301,6 +301,8 @@ namespace Microsoft.Research.Vcc
       function
         | Call (ec, { FriendlyName = "VCC::Object::operator==" }, [], [arg0; arg1]) ->
           Some(Prim(ec, Op("==", CheckedStatus.Checked), [self arg0; self arg1]))
+        | Call (ec, { FriendlyName = "VCC::Object::operator!=" }, [], [arg0; arg1]) ->
+          Some(Prim(ec, Op("!=", CheckedStatus.Checked), [self arg0; self arg1]))
         | _ -> None
 
     // ============================================================================================================    
@@ -345,6 +347,8 @@ namespace Microsoft.Research.Vcc
           Some(Macro(ec, "set", List.map self elems))
         | Call(ec, { FriendlyName = "VCC::Set::operator==" }, [], [arg0; arg1]) ->
           Some(Macro(ec, "_vcc_set_eq", [self arg0; self arg1]))
+        | Call(ec, { FriendlyName = "VCC::Set::operator+=" }, [], [arg0; arg1]) ->
+          Some(Prim(ec, Op("+=", CheckedStatus.Checked), [self arg0; self arg1]))
         | _ -> None
 
     // ============================================================================================================    
