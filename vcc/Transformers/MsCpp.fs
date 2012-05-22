@@ -294,6 +294,9 @@ namespace Microsoft.Research.Vcc
         | Call (ec, { FriendlyName = n}, [], [arg0; arg1]) 
             when n.StartsWith("VCC::Map") && n.EndsWith("operator==") ->
           Some(Prim(ec, Op("==", CheckedStatus.Checked), [self arg0; self arg1]))
+        | Call (ec, { FriendlyName = n }, [], [arg0; arg1])
+            when n.StartsWith("VCC::Map") && n.EndsWith("operator[]") ->
+          Some(Macro(ec, "map_get", [self arg0; self arg1]))
         | _ -> None
 
     // ============================================================================================================    
