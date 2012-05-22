@@ -9,7 +9,7 @@
     <MoreInfoUrl>http://vcc.codeplex.com</MoreInfoUrl>
     <Icon>Package.ico</Icon>
     <PreviewImage>preview.png</PreviewImage>
-    <InstalledByMsi>true</InstalledByMsi>
+    <InstalledByMsi>false</InstalledByMsi>
     <SupportedProducts>
       <VisualStudio Version="11.0">
         <Edition>Ultimate</Edition>
