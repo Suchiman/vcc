@@ -167,6 +167,7 @@ namespace Microsoft.Research.Vcc
                                   "VCC::NoReadsCheck",  CAST.AttrNoReadsCheck
                                   "VCC::AtomicInline",  CAST.AttrAtomicInline
                                   "VCC::SkipSmoke",     CAST.AttrSkipSmoke
+                                  "VCC::AssumeCorrect", CAST.AttrSkipVerification
                                 ]
 
   let (|IsCustomAttr|_|) s = Map.tryFind s customAttrs
@@ -317,6 +318,10 @@ namespace Microsoft.Research.Vcc
       function
         | Call (ec, { FriendlyName = "VCC::Integer::operator int" }, [], [arg]) ->
           Some(self arg)
+        | Call (ec, { FriendlyName = "VCC::Integer::operator-=" }, [], [arg0; arg1]) ->
+          Some(Prim(ec, Op("-=", CheckedStatus.Checked), [self arg0; self arg1]))
+        | Call (ec, { FriendlyName = "VCC::Integer::operator+=" }, [], [arg0; arg1]) ->
+          Some(Prim(ec, Op("+=", CheckedStatus.Checked), [self arg0; self arg1]))
         | Call (ec, { FriendlyName = StartsWith "VCC::Integer::Integer" }, [], [arg0; arg1]) ->
           Some(Cast({ ec with Type = Type.MathInteger MathIntKind.Signed }, CheckedStatus.Checked, self arg1))
         | _ -> None
