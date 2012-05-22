@@ -2,7 +2,7 @@
 #include <vcc.h>
 #include <limits.h>
 
-_(logic bool foo(int a) = \forall int blob; a <= blob)
+_(logic \bool foo(int a) = \forall int blob; a <= blob)
 
 int main()
 {

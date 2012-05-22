@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define ASSERT(E) { int tmp = E; _(assert tmp) } // A
 
-_(ghost typedef bool uset_t[unsigned])
+_(ghost typedef \bool uset_t[unsigned])
 
 _(ghost _(pure) \integer card(uset_t s))  // A
 _(ghost _(pure) uset_t empty()  // A
@@ -45,7 +45,7 @@ _(ghost _(pure) uset_t addone(uset_t s, unsigned i) // A
 _(axiom card(empty()) == 0) // A
 _(axiom \forall uset_t s; unsigned i; card(s) >= 0 && !s[i] ==> card(addone(s, i)) == card(s) + 1) // A
 
-_(ghost _(pure) bool upper_card(uset_t s, \integer n) _(returns \forall unsigned i; s[i] ==> i < n))  // A
+_(ghost _(pure) \bool upper_card(uset_t s, \integer n) _(returns \forall unsigned i; s[i] ==> i < n))  // A
 _(axiom \forall uset_t s; \integer n; upper_card(s, n) ==> card(s) <= n) // A
 
 #define wrappedD(a) (a \in \domain(a) && \wrapped(a))

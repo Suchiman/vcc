@@ -9,7 +9,7 @@ typedef void VOID;
 
 void foo()
 {
-  bool b = 0;
+  int b = 0;
   
   do
   {
@@ -21,7 +21,7 @@ void foo()
 
 void bar()
 {
-  bool b = 0;
+  int b = 0;
   int i = 0;
   
   do

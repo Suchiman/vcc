@@ -1,6 +1,6 @@
 #include <vcc.h>
 
-bool foo();
+int foo();
 void bar()
 {
   _(assert foo->b == 0)

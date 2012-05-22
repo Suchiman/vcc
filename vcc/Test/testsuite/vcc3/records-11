@@ -12,7 +12,7 @@ typedef unsigned int uint;
 #define let(x, X, y, f) (\exists X x; x == (y) && (f))
 
 
-_(ghost _(pure) bool mov_reg_excp(uint regidx, uint64 data, Core c)
+_(ghost _(pure) \bool mov_reg_excp(uint regidx, uint64 data, Core c)
     _(returns regidx >= 8);)
 
 

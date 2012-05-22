@@ -10,7 +10,7 @@ typedef _(record) struct {
 } ByteString;
 )
 
-_(logic bool valid(ByteString s) = s.length >= 0 && (\forall \integer i; (i < 0 || s.length <= i) ==> (s.bytes[i] == (BYTE) 0)))
+_(logic \bool valid(ByteString s) = s.length >= 0 && (\forall \integer i; (i < 0 || s.length <= i) ==> (s.bytes[i] == (BYTE) 0)))
 
 
 

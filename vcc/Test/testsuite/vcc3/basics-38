@@ -1,11 +1,13 @@
 #include <vcc.h>
 
-bool _(pure) zero1(int a)
+_(
+\bool _(pure) zero1(int a)
 _(returns a == 0 ? (0 == 0) : \false);
-bool _(pure) zero2(int a)
+\bool _(pure) zero2(int a)
 _(returns a == 0 ? (0 == 0) : (1 < 0));
-bool _(pure) zero3(int a)
+\bool _(pure) zero3(int a)
 _(returns a == 0 ? (0 != 1) : (0 == 0) && (0 == 1));
+)
 
 void foo() {
   _(assert zero1(0))

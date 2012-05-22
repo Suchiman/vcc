@@ -3,7 +3,7 @@
 typedef  _(claimable) struct { int dummy; } Seal;
 
 _(volatile_owns) _(claimable) struct Mut {
-  volatile bool af, bf;
+  volatile int af, bf;
    _(ghost Seal afs;) 
   _(invariant \on_unwrap(\this,  !(&afs)->\closed))
 };

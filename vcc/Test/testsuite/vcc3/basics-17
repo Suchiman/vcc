@@ -1,7 +1,7 @@
 #include <vcc.h>
 
 void foo() {
-  _(ghost bool m[int])
+  _(ghost \bool m[int])
   _(ghost m[(void *)0] = \true)
 }
 `

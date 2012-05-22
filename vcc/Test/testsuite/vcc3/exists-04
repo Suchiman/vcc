@@ -14,9 +14,9 @@ void bar(int *p)
 {
 }
 
-_(pure) bool baz(int x);
+_(pure) int baz(int x);
 
-bool qux(int z)
+int qux(int z)
   _(ensures \result ==> \exists int p; baz(p))
 {
   return baz(z/2);

@@ -8,9 +8,9 @@ struct Node {
 
 /*{type}*/
 _(dynamic_owns) struct List {
-  _(ghost bool val[int];)
+  _(ghost \bool val[int];)
   struct Node *head;
-  _(ghost bool followers[struct Node *][int];)
+  _(ghost \bool followers[struct Node *][int];)
   _(invariant val == followers[head])
   _(invariant head != NULL ==> \mine(head))
   _(invariant followers[NULL] == \lambda int k; \false)

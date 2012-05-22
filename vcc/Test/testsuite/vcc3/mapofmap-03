@@ -2,7 +2,7 @@
 
 struct T {
     int dummy;
-    _(ghost volatile bool map[int][int][int])
+    _(ghost volatile \bool map[int][int][int])
 };
 
 void foo(struct T *t)

@@ -16,6 +16,7 @@ void adm_A(struct A* x)
   _(assume \inv(x))
 })
 `
+testcase(15,3) : warning VC9315: [possible unsoundness]: termination checking not enabled for function 'bar'; consider supplying _(decreases ...) clause
 Verification of bar succeeded.
 Verification of adm_A failed.
 testcase(11,11) : error VC8002: state was altered after havoc_others().

@@ -54,7 +54,7 @@ unsigned partition(int *arr, unsigned len, unsigned pivotIdx)
 }
 
 #if 0
-_(_(pure) bool iszero(int x) _(returns x == 0))
+_(_(pure) \bool iszero(int x) _(returns x == 0))
 /*{qsort}*/
 void qsort(int *arr, unsigned len)
   _(writes \array_range(arr, len))

@@ -1,8 +1,8 @@
 #include <vcc.h>
 
-_(logic bool f(bool a) = a)
+_(logic \bool f(\bool a) = a)
 
-bool test(_(out int x))
+\bool test(_(out int x))
 _(returns f(x > 0))
 {
 	_(ghost x = 5)

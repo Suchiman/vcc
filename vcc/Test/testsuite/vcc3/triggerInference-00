@@ -1,11 +1,11 @@
 ` /dt:1
 #include "vcc.h"
 
-_(typedef bool set_t[unsigned];)
+_(typedef \bool set_t[unsigned];)
 
 _(typedef set_t set2_t[unsigned];)
 
-_(ghost bool _(pure) f1(unsigned); )
+_(ghost \bool _(pure) f1(unsigned); )
 _(ghost unsigned _(pure) f2(unsigned); )
 
 void trg2(unsigned *m _(ghost set_t s) _(ghost set2_t s2))
