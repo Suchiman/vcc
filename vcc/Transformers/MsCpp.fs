@@ -54,6 +54,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Claimable",           "_vcc_is_claimable"
                                                     "VCC::Claimcount",          "_vcc_ref_cnt"
                                                     "VCC::Claims",              "_vcc_claims"
+                                                    "VCC::Claimsobject",        "_vcc_claims_obj"
                                                     "VCC::Closed",              "_vcc_closed"
                                                     "VCC::Deepeq",              "_vcc_deep_struct_eq"
                                                     "VCC::Depends",             "_vcc_depends"
