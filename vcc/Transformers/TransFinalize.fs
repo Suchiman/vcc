@@ -616,6 +616,32 @@ namespace Microsoft.Research.Vcc
                   
     // ============================================================================================================
 
+    let errorForMe decls =
+
+      let errorForMeInInvariant _ = function
+        | Macro(ec, "_vcc_me", []) ->
+          helper.Error(ec.Token, 9749, "Cannot refer to '\me' in invariant", None)
+          false
+        | _ -> true
+
+      let errorForAddressOfMe _ = function
+        | Macro(ec, "&", [Macro(_, "_vcc_me", [])]) ->
+          helper.Error(ec.Token, 9750, "Cannot take address of '\me'", None)
+          false
+        | _ -> true
+
+      decls |> deepVisitExpressions errorForAddressOfMe
+
+      for d in decls do
+        match d with
+          | Top.TypeDecl(td) ->
+            td.Invariants |> List.iter (fun (e:Expr) -> e.SelfVisit(errorForMeInInvariant))
+          | _ -> ()
+
+      decls
+
+    // ============================================================================================================
+
     helper.AddTransformer ("final-begin", TransHelper.DoNothing)
     
     helper.AddTransformer ("final-range-assumptions", TransHelper.Decl addRangeAssumptions)
@@ -629,6 +655,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-error-result", TransHelper.Decl errorForResultWhenThereIsNone)
     helper.AddTransformer ("final-error-old", TransHelper.Decl errorForOldInOneStateContext)
     helper.AddTransformer ("final-error-pure", TransHelper.Decl errorForStateWriteInPureContext)
+    helper.AddTransformer ("final-error-me", TransHelper.Decl errorForMe)
     helper.AddTransformer ("final-error-when-claimed", TransHelper.Decl errorForWhenClaimedOutsideOfClaim)
     helper.AddTransformer ("final-error-arithmetic-in-trigger", TransHelper.Expr checkTriggerOps)
     helper.AddTransformer ("final-error-jump-from-atomic", TransHelper.Expr (errorWhenJumpingFromAtomic false))
