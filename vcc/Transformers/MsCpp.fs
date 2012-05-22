@@ -69,6 +69,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Extentmutable",       "_vcc_extent_mutable"
                                                     "VCC::Fresh",               "_vcc_is_fresh"
                                                     "VCC::Fullextent",          "_vcc_full_extent"
+                                                    "VCC::HavocOthers",         "_vcc_havoc_others"
                                                     "VCC::In",                  "_vcc_set_in"
                                                     "VCC::In0",                 "_vcc_set_in0"
                                                     "VCC::Indexwithin",         "index_within"
