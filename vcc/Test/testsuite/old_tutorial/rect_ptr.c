@@ -15,11 +15,11 @@ struct rect {
   _(invariant ll != ur)
 };
 
-_(ghost _(pure) bool inv_rect(struct rect *r)
+_(ghost _(pure) \bool inv_rect(struct rect *r)
   _(reads r)
   _(returns r->ll->x <= r->ur->x && r->ll->y <= r->ur->y))
 
-_(ghost _(pure) bool within_bounds(struct rect *r, int dx, int dy)
+_(ghost _(pure) \bool within_bounds(struct rect *r, int dx, int dy)
   _(reads r)
   _(returns 0 <= r->ll->x + dx && r->ll->x + dx < 1024 &&
     0 <= r->ur->x + dx && r->ur->x + dx < 1024 &&

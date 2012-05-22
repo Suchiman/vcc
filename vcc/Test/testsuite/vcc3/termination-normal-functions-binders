@@ -16,7 +16,7 @@ _(void foo()
     _(decreases i)
     _(invariant i > 0)
   {
-    bool k = \forall int z; bar(z);
+    int k = \forall int z; bar(z);
   }
 })
 
@@ -37,7 +37,7 @@ _(void foo2()
     _(decreases i)
     _(invariant i > 0)
   {
-    bool k = \forall int z; bar2(z);
+    int k = \forall int z; bar2(z);
   }
 })
 
@@ -47,5 +47,5 @@ Verification of bar succeeded.
 Verification of foo succeeded.
 Verification of bar2 succeeded.
 Verification of foo2 failed.
-testcase(40,29) : error VC8029: the call 'bar2(z)' might not terminate.
+testcase(40,28) : error VC8029: the call 'bar2(z)' might not terminate.
 `

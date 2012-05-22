@@ -1,7 +1,7 @@
 #include "02_rand.c"
 
 /*{begin}*/
-_(logic bool sorted(int *buf, unsigned len) =
+_(logic \bool sorted(int *buf, unsigned len) =
   \forall unsigned i, j; i < j && j < len ==> buf[i] <= buf[j])
 
 void bozo_sort(int *buf, unsigned len)

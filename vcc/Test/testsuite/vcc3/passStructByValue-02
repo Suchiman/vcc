@@ -8,7 +8,7 @@ typedef struct proc_t {
 } proc_t;
 
 
-_(ghost _(pure)   bool post(proc_t proc, proc_t oldproc) 
+_(ghost _(pure)   \bool post(proc_t proc, proc_t oldproc) 
     _(ensures \result == (proc.dpc == oldproc.pcp && proc.pcp == _(unchecked)(oldproc.pcp + 4)));)
     
 

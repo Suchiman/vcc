@@ -10,7 +10,7 @@
 
 #define TEST(...) TEST1(__COUNTER__,__VA_ARGS__)
 
- _(ghost _(pure) bool alwaysTrue(bool x) _(returns \true);) 
+ _(ghost _(pure) \bool alwaysTrue(\bool x) _(returns \true);) 
 
 
 TEST(a!=b)

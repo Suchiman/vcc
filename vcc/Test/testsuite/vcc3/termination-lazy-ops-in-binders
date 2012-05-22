@@ -1,40 +1,40 @@
 #include <vcc.h>
 
-_(abstract bool foo(int x) 
+_(abstract \bool foo(int x) 
 { 
 })
 
-_(abstract bool foo2(int x) 
+_(abstract \bool foo2(int x) 
   _(requires x > 0)
 { 
 })
 
-_(abstract bool bar(int x)
+_(abstract \bool bar(int x)
   _(requires foo(x)) 
    
 { 
 })
 
-_(def bool baz(bool m[int])
+_(def \bool baz(\bool m[int])
   
 {
   return \forall int x; m[x] ==> foo(x) && bar(x);
 })
 
-_(def bool baz2(bool m[int])
+_(def \bool baz2(\bool m[int])
   
 {
   return \forall int x; m[x] && x > 0 ==> foo2(x);
 })
 
-_(def bool baz_fail(bool m[int])
+_(def \bool baz_fail(\bool m[int])
   
 {
   return \forall int x; m[x] ==> bar(x) && foo(x);
 })
 
 
-_(def bool baz2_fail(bool m[int])
+_(def \bool baz2_fail(\bool m[int])
   
 {
   return \forall int x; m[x] && x > -10 ==> foo2(x);

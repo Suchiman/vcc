@@ -5,7 +5,7 @@ struct S {
   int b;
 };
 
-_(ghost bool _(pure) swapped(struct S *s, \state s1, \state s2)
+_(ghost \bool _(pure) swapped(struct S *s, \state s1, \state s2)
   _(returns \at(s1, s->a) == \at(s2, s->b) && \at(s2, s->a) == \at(s1, s->b));)
 
 void foo(struct S *s)

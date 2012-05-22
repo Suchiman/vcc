@@ -1,6 +1,6 @@
 #include <vcc.h>
 
-bool _vcc_full_stop();
+_(\bool _vcc_full_stop();)
 
 struct foo {
   int x;

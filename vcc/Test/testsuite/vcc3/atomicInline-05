@@ -22,7 +22,7 @@ typedef _(claimable) _(volatile_owns) struct _RTL_SPIN_LOCK
 _(ghost _(atomic_inline)
 int
 RtlpGiveupSpinLockOwner(
-    bool r,
+    int r,
     PRTL_SPIN_LOCK SpinLock)
 {
     if (!r) _(ghost SpinLock->\owns -= SpinLock->protected_obj);
@@ -30,8 +30,8 @@ RtlpGiveupSpinLockOwner(
 };)
 
 
-_(atomic_inline) bool InterlockedBitTestAndSet(volatile INT32 *v, INT32 pos) {
-  bool result = (((*v) >> pos) & 1) == 1;
+_(atomic_inline) int InterlockedBitTestAndSet(volatile INT32 *v, INT32 pos) {
+  int result = (((*v) >> pos) & 1) == 1;
   *v |= (1 << pos);
   return result;
 }

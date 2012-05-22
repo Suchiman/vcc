@@ -9,19 +9,20 @@ void AllIntegralOperationsTestOk() {
   unsigned int u4;
   signed __int64 i8;
   unsigned __int64 u8;
-  bool b;
+  _(ghost \bool b;)
   u8 = _(unchecked)((unsigned __int64)i8);
   u4 = _(unchecked)((unsigned int)i4);
   u2 = _(unchecked)((unsigned short)i2);
   u1 = _(unchecked)((unsigned char)i1);
-  b = 1;
+  _(ghost b = 1;)
 }
 
 void IntOperationsTestOk(int a, int b)
   _(requires 0 < a && a < 100)
   _(requires 0 < b  && b < 100)
 {
-  int z; bool y;
+  int z; 
+  _(ghost \bool y;)
 
   z = -a;
   z = +z;
@@ -33,14 +34,14 @@ void IntOperationsTestOk(int a, int b)
   z = a % b;
   z = a % 4;
 
-  y = !y;
+  _(ghost {y = !y;
   y = a < b;
   y = a > b;
   y = a <= b;
   y = a >= b;
 
   y = a == b;
-  y = a != b;
+  y = a != b;})
 
   z = ~a;
   z = a & b;
@@ -55,7 +56,7 @@ void IntShiftOperationsTestOk(int a, int b)
   _(requires 0 < a && a < 100)
   _(requires 0 <= b  && b < 32)
 {
-  int z; bool y;
+  int z;
 
   z = a >> b;
   z = a << b;
@@ -67,7 +68,7 @@ void ShortOperationsTestOk(short a, short b)
   _(requires 0 < b  && b < 100)
 {
   short z = 1;
-  bool y;
+  _(ghost \bool y;)
 
   z = (short)-z;
   z = (short)+z;
@@ -78,14 +79,14 @@ void ShortOperationsTestOk(short a, short b)
   z = _(unchecked)((short)(a / b));
   z = (short)(a % b);
 
-  y = !y;
+  _(ghost {y = !y;
   y = a < b;
   y = a > b;
   y = a <= b;
   y = a >= b;
 
   y = a == b;
-  y = a != b;
+  y = a != b;})
 
   z = _(unchecked)((short)(~a));
   z = _(unchecked)((short)(a & b));
@@ -98,7 +99,6 @@ void ShortShiftOperationsTestOk(short a, short b)
   _(requires 0 <= b  && b < 16)
 {
   short z = 1;
-  bool y;
 
   z = _(unchecked)((short)(a >> b));
   z = _(unchecked)((short)(a << b));
@@ -108,7 +108,7 @@ void CharOperationsTestOk(char a, char b)
   _(requires 0 < a && a < 50)
   _(requires 0 < b  && b < 50)
 {
-  char z; bool y;
+  char z; _(ghost \bool y;)
 
   z = (char)(a + b);
   z = (char)(a - b);
@@ -117,6 +117,7 @@ void CharOperationsTestOk(char a, char b)
   z = _(unchecked)((char)(a / b));
   z = (char)(a % b);
 
+  _(ghost {
   y = !y;
   y = a < b;
   y = a > b;
@@ -125,7 +126,7 @@ void CharOperationsTestOk(char a, char b)
 
   y = a == b;
   y = a != b;
-
+  })
   z = _(unchecked)((char)~a);
   z = _(unchecked)((char)(a & b));
   z = _(unchecked)((char)(a | b));
@@ -138,7 +139,7 @@ void CharShiftOperationsTestOk(char a, char b)
   _(requires 0 < a && a < 50)
   _(requires 0 <= b  && b < 8)
 {
-  char z; bool y;
+  char z;
 
   z = _(unchecked)((char)(a >> b));
   z = _(unchecked)((char)(a << b));
@@ -148,7 +149,7 @@ void LongOperationsTestOk(__int64 a, __int64 b)
   _(requires 0 < a && a < 100)
   _(requires 0 < b  && b < 100)
 {
-  __int64 z; bool y;
+  __int64 z; _(ghost \bool y;)
 
   z = a + b;
   z = a - b;
@@ -157,6 +158,7 @@ void LongOperationsTestOk(__int64 a, __int64 b)
   z = a / b;
   z = a % b;
 
+  _(ghost {
   y = !y;
   y = a < b;
   y = a > b;
@@ -165,6 +167,7 @@ void LongOperationsTestOk(__int64 a, __int64 b)
 
   y = a == b;
   y = a != b;
+  })
 
   z = ~a;
   z = a & b;
@@ -177,19 +180,20 @@ void LongShiftOperationsTestOk(__int64 a, __int64 b)
   _(requires 0 < a && a < 100)
   _(requires 0 <= b  && b < 64)
 {
-  __int64 z; bool y;
+  __int64 z;
 
   z = a >> (int)b;
   z = a << (int)b;
 }
 
-void BoolOperationsTestOk(bool a, bool b) {
-  bool y;
+_(void BoolOperationsTestOk(\bool a, \bool b) {
+  _(ghost \bool y;)
+  _(ghost {
   y = a && b;
   y = a || b;
   y = !a || b;
-  y = !y;
-}
+  y = !y; })
+})
 
 int DivisionByZeroTestFails1() {
   int zero, x, result;
@@ -216,7 +220,7 @@ Verification of LongOperationsTestOk succeeded.
 Verification of LongShiftOperationsTestOk succeeded.
 Verification of BoolOperationsTestOk succeeded.
 Verification of DivisionByZeroTestFails1 failed.
-testcase(197,9) : error VC8519: Assertion 'zero != 0 (in division by zero)' did not verify.
+testcase(201,9) : error VC8519: Assertion 'zero != 0 (in division by zero)' did not verify.
 Verification of DivisionByZeroTestFails2 failed.
-testcase(204,10) : error VC8519: Assertion 'zero+zero != 0 (in division by zero)' did not verify.
+testcase(208,10) : error VC8519: Assertion 'zero+zero != 0 (in division by zero)' did not verify.
 `

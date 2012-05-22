@@ -2,14 +2,14 @@
 
 
 _(volatile_owns) struct Actor {
-  bool dummy;
+  int dummy;
   
   _(ghost volatile \claim c;)
   _(ghost volatile \claim arr[3];)
   _(ghost \claim map[\integer];)
   _(ghost volatile \claim vmap[\integer];)
 
-  _(ghost bool OutP[\claim];)
+  _(ghost \bool OutP[\claim];)
   
   _(invariant \forall \claim inc; OutP[inc])
 };

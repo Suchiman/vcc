@@ -6,7 +6,7 @@ typedef struct _Y *PY;
 
 typedef _(claimable) struct _X {
   int dummy;
-  _(ghost volatile bool T[PY])
+  _(ghost volatile \bool T[PY])
   _(invariant \approves(\this->\owner,T))
   _(invariant \forall PY t; {T[t]} T[t] <==> t->\closed && t->x == \this)
 } X, *PX;

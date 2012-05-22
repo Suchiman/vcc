@@ -10,7 +10,6 @@ memoryReintp-02
 memoryReintp-04
 memoryReintp-09
 memoryReintp-10
-as_array-09
 
 # extent_zero
 extent_zero-00

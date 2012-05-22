@@ -1,8 +1,8 @@
 #include <vcc.h>
 
-_(typedef bool Map[int];)
+_(typedef \bool Map[int];)
 
-_(pure bool f(Map arr))
+_(pure \bool f(Map arr))
 _(axiom \forall Map arr; f(arr) == \exists int i; arr[i])
 
 void main() {}

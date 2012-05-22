@@ -19,7 +19,7 @@ struct VS2 {
 struct VS3 {
   volatile int y;
   _(ghost \object yappr;)
-  bool f;
+  \bool f;
 
   _(invariant f ==> \approves(yappr, y))
 };

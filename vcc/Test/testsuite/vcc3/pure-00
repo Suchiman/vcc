@@ -1,17 +1,17 @@
 #include "vcc.h"
 
 #ifdef VERIFY
-typedef _Bool bool;
-_(pure) bool is_zero(int n)
-  _(ensures \result == (n == 0));
+_(_(pure) \bool is_zero(int n)
+  _(ensures \result == (n == 0));)
 
-_(frameaxiom) bool is_zerop(int *n)
+_(_(frameaxiom) \bool is_zerop(int *n)
   _(reads n)
-  _(ensures \result == (*n == 0));
+  _(ensures \result == (*n == 0));)
 
-_(no_reads_check)
-_(frameaxiom) bool wont_tell(int *n)
+_(_(no_reads_check)
+_(frameaxiom) \bool wont_tell(int *n)
   _(reads n);
+)
 #endif
 
 void foo()
@@ -47,8 +47,8 @@ struct A {
   int x, y;
 };
 
- _(ghost _(no_reads_check) _(frameaxiom) bool wont_tell_A(struct A *a) _(reads a);) 
- _(ghost _(no_reads_check) _(pure) bool wont_tell_nf(struct A *a) _(reads a);) 
+ _(ghost _(no_reads_check) _(frameaxiom) \bool wont_tell_A(struct A *a) _(reads a);) 
+ _(ghost _(no_reads_check) _(pure) \bool wont_tell_nf(struct A *a) _(reads a);) 
 
 void mux(struct A *a)
   _(requires \wrapped(a) && wont_tell_A(a))

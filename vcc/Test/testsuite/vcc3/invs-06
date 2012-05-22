@@ -1,13 +1,15 @@
 #include <vcc.h>
 
 typedef unsigned int UINT;
+typedef unsigned __int8 bool;
+
 #define N ((unsigned) 2)
 
 typedef struct Bakery Bakery;
 
 typedef _(claimable) struct Client {
 	volatile bool choosing;
-	_(ghost volatile bool waiting)
+	_(ghost volatile \bool waiting)
 	_(ghost \object bakery)
 	_(invariant \on_unwrap(\this, \inv(bakery)))
 	_(invariant \approves(\this->\owner,choosing))

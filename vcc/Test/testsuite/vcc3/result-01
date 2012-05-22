@@ -1,6 +1,6 @@
 #include <vcc.h>
 
-_(unsigned \macro_on_success(bool cond)
+_(unsigned \macro_on_success(\bool cond)
 _(ensures (\result == 0) ==> cond))
 
 void test()

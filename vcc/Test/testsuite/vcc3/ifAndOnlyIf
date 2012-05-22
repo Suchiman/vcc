@@ -1,13 +1,13 @@
 #include <vcc.h>
 
-bool foo(int i, bool b) 
+_(\bool foo(int i, \bool b) 
   _(ensures \result <==> b && i < 0) 
 {
   if (!b) return 0;
   if (i < 0) return 1;
   return 0;
 }
-
+)
 void bar(int i, int j)
   _(requires i <==> j)
 {

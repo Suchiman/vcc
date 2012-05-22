@@ -1,10 +1,10 @@
 #include "vcc.h"
 struct T;
-_(ghost _(pure) bool not_inv(\object o)
+_(ghost _(pure) \bool not_inv(\object o)
     _(reads \universe())
     _(returns !\inv(o)))
 
-_(ghost _(pure) bool _inv(\object o)
+_(ghost _(pure) \bool _inv(\object o)
     _(reads \universe())
     _(returns \inv(o)))
 

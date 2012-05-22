@@ -218,6 +218,7 @@ namespace Microsoft.Research.Vcc
             let initOwns, tmpowns = genTmpOwns()
             let assumeOwns = Expr.MkAssume (mkEq (mkRef tmpowns) (Macro ({ bogusEC with Type = Type.PtrSet }, "_vcc_owns", [this])))
             let (curstate, save1) = saveState "prestate" curstate
+            let startRelease = VarWrite (bogusEC, [curstate], pureEx (Macro (bogusState, "_vcc_start_release", [mkRef curstate; mkRef curstate])))
             let props = checkInvariant prestate (fun e -> not (isOnUnwrap e)) 0 "OOPS" this
             let now = Macro (bogusState, "_vcc_current_state", [])
             let updateFor obj =
@@ -227,7 +228,7 @@ namespace Microsoft.Research.Vcc
                Expr.MkAssume (pureEx (Macro (boolBogusEC(), "_vcc_typed", [obj])))]
             let addOwnees = extractKeeps updateFor props
             Some (Some prestate, Some curstate, initOwns @ all_save @ save @ save1,
-              pre @ [checkWrap; checkWr; assumeInv] @ addOwnees @ [assumeOwns],
+              pre @ [checkWrap; checkWr; startRelease; assumeInv] @ addOwnees @ [assumeOwns],
               Some curstate, dyns, stas @ [this], post @ check)
           | _ -> 
             match this.Type with

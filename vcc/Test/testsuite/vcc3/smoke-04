@@ -1,7 +1,7 @@
 `/smoke 
 #include <vcc.h>
 
-bool bar(bool a)
+int bar(int a)
   _(requires a)
 {
   int x;

@@ -44,6 +44,7 @@ module Ast =
 
   let private guardedKeywords =
     toKeywordSet [
+                  "\\bool";
                   "\\result";
                   "\\lambda";
                   "\\forall" ;

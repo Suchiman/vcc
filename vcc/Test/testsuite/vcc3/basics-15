@@ -1,6 +1,7 @@
 #include <vcc.h>
 
-void foo(bool a, bool b) 
+_(
+void foo(\bool a, \bool b) 
   _(requires a && !b)
 {
   _(assert b <== b)
@@ -19,6 +20,7 @@ void foo(bool a, bool b)
   _(assert !((a <== a) ==> b))
   _(assert a <== (a ==> b))
 }
+)
 `
 Verification of foo succeeded.
 `
