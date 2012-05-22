@@ -343,6 +343,26 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================        
 
+    let rewriteNaturals self =
+
+      // rewrite natural operators and constructor
+
+      function
+        | Call (ec, { FriendlyName = "VCC::Natural::operator unsigned int" }, [], [AddrOf(_, arg)])
+        | Call (ec, { FriendlyName = "VCC::Natural::operator unsigned int" }, [], [arg]) ->
+          Some(self arg)
+        | AddrOf(_, Deref(_, Call (ec, { FriendlyName = StartsWith "VCC::Natural::Natural" }, [], [arg0; arg1])))
+        | Deref(_, Call (ec, { FriendlyName = StartsWith "VCC::Natural::Natural" }, [], [arg0; arg1]))
+        | Call (ec, { FriendlyName = "VCC::Natural::operator-=" }, [], [arg0; arg1]) ->
+          Some(Prim(ec, Op("-=", CheckedStatus.Checked), [self arg0; self arg1]))
+        | Call (ec, { FriendlyName = "VCC::Natural::operator+=" }, [], [arg0; arg1]) ->
+          Some(Prim(ec, Op("+=", CheckedStatus.Checked), [self arg0; self arg1]))
+        | Call (ec, { FriendlyName = StartsWith "VCC::Natural::Natural" }, [], [arg0; arg1]) ->
+          Some(Cast({ ec with Type = Type.MathInteger MathIntKind.Signed }, CheckedStatus.Checked, self arg1))
+        | _ -> None
+
+    // ============================================================================================================        
+
     let rewriteTypeLockageFunctor self =
 
       // rewrite type lockage functor operator
@@ -1526,6 +1546,7 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("cpp-map", TransHelper.Expr rewriteMaps)
     helper.AddTransformer ("cpp-object", TransHelper.Expr rewriteObjects)
     helper.AddTransformer ("cpp-integer", TransHelper.Expr rewriteIntegers)
+    helper.AddTransformer ("cpp-natural", TransHelper.Expr rewriteNaturals)
     helper.AddTransformer ("cpp-typelockagefunctor", TransHelper.Expr rewriteTypeLockageFunctor)
     helper.AddTransformer ("cpp-remove-object-copying", TransHelper.Expr removeObjectCopyOperations)
     helper.AddTransformer ("cpp-blocks", TransHelper.Expr normalizeBlocks)
