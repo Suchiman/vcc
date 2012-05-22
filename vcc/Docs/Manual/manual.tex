@@ -225,9 +225,10 @@ verifier for concurrent C.
 
 VCC is a deductive verifier for concurrent C code. VCC takes C code,
 annotated with specifications of its behavior, and tries to prove that
-the code does indeed behave as specified. The primary purpose of this
-document is to describe the meaning of these annotations and what constitutes
-correct behavior of VCC (but not its internal architecture). 
+the code does indeed behave as specified. This document describes
+these annotations and what constitutes correct behavior of VCC.
+It assumes a working knowledge of C. It is not intended as a tutorial
+or as a guide to verification methodology.
 
 \section{Introduction}
 
@@ -262,101 +263,75 @@ satisfies the invariant of \vcc{o}, and (2) every good transition,
 starting from a good state, results in a state from which stuttering
 satisfies the invariant of \vcc{o}. VCC proves its inductive step by
 proving that every object invariant is admissible and that each
-transition induced by each function is legal.
+transition induced by each function is legal.  In VCC, every object
+has a type, and the (annotated) definition of a type determines the
+invariant of an object of that type; verifying a type definition means
+verifying that the invariants of objects of that type are admissible.
 
-In VCC, every object has a type, and the (annotated) definition of a
-type determines the invariant of an object of that type. Verifying a
-type definition means verifying that the invariants of objects of that
-type are admissible. 
+VCC makes substantial use of \Def{ghost} data and code - data and code
+added to the program to facilitate reasoning, and removed when the
+program is compiled. Ghost code can additional data types (e.g.
+unbounded integers and maps) and operations (e.g. quantifiers) since
+it is never executed. Ghost code must terminate, and doesn't write to
+non-ghost (concrete) data; these conditions guarantee that the program
+without ghost code simulates the program with the ghost code. VCC
+provides a number of pieces of ghost data that are integrated into the
+programming methodology. In addition, the user can add ghost fields to
+compound data types, ghost arguments to functions, and ghost data and
+code to function bodies. Because user-defined ghost objects have
+invariants, they serve as ``first-class'' chunks of information that
+can be stored in data structures, passed in and out of functions, and
+so on.
+
+Each object has a Boolean ghost field that says whether it
+is \Def{closed}, and a ghost field that gives its \Def{owner} (an
+object). Objects owned by a thread are (in the context of that thread)
+said to be \Def{mutable} when open (i.e., not closed)
+and \Def{wrapped} when closed.  Only threads can own open objects. For
+an object of a user-defined type, user-provided invariants are not
+guaranteed to hold only when the object is closed.  When an object is
+open, only its owner can read or write it. Thus, sequential code
+normally operates on mutable objects, without having to check object
+invariants. Only explicitly marked atomic actions can update fields of
+closed objects (and can do so regardless of who owns the
+object). Ownership of an object can transfer from one thread to
+another only by transfering ownership to some shared (and therefore
+closed) object as an intermediary; this idiom is used to construct
+synchronization objects such as locks.
 
 To modularize the verification of the functions, each function has a
 specification that defines its preconditions (what the function
 expects when it is called), postconditions (what it guarantees when it
 returns), framing (what parts of the state it is allowed to modify),
-and possibly termination guarantees. When verifying the body of a
-function, function calls are replaced with their
-specifications. Similar sorts of specifications can be put on code
-blocks. Loops are verified by constructing a suitable loop invariant,
-and showing that the invariant holds on entry and is maintained by an
-arbitrary iteration of the loop. Atomic actions are verified by
-showing that they maintain the invariants of the objects they
-update. In this way, verification of concurrent programs is reduced to
-the verification of branching programs without loops or function
-calls.
-
-VCC methodology depends heavily on \Def{ghost} data and code - data
-and code that is added to the program to facilitate reasoning, but is
-removed prior to compilation. Ghost code can use richer data types and
-operations than real code, since ghost data doesn't have to be stored
-in a finite memory and ghost code doesn't have to be implemented with
-hardware.  The primary restrictions on ghost data are that ghost code
-cannot write to non-ghost (concrete) data, and ghost code must not
-effect the control flow of real code (so in particular, ghost code
-must terminate); these conditions guarantee that the program without
-ghost code simulates the program with the ghost code. VCC provides a
-number of pieces of ghost data that are integrated into the
-programming methodology. In addition, users can define their own ghost
-data types, declare ghost data, and write ghost functions to
-manipulate this data.  Users can also use ghost parameters to pass
-ghost data in and out of concrete functions.
-
-Each object has a Boolean ghost field that says whether it
-is \Def{closed}, and a ghost field that gives its \Def{owner} (an
-object). If the owner of an object is a thread, that thread says the
-object is \Def{mutable} if it is open and \Def{wrapped} if it is closed.
-Only threads can own open (non-closed) objects. For an 
-object of a user-defined type, invariants are not guaranteed to hold
-in transitions between states where the object is open. When an object
-is open, only the thread that owns it can read or write it. Thus,
-sequential code normally operates on mutable objects,
-without having to check object invariants. Only explicitly marked
-atomic actions can update fields of closed objects (regardless of who
-owns the object). Ownership of an object can transfer from one thread
-to another only by transfering ownership to some shared (and therefore
-closed) object as an intermediary; this idiom is used in the
-implementation of synchronization primitives such as locks (which are
-not built in). 
-
-An implicit reduction theorem allows each thread to pretend that it
-runs in isolation (without interleaving actions of other threads),
-allowing other threads to run only just before starting an atomic
-action. At this point, the thread ``forgets'' everything it knows
-about the state, except for what it knows about the objects that it
-owns. Additional information about the state before this ``scheduler
-boundary'' that is known to still be true later (because of object
-invariants) can be explicitly captured by the thread by using it as an
-invariant of a ghost object that it wraps before the atomic
-action. VCC provides syntactic sugar for making such objects, in the
-form of \Def{claims}. Closed ghost objects are often used as carriers
-of information; because the are first-class, they can be stored in
-data structures, passed in and out of functions, packaged up in
-messages sent from one thread to another, and so on. Part of the VCC
-philosophy is to allow the programmer to use ordinary programming
-methods to structure what he knows about program behavior, to
-explicitly move such information around to where it's needed, and to
-expose it where it's needed to show correctness of the program; it's
-up to VCC to combine the information the programmer has provided using
-mathematical deduction.
+and possibly termination guarantees. When verifying code, each
+function call is replaced with the most general state change that
+satisfies the specification of the called function.  Similar sorts of
+specifications can be put on code blocks, and blocks so annotated are
+treated much like functions.  Loops are given similar contracts (but
+using loop invariants in place of preconditions and postconditions),
+and verified by proving that the invariant holds on loop entry and is
+maintained by an arbitrary iteration of the loop. An atomic action is
+translated into a scheduler boundary (where the thread ``forgets''
+everything about objects it doesn't own), followed by the atomic
+action (which is checked for legality). In this way, verification of
+concurrent programs is reduced to the verification of branching
+programs without loops or function calls.
 
 \section{Program Structure}
 
 \subsection{Annotations}
 VCC annotations are of the form \vcc{_(tag stuff)}, where \vcc{tag} is
-a \Def{annotation tag} and \vcc{stuff} has ballanced parentheses
-(after preprocessing), and follows the rules defined in this
-manual. In ordinary program compilation, the header vcc.h defines the
-macro \vcc{_} as ignoring its argument, so all VCC annotations are
-removed. 
+a \Def{annotation tag} and \vcc{stuff} has balanced parentheses (after
+preprocessing). All such annotations must be preceded by inclusion of
+the header \vcc{<vcc.h>}.  If the C flag \vcc{VERIFY} is not set,
+this header defines the macro \vcc{_()} to be the empty string,
+causing all annotations to be removed in preprocessing.
 
-In this manual, the syntax of annotations are described like function
-calls, except that instead of writing 
-\begin{VCC}
-  void F(args)
-\end{VCC}
-we write
-\noindent\vcc{_(F args)} (class)\\
-where the class describes the lexical role of the annotation, which is
-one of the following:
+Each VCC annotation is described with an entry of the form
+\noindent\vcc{_(tag args)} (class)\\
+where args is a sequence of 0 or more parameter declarations
+(including types) and ``class'' describes the lexical role of the
+annotation, which is one of the following:
 \begin{description}
 \item[command] an annotation that acts syntactically as a program 
 statement in ghost code;
@@ -368,16 +343,15 @@ of a function or a block (in concrete or ghost code);
 function specifier (just before a function declaration or definition);
 \item[special] an annotation whose role is described in the text.
 \end{description}
-
 Several VCC annotations allow a variable number of arguments of the
 same type. In such cases, we write the argument as a single typed
-argument followed by an ellipses. If the argument is separated from
-the ellipses by a comma, the list is comma-separated.
+argument followed by an ellipsis; the actual parameters are to be 
+comma separated iff the ellipsis is preceded by a comma.
 
 In addition to annotations, VCC also provides a number of additional
 types and functions that can be used inside of annotations. These
-types and functions all have names starting with \vcc{\}. In this
-manual, these functions are given conventional C declarations. 
+types and functions all have names starting with \vcc{\}. Their syntax
+is given using conventional C declarations. 
 
 \subsection{Contexts}
 An annotated program contains several types of context:
@@ -401,24 +375,6 @@ or \vcc{_(ghost_atomic)}), or within the definition of a type
 invariant (i.e., inside of a \vcc{_(invariant)} inside of a type
 definition). 
 \end{itemize}
-
-\subsection{Sequentialization}
-C allows the compiler great lattitude in reordering computations. For
-example, it allows the arguments to a functon call to be evaluated in
-any order, or even in parallel. VCC enforces stronger properties on
-programs so that the behavior allowed by C is equivalent to the
-behavior of a naive translation of the program, where things are
-computed sequentially in the obvious order (typically textual when
-ambiguities arise, so for example VCC translates a function call into
-first evaluating the parameters one at a time, from left to
-right). This means VCC will reject some programs that are legal C,
-even ones that correctly implement the specification. Typically, for
-any specific desired ordering one wanted to make possible, it is
-possible to rewrite the program so that VCC will accept it (for
-example, one can obtain any desired ordering of parameter evaluation
-by just computing them one at a time and putting the results into
-local variables).
-
 
 \subsection{Objects}
 VCC organizes the state into a collection of objects, each with
@@ -1403,7 +1359,11 @@ expression, means the value \vcc{e} evaluated to on function entry
 \\\\
 \vcc{_(writes o1, o2, ...)} \\
 \vcc{_(writes \objset s)}\\
-This has two effects. First, it implicitly \vcc{_(require)}s that the listed objects are \vcc{\writable} (section ??) and \vcc{\thread_local}. Second, at the beginning of the function body, the writes set is set to the set of objects written in the writes clause.
+This has two effects. First, it implicitly \vcc{_(require)}s that the
+listed objects are \vcc{\writable} (section ??)
+and \vcc{\thread_local}. Second, at the beginning of the function
+body, the writes set is set to the set of objects written in the
+writes clause.
 \\\\
 \vcc{_(reads o1,...)}\\
 This annotation can appear only on \vcc{_(pure)} functions. It causes
@@ -1582,6 +1542,13 @@ assigning the result of each to a fresh temporary local variable
 \item assert that every object that was \vcc{thread_local} prior to the call and was not listed in the writes clauses of the function has the same version as it did before state change
 \item assert the postconditions of the call
 \end{enumerate}	
+
+C allows the compiler great lattitude in reordering computations. For
+example, it allows the arguments to a functon call to be evaluated in
+any order, or even in parallel. VCC enforces stronger properties on
+programs so that the behavior allowed by C is equivalent to the
+behavior of a naive translation of the program, where actual parameters
+are evaluated sequentially left-to-right. 
 
 \section{Statements}
 In verifying a statement, VCC maintains an implicit local variable
@@ -1891,12 +1858,6 @@ An atomic read acts just like an atomic action, with all of its
 objects implicitly marked \vcc{_(read_only)}, except that it applies
 to the implicit sequentialization of the compuation of the term to
 which it is applied.
-
-TODO: move the following to the right place.
-\\
-%// the VccAtomicOp AST class uses this
-\vcc{_(void _vcc_atomic_op(\object, ...);)}\\
-
 
 \section{Library Functions}
 
@@ -2223,20 +2184,5 @@ where \vcc{<Name>} is the name of the new annotation tag,
 and \vcc{<args>} gives the remaining arguments that occur within the
 annotation. <TODO>
 
-
-
 \end{document}
 
-% vim: spell
-Not all objects can be reinterpreted. To see why, suppose there was an
-object \vcc{o} of \vcc{struct} type \vcc{T} that had a
-single \vcc{struct} field \vcc{f} of some other type \vcc{T'}, where \vcc{o}
-and \vcc{&o->f} had different owners. If the owner of \vcc{&o->f}
-could reinterpret it, he could turn it into an object of
-type \vcc{T}. This would mean that there were two different objects of
-type \vcc{T} with the same address. In older versions of VCC, this was
-okay because these objects could be distinguished by their embeddings (their
-immediately containing object). However, embeddings have now been
-removed except for primitive fields, so this situation would lead to
-inconsistency. (Note that the same situation could occur if \vcc{f}
-had multiple fields, as long as all of them are reinterpretable.)
