@@ -140,12 +140,16 @@ namespace Microsoft.Research.Vcc
                                     ">>=", (">>", false)
                                   ]
 
+  let specialNonPtrTypesMap = Map.ofList[
+                                      "VCC::Integer",   Type.MathInteger MathIntKind.Signed
+                                      "VCC::Natural",   Type.MathInteger MathIntKind.Unsigned
+  ]
 
   let specialTypesMap = Map.ofList  [
                                       "VCC::ClaimT",    Type.Claim
+                                      "VCC::Object",    Type.ObjectT
                                       "VCC::Integer",   Type.MathInteger MathIntKind.Signed
                                       "VCC::Natural",   Type.MathInteger MathIntKind.Unsigned
-                                      "VCC::Object",    Type.ObjectT
                                       "VCC::State",     Type.MathState
                                       "VCC::ThreadT",   Type.ThreadIdT
                                     ] 
@@ -204,8 +208,10 @@ namespace Microsoft.Research.Vcc
 
   let (|SpecialCallTo|_|) name = Map.tryFind (nongeneric name) specialFunctionMap
 
-  let (|IsSpecialType|_|) name = Map.tryFind name specialTypesMap
+  let (|IsSpecialNonPtrType|_|) name = Map.tryFind name specialNonPtrTypesMap
   
+  let (|IsSpecialType|_|) name = Map.tryFind name specialTypesMap
+
   let (|AddrOf|_|) = function
     | Macro(ec, "&", [arg]) -> Some(ec, arg)
     | _ -> None
@@ -315,8 +321,11 @@ namespace Microsoft.Research.Vcc
       // rewrite integer operators and constructor
 
       function
+        | Call (ec, { FriendlyName = "VCC::Integer::operator int" }, [], [AddrOf(_, arg)])
         | Call (ec, { FriendlyName = "VCC::Integer::operator int" }, [], [arg]) ->
           Some(self arg)
+        | AddrOf(_, Deref(_, Call (ec, { FriendlyName = StartsWith "VCC::Integer::Integer" }, [], [arg0; arg1])))
+        | Deref(_, Call (ec, { FriendlyName = StartsWith "VCC::Integer::Integer" }, [], [arg0; arg1]))
         | Call (ec, { FriendlyName = StartsWith "VCC::Integer::Integer" }, [], [arg0; arg1]) ->
           Some(Cast({ ec with Type = Type.MathInteger MathIntKind.Signed }, CheckedStatus.Checked, self arg1))
         | _ -> None
@@ -1285,6 +1294,7 @@ namespace Microsoft.Research.Vcc
       // turn types from the VCC:: namespace into their CAST counterparts
 
       let typeSubst self = function
+        | Ptr(Type.Ref({Name = IsSpecialNonPtrType(t')}))
         | Type.Ref({Name = IsSpecialType(t')}) ->
           Some(t')
         | Type.Ref({Name = "VCC::Set"})
