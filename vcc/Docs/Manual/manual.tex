@@ -365,11 +365,11 @@ annotations. Within a ghost context, real state can be read but not
 updated. 
 \item A pure context is a ghost context within which the state is not
 allowed to change. (Note: the body of a pure function is not itself a
-pure contect.) Within a pure context, the state can be read but
+pure context.) Within a pure context, the state can be read but
 not updated. No implicit assertions (e.g. to avoid null dereferences)
 are implicitly added inside pure contexts. Only pure functions can be
 called in a pure context.
-\item An atomic context is a a context inside of an atomic action
+\item An atomic context is a context inside of an atomic action
 (i.e., within the scope of a block labelled \vcc{_(atomic)}
 or \vcc{_(ghost_atomic)}), or within the definition of a type
 invariant (i.e., inside of a \vcc{_(invariant)} inside of a type
@@ -642,7 +642,7 @@ where \vcc{<decl>} is a variable declaration, and \vcc{p}
 is an expression. (Optionally, pattern matchings can appear after the
 semicolon (section ??)). A universal/existential quantification evaluates
 to \vcc{\true} iff \vcc{p} evaluates to a non-\vcc{\false} value for
-each/some possible instantiation of the quantified vvariables.
+each/some possible instantiation of the quantified variables.
 
 \subsubsection{Numeric Types}
 
@@ -1082,7 +1082,7 @@ object \vcc{a}, and breaks \vcc{a} into two \vcc{\mutable} contiguous array
 objects of the same base type, the first of length \vcc{s}.
 \\\\
 \vcc{_(root_index \type T size_t s)}\\
-This macro should be aookued only to a pointer \vcc{o} of type \vcc{T*}, and
+This macro should be applied only to a pointer \vcc{o} of type \vcc{T*}, and
 expands to \vcc{_(T *)_(T[s])}. This has the effect of giving
 back \vcc{o} but, if \vcc{o} is of primitive type, changing its
 embedding to the array object \vcc{_(T[s])o}. 
@@ -1092,7 +1092,7 @@ A blob is an uninterpreted contiguous portion of the concrete address
 space, much like a struct of a given size with nothing but padding. 
 A chunk of memory starts out as a blob. This blob can be broken into
 smaller blobs, joined into larger contiguous blobs, or turned into a
-collection of objects (essentially, the \vcc{extent} of the outermopst
+collection of objects (essentially, the \vcc{extent} of the outermost
 object). The outermost object made from the blob is said to be
 ``blobifiable''; only blobifiable objects can be blobified. (This is
 to avoid accidentally making multiple objects of the same type with
@@ -1543,8 +1543,8 @@ assigning the result of each to a fresh temporary local variable
 \item assert the postconditions of the call
 \end{enumerate}	
 
-C allows the compiler great lattitude in reordering computations. For
-example, it allows the arguments to a functon call to be evaluated in
+C allows the compiler great latitude in reordering computations. For
+example, it allows the arguments to a function call to be evaluated in
 any order, or even in parallel. VCC enforces stronger properties on
 programs so that the behavior allowed by C is equivalent to the
 behavior of a naive translation of the program, where actual parameters
@@ -1856,7 +1856,7 @@ does not allow code blocks to appear inside expressions.
 \vcc{_(a_atomic_read obs)} (cast)\\
 An atomic read acts just like an atomic action, with all of its
 objects implicitly marked \vcc{_(read_only)}, except that it applies
-to the implicit sequentialization of the compuation of the term to
+to the implicit sequentialization of the computation of the term to
 which it is applied.
 
 \section{Library Functions}
@@ -2136,7 +2136,7 @@ This annotation causes VCC to skip smoke testing on the following function.
 VCC has a number of parameters that effect how verification is
 performed. These can be adjusted using arguments to the command used
 to run VCC (either on the command line or through the Visual Studio
-pluggin). 
+plugin). 
 
 Some of these can be overridden for individual functions by
 means of attributes put on individual function definitions. These

@@ -18,7 +18,8 @@ $(PAPER).aux:
 	pdflatex $(PAPER).tex </dev/null
 
 
-$(PAPER).pdf: $(PAPER).bbl $(PAPER).tex $(OTHERSOURCES)
+# No bib yet: $(PAPER).pdf: $(PAPER).bbl $(PAPER).tex $(OTHERSOURCES)
+$(PAPER).pdf: $(PAPER).tex $(OTHERSOURCES)
 	echo "Rerun to get cross" >> $(PAPER).log
 	while grep -q "Rerun to get cross" $(PAPER).log; do \
 		if pdflatex $(PAPER).tex </dev/null; then \
