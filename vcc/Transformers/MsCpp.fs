@@ -29,6 +29,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Span"
                                                     "VCC::Union"
                                                     "VCC::Universe"
+                                                    "VCC::Wrapped"
                                                   ]
 
   let functionsWithVarargs = Set.ofList [
@@ -52,6 +53,7 @@ namespace Microsoft.Research.Vcc
                                                     "VCC::Arrayrange",          "_vcc_array_range"
                                                     "VCC::AtomicObject",        "_vcc_is_atomic_obj"
                                                     "VCC::Claimable",           "_vcc_is_claimable"
+                                                    "VCC::BumpVolatileVersion", "_vcc_bump_volatile_version"
                                                     "VCC::Claimcount",          "_vcc_ref_cnt"
                                                     "VCC::Claims",              "_vcc_claims"
                                                     "VCC::Claimsobject",        "_vcc_claims_obj"
