@@ -351,12 +351,12 @@ namespace Microsoft.Research.Vcc
         | Call (ec, { FriendlyName = "VCC::Natural::operator unsigned int" }, [], [AddrOf(_, arg)])
         | Call (ec, { FriendlyName = "VCC::Natural::operator unsigned int" }, [], [arg]) ->
           Some(self arg)
-        | AddrOf(_, Deref(_, Call (ec, { FriendlyName = StartsWith "VCC::Natural::Natural" }, [], [arg0; arg1])))
-        | Deref(_, Call (ec, { FriendlyName = StartsWith "VCC::Natural::Natural" }, [], [arg0; arg1]))
         | Call (ec, { FriendlyName = "VCC::Natural::operator-=" }, [], [arg0; arg1]) ->
           Some(Prim(ec, Op("-=", CheckedStatus.Checked), [self arg0; self arg1]))
         | Call (ec, { FriendlyName = "VCC::Natural::operator+=" }, [], [arg0; arg1]) ->
           Some(Prim(ec, Op("+=", CheckedStatus.Checked), [self arg0; self arg1]))
+        | AddrOf(_, Deref(_, Call (ec, { FriendlyName = StartsWith "VCC::Natural::Natural" }, [], [arg0; arg1])))
+        | Deref(_, Call (ec, { FriendlyName = StartsWith "VCC::Natural::Natural" }, [], [arg0; arg1]))
         | Call (ec, { FriendlyName = StartsWith "VCC::Natural::Natural" }, [], [arg0; arg1]) ->
           Some(Cast({ ec with Type = Type.MathInteger MathIntKind.Signed }, CheckedStatus.Checked, self arg1))
         | _ -> None
