@@ -21,8 +21,8 @@ typedef _(claimable) _(volatile_owns) struct _Rundown {
    _(ghost \object protected_obj;)
   volatile unsigned int count;
 
-   _(ghost volatile bool alive;)
-   _(ghost volatile bool enabled;)
+   _(ghost volatile \bool alive;)
+   _(ghost volatile \bool enabled;)
    _(ghost Protector enabled_protector;)
   _(invariant \old((&enabled_protector)->\closed) ==> \unchanged(enabled) && \unchanged(alive))
 

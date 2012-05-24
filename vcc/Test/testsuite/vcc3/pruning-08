@@ -2,7 +2,7 @@
 
 #include <vcc.h>
 
-_(ghost bool _(pure) baz() _(ensures \result == \true))
+_(ghost \bool _(pure) baz() _(ensures \result == \true))
 
 _(atomic_inline) int foo(_(out int x)) {
   _(ghost x = 10)

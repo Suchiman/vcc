@@ -2,7 +2,7 @@
 
 // the following used to seen Z3 into a loop
 
-void loops(bool *a, unsigned N, unsigned n)
+void loops(int *a, unsigned N, unsigned n)
   _(requires \wrapped((void[N])a))
 {
   unsigned j, k;

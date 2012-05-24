@@ -7,7 +7,7 @@ typedef struct _TEST{
 
 
 
-_(ghost _(pure) bool Fun(PTEST a _(ghost \claim c))
+_(ghost _(pure) \bool Fun(PTEST a _(ghost \claim c))
   _(reads a) 
   _(requires a->\valid)
   _(requires \thread_local(a))
@@ -18,7 +18,7 @@ _(ghost _(pure) bool Fun(PTEST a _(ghost \claim c))
 
 void foo(PTEST a)
 {
-  _(ghost bool m[\claim] = (\lambda \claim cl; (Fun(a, cl))))
+  _(ghost \bool m[\claim] = (\lambda \claim cl; (Fun(a, cl))))
 } 
 `
 Verification of Fun succeeded.

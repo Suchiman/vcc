@@ -5,7 +5,7 @@ struct Node
 {
   struct Node* next;
   _(ghost struct List* list)
-  _(ghost bool initialized)
+  _(ghost \bool initialized)
   _(invariant initialized ==> next == &list->nil)
 };
 struct List

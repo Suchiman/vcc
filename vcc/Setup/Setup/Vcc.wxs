@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" 
+     xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension" 
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension"
+     xmlns:vs="http://schemas.microsoft.com/wix/VSExtension">
 
   <?define BoogieDir="..\..\Boogie" ?>
   <?define HostDir="..\..\host\bin\debug" ?>
@@ -178,19 +181,16 @@
           </Directory>
         </Directory>
       </Directory>
-    
-      <Directory Id="DEVENV11_DIR" Name=".">
-        <Directory Id="EXTENSIONS11" Name="Extensions">
-          <Directory Id="VCCEXTENSIONDIR11" Name="Microsoft Research Vcc">
-            <Component Id="ExtensionShortcuts11" Guid="{A9457025-6443-44C8-8FBF-AA56A7CE6500}" KeyPath="yes">
-              <Shortcut Id="MANIFESTSHORTCUT11" Name="extension.vsixmanifest.lnk" Target="[VSPACKAGEDIR]extension.vsixmanifest"/>
-              <Shortcut Id="PKGDEFSHORTCUT11" Name="Microsoft.Research.Vcc.VSPackage.pkgdef.lnk" Target="[VSPACKAGEDIR]Microsoft.Research.Vcc.VSPackage.pkgdef"/>
-            </Component>
-          </Directory>
-        </Directory>
-      </Directory>
 
+      
+      <!-- Install the VSIX package into Dev11 via the VSIX Installer -->
+      <Component Id="VsPackage11" Guid="{65C5778C-11A7-4103-89DC-223070ED61A5}">
+        <File Name="Microsoft.Research.Vcc.VSPackage.vsix">
+          <vs:VsixPackage PackageId="Microsoft.Research.Vcc" Vital="yes" />            
+        </File>
+      </Component>
     </DirectoryRef>
+
     
     <DirectoryRef Id="DOCDIR">
       <Component Id="EULA" Guid="*">
@@ -219,7 +219,6 @@
         <?include Wiki.Css.wxi?>
       </Component>
     </DirectoryRef>
-
 
     <DirectoryRef Id="ShortcutFolder">
       <Component Id="Shortcuts" Guid="B20B4427-86FF-42A0-B705-973D8106A917">
@@ -305,8 +304,7 @@
     </Feature>
     <Feature Id ="VisualStudio2011Integration" Title ="Visual Studio 2011 Integration" AllowAdvertise="no" Level="0">
       <Condition Level="1">DEVENV11_DIR</Condition>
-      <ComponentRef Id ="VsPackage"/>
-      <ComponentRef Id ="ExtensionShortcuts11"/>
+      <ComponentRef Id ="VsPackage11"/>
     </Feature>
 
     <MajorUpgrade AllowDowngrades="no" DowngradeErrorMessage="A newer version of Microsoft Research VCC is already installed. Setup will now exit." Schedule="afterInstallValidate" />

@@ -12,7 +12,7 @@ struct Stack {
     volatile PNode hd;
 };
 
-bool t1(struct Stack *s _(ghost \claim c))
+int t1(struct Stack *s _(ghost \claim c))
     _(always c, s->\closed)
 {
 	_(atomic c, s) {
@@ -20,7 +20,7 @@ bool t1(struct Stack *s _(ghost \claim c))
 	}
 }
 
-bool t2(struct Stack *s _(ghost \claim c))
+int t2(struct Stack *s _(ghost \claim c))
     _(always c, s->\closed)
 {
 	_(atomic c, s) {
@@ -30,7 +30,7 @@ bool t2(struct Stack *s _(ghost \claim c))
 
 void foo () { }
 
-bool t3(struct Stack *s _(ghost \claim c))
+int t3(struct Stack *s _(ghost \claim c))
     _(always c, s->\closed)
 {
 	_(atomic c, s) {

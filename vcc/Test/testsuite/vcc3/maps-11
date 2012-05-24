@@ -1,7 +1,7 @@
 #include "vcc.h"
 
 void foo() {
-    _(ghost bool map[unsigned][unsigned])
+    _(ghost \bool map[unsigned][unsigned])
     _(ghost map = (\lambda unsigned i; ((\lambda unsigned j; (j==i)))))
     _(assert map[3][3])
     _(assert !map[3][2])

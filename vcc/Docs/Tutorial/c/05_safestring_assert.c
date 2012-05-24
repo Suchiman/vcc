@@ -9,7 +9,7 @@ struct SafeString {
   _(invariant content[len] == '\0')
 };
 
-_(bool \writable(\objset o) _(returns \true))
+_(\bool \writable(\objset o) _(returns \true))
 
 /*{assert}*/
 void sstr_append_char(struct SafeString *s, char c)

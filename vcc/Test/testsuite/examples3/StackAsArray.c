@@ -35,7 +35,7 @@ struct Stack{
 
 
 _(ghost _(pure)
-bool AbstractionRelation(struct Stack *stack)
+\bool AbstractionRelation(struct Stack *stack)
     _(reads \universe())
     _(returns (stack->capacity == stack->abs->capacity) &&
         stack->topOfStack == stack->abs->high_mark &&

@@ -5,7 +5,7 @@ typedef unsigned __int64 UINT64;
 struct Core
 {
     UINT64   RIP;       // instruction pointer
-    bool     GIF;       // Global Interrupt Flag (always 1 for INTEL)
+    int     GIF;       // Global Interrupt Flag (always 1 for INTEL)
 };
 
 _(pure) struct Core AFSvm(UINT64 rip);

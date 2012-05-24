@@ -239,42 +239,42 @@ union F
 _(record H
 {
     \natural H1;
-    bool H2;
-    bool H3;
-    bool H4;
-    bool H5;
-    bool H6;
+    \bool H2;
+    \bool H3;
+    \bool H4;
+    \bool H5;
+    \bool H6;
 
-    bool H01;
-    bool H02;
-    bool H03;
-    bool H04;
-    bool H05;
-    bool H06;
+    \bool H01;
+    \bool H02;
+    \bool H03;
+    \bool H04;
+    \bool H05;
+    \bool H06;
 
-    bool H31;
-    bool H32;
-    bool H33;
-    bool H34;
-    bool H35;
-    bool H36;
+    \bool H31;
+    \bool H32;
+    \bool H33;
+    \bool H34;
+    \bool H35;
+    \bool H36;
 
-    bool H21;
-    bool H22;
-    bool H23;
-    bool H24;
-    bool H25;
-    bool H26;
+    \bool H21;
+    \bool H22;
+    \bool H23;
+    \bool H24;
+    \bool H25;
+    \bool H26;
 
     \natural H7;
     \natural H8;
-    bool H9;
+    \bool H9;
     \natural H10;
-    bool H11;
-    bool H12;
-    bool H13;
-    bool H14;
-    bool H15;
+    \bool H11;
+    \bool H12;
+    \bool H13;
+    \bool H14;
+    \bool H15;
 })
 
 

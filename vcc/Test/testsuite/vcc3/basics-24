@@ -2,7 +2,7 @@
 
 _(dynamic_owns) struct S {
   int a[5];
-  bool x;
+  _(ghost \bool x;)
   _(invariant x ==> \mine(a)) 
 };
 

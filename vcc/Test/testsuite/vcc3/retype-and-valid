@@ -15,7 +15,7 @@ typedef struct T
 typedef _(volatile_owns) struct TV 
 {
     Gicc* gicc;
-    volatile bool bootOver;
+    volatile int bootOver;
     
     _(invariant \old(bootOver) ==> bootOver)
     _(invariant \approves(\this->\owner, bootOver))
