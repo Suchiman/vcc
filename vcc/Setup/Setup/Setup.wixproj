@@ -62,6 +62,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <WixExtension Include="WixVSExtension">
+      <HintPath>$(WixExtDir)\WixVSExtension.dll</HintPath>
+      <Name>WixVSExtension</Name>
+    </WixExtension>
     <WixExtension Include="WixUtilExtension">
       <HintPath>c:\Program Files (x86)\Windows Installer XML v3.5\bin\WixUtilExtension.dll</HintPath>
       <Name>WixUtilExtension</Name>

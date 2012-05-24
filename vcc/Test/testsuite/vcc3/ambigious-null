@@ -7,7 +7,7 @@ struct Node {
 
 struct List {
   int x;
-  _(ghost bool followers[struct Node *][int];)
+  _(ghost \bool followers[struct Node *][int];)
   _(invariant followers[NULL] == \lambda int k; \false)
 };
 

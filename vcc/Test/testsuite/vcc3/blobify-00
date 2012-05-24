@@ -1,24 +1,25 @@
-#include <vcc2test.h>
+#include <vcc.h>
 
-
-_(logic bool fresh_object(\object ptr) = \object_root(ptr) && \mutable(ptr) && \fresh(ptr))
+_(logic \bool fresh_object(\object ptr) =
+  \object_root(ptr) && \mutable(ptr) && \fresh(ptr))
 
 void *alloc(unsigned __int64  sz)
   _(ensures fresh_object(_(blob sz)(\result)))
   ;
 
+void mfree(void *p, unsigned __int64 sz)
+  _(writes \extent(_(blob sz)p))
+  ;
+
 struct A {
-  int x , y;
+  int x, y;
 };
+
 struct B {
   struct A a1;
   struct A a2;
   int x;
 };
-
-void mfree(void *p, unsigned __int64 sz)
-  _(writes \extent(_(blob sz)p))
-  ;
 
 void f2()
 {
@@ -50,9 +51,9 @@ void f2_fail3()
 `
 Verification of f2 succeeded.
 Verification of f2_fail1 failed.
-testcase(37,13) : error VC8507: Assertion 'extent(b) is writable' did not verify.
+testcase(38,13) : error VC8507: Assertion 'extent(b) is writable' did not verify.
 Verification of f2_fail2 failed.
-testcase(43,31) : error VC8507: Assertion '_(blob ...) ((struct B*)alloc(sizeof(struct B) - 1)) is writable' did not verify.
+testcase(44,31) : error VC8507: Assertion '_(blob ...) ((struct B*)alloc(sizeof(struct B) - 1)) is writable' did not verify.
 Verification of f2_fail3 failed.
-testcase(48,31) : error VC8507: Assertion '_(blob ...) ((struct B*)alloc(sizeof(struct B) + 1)) is writable' did not verify.
+testcase(49,31) : error VC8507: Assertion '_(blob ...) ((struct B*)alloc(sizeof(struct B) + 1)) is writable' did not verify.
 `

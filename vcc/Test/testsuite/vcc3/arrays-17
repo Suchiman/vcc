@@ -4,7 +4,7 @@ struct S
 {
   int dummy;
   _(ghost \integer a[42])
-  _(ghost bool b[10])
+  _(ghost \bool b[10])
 };
 
 void foo() {

@@ -5,7 +5,7 @@ struct X { int y; };
 
 struct Data {
   int dummy;
-   _(ghost volatile bool handles[struct Handle*];) 
+   _(ghost volatile \bool handles[struct Handle*];) 
   _(invariant \on_unwrap(\this, \forall struct Handle *h; ! handles[h]))
   _(invariant \approves(\this->\owner, handles))
   //invariant(forall(struct Handle *h; closed(h) && h->data == this ==> handles[h]))

@@ -4,7 +4,7 @@ _(ghost
 
 _(record) struct S {
   int a;
-  bool b;
+  \bool b;
 };
 
 void foo() {

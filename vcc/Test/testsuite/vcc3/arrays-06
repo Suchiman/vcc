@@ -28,7 +28,7 @@ struct DESC {
 };
  
 _(ghost _(pure)
-bool AbsConcRel(struct ABS ^abs, struct CONC *conc)
+\bool AbsConcRel(struct ABS ^abs, struct CONC *conc)
  _(reads abs, conc)
  _(returns abs->a == conc->a &&
       abs->core.RIP == conc->RIP &&

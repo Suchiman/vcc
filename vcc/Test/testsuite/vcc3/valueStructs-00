@@ -10,10 +10,10 @@ struct B {
   int z;
 };
 
-_(pure) bool foo(struct A a)
+_(pure) \bool foo(struct A a)
   _(returns a.x == 0);
 
-_(pure) bool bar(struct B b)
+_(pure) \bool bar(struct B b)
   _(returns foo(b.a));
 
 void baz(struct B b)

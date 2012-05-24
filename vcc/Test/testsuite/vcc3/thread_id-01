@@ -2,7 +2,7 @@
 
 int main(void)
 {
-_(ghost bool f[\thread]);
+_(ghost \bool f[\thread]);
 _(ghost f[\me]=\true;)
 _(assert (\forall \thread t; (t!=\me)) ;)
 }

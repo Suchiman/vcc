@@ -1,26 +1,26 @@
 #include <vcc.h>
 
-_(abstract bool foo(\integer i) { })
-_(abstract bool qux(\integer i) { })
-_(abstract bool bar(\integer i)
+_(abstract \bool foo(\integer i) { })
+_(abstract \bool qux(\integer i) { })
+_(abstract \bool bar(\integer i)
   _(requires foo(i))
   { })
 
-_(def bool baz(bool L[\integer])
+_(def \bool baz(\bool L[\integer])
   
 {
   return (\forall \integer n; L[n] ==>
              foo(n) && bar(n) && foo(n));
 })
 
-_(def bool baz_fail(bool L[\integer])
+_(def \bool baz_fail(\bool L[\integer])
   
 {
   return (\forall \integer n; L[n] ==>
              bar(n) && foo(n));
 })
 
-_(def bool baz_fail2(bool L[\integer])
+_(def \bool baz_fail2(\bool L[\integer])
   
 {
   return (\forall \integer n; L[n] ==>

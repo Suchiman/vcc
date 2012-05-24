@@ -5,7 +5,7 @@ typedef struct s1{
 } s1;
 
 typedef _(dynamic_owns) struct q1{
-    bool b;
+    _(ghost \bool b)
     s1 *s;
     _(invariant b ==> \mine(s))
 }q1;

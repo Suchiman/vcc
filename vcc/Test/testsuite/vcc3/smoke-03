@@ -3,62 +3,62 @@
 
 int foo1() {
   int x;
-  bool a = x; // conversion uses if-then-else
+  _(ghost \bool a = x;) // conversion uses if-then-else
 }
 
-int foo1_smoke(bool True)
+int foo1_smoke(int True)
   _(requires True)
 {
   int x;
-  bool a = x; // conv uses if-then-else
+  _(ghost \bool a = x;) // conv uses if-then-else
   if (True) return;
 }
 
-int foo2() {
-  bool b;
-  bool a = b || b;
-}
+_(int foo2() {
+  \bool b;
+  \bool a = b || b;
+})
 
-int foo2_smoke(bool True)
+_(int foo2_smoke(\bool True)
   _(requires True)
 {
-  bool b;
-  bool a = b || b;
+  \bool b;
+  \bool a = b || b;
   if (True) return;
-}
+})
 
-int foo3() {
-  bool b;
-  bool a = b && b;
-}
+_(int foo3() {
+  \bool b;
+  \bool a = b && b;
+})
 
-int foo3_smoke(bool True)
+_(int foo3_smoke(\bool True)
   _(requires True)
 {
-  bool b;
-  bool a = b && b;
+  \bool b;
+  \bool a = b && b;
   if (True) return;
-}
+})
 
-int foo4() {
-  bool b;
-  bool a = b ? b : b;
-}
+_(int foo4() {
+  \bool b;
+  \bool a = b ? b : b;
+})
 
-int foo4_smoke(bool True)
+_(int foo4_smoke(\bool True)
   _(requires True)
 {
-  bool b;
-  bool a = b ? b : b;
+  \bool b;
+  \bool a = b ? b : b;
   if (True) return;
-}
+})
 
 int foo5() {
   unsigned n;
   for (n = 0; n < 20; n++) { }
 }
 
-int foo5_smoke(bool True)
+int foo5_smoke(int True)
   _(requires True)
 {
   unsigned n;
@@ -71,7 +71,7 @@ int foo6() {
   n = 0; while (n < 20) { n++; }
 }
 
-int foo6_smoke(bool True)
+int foo6_smoke(int True)
   _(requires True)
 {
   unsigned n;

@@ -26,7 +26,7 @@ _(def ByteString from_array(BYTE a[], \integer size)
 }
 )
 
-_(abstract bool foo(ByteString b) { return \true; })
+_(abstract \bool foo(ByteString b) { return \true; })
 
 #define MAX_RSA_KEY_BYTES 100
 

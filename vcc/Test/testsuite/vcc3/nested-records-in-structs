@@ -1,7 +1,7 @@
 #include <vcc.h>
 
 _(typedef _(record) struct {
-  bool bar;
+  \bool bar;
 } inner;)
 
 _(typedef _(record) struct {

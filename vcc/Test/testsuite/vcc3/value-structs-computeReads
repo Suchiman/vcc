@@ -21,7 +21,7 @@ _(record AbsUnion
 {
     \natural A;
     \natural B;
-    bool C;
+    \bool C;
 })
 
 

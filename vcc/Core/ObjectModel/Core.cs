@@ -658,7 +658,7 @@ namespace Microsoft.Research.Vcc {
       switch (typeDefinition.TypeCode)
       {
         case PrimitiveTypeCode.Boolean:
-          return "bool";
+          return "\\bool";
         case PrimitiveTypeCode.Char:
           return "wchar";
         case PrimitiveTypeCode.Int8:

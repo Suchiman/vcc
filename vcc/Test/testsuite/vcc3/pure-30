@@ -3,7 +3,7 @@
 typedef unsigned int     uint;
 
 typedef struct Core {
-    bool dummy;
+    int dummy;
 } Core;
 
  uint fun_1(Core core)

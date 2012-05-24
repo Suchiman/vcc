@@ -1,6 +1,6 @@
 #include <vcc.h>
 
-_(logic bool And(bool a, bool b) = (a && b);)
+_(logic \bool And(\bool a, \bool b) = (a && b);)
 
 void foo2()
 {

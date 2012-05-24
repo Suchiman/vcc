@@ -14,7 +14,7 @@ typedef union _PTE {
   };
 } PTE, *PPTE;
 
-_(ghost _(pure) bool PteIsPresent(PPTE p)
+_(ghost _(pure) \bool PteIsPresent(PPTE p)
   _(reads p)
   _(ensures \result == (p->Present)))
 

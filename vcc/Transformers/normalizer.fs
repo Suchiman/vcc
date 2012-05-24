@@ -35,7 +35,9 @@ namespace Microsoft.Research.Vcc
           Some e
         | _ -> None
  
+
   // ============================================================================================================          
+
   let rec doHandleComparison helper self = function
     | Expr.Prim (c, op, [Expr.Cast ({ Type = Integer _ }, _, a1); Expr.Cast ({ Type = Integer _ }, _, a2)]) 
       when op.IsEqOrIneq && a1.Type = Type.Bool && a2.Type = Type.Bool -> 
@@ -52,6 +54,9 @@ namespace Microsoft.Research.Vcc
       Some (self (Expr.MkDot (c, e, f)))
     | _ -> None
   
+
+  // ============================================================================================================          
+
   let doHandleConversions = 
     let rec doHandleConversions' inGroupInvariant self = function
       | Expr.Cast ({ Type = ObjectT}, _, e) -> 
@@ -59,7 +64,7 @@ namespace Microsoft.Research.Vcc
           | Ptr _ | ObjectT | Claim -> Some (self e)
           | _ -> None
       | Expr.Cast ({Type = Ptr(t1) } as ec, cs, Expr.Cast ({ Type = (ObjectT | Ptr(Type.Ref(_) | Void)) }, _, e')) when t1 <> Void -> Some (self (Cast(ec, cs, e')))
-      | Expr.Cast ({ Type = t1 }, (Processed|Unchecked), Expr.Cast (_, (Processed|Unchecked), e')) when e'.Type = t1 -> Some (self e')
+      | Expr.Cast ({ Type = t1 }, (Processed|Unchecked), Expr.Cast ({ Type = t2 }, (Processed|Unchecked), e')) when t1.IsPtr && t2.IsPtr && e'.Type = t1 -> Some (self e')
       | Expr.Cast ({ Type = Bool }, _, Expr.Cast (_, _, e')) when e'.Type = Bool -> Some (self e')
       | Expr.Cast ({ Type = PtrSoP(_, isSpec) } as c, _, Expr.IntLiteral (_, ZeroBigInt)) -> 
         Some (self (Expr.Cast (c, Processed, Expr.Macro ({c with Type = Type.MkPtr(Void, isSpec)}, "null", []))))
@@ -549,7 +554,7 @@ namespace Microsoft.Research.Vcc
       let inlines = gdict()
       let isntInline = function
         | Top.FunctionDecl fd ->
-          if hasCustomAttr "atomic_inline" fd.CustomAttr then
+          if hasCustomAttr AttrAtomicInline fd.CustomAttr then
             if fd.IsPure then
               helper.Error(fd.Token, 9667, "Pure function '" + fd.Name + "' cannot be inlined.")
               true
