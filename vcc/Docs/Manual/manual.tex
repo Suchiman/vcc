@@ -225,63 +225,222 @@ verifier for concurrent C.
 
 VCC is a deductive verifier for concurrent C code. VCC takes C code,
 annotated with specifications of its behavior, and tries to prove that
-the code does indeed behave as specified. This document describes
-these annotations and what constitutes correct behavior of VCC.
-It assumes a working knowledge of C. It is not intended as a tutorial
-or as a guide to verification methodology.
+the code behaves as specified. This document describes the meaning of these
+annotations and the expected behavior of VCC.
 
-\section{Introduction}
+\section{Terminology}
+In this document, we consider the meaning of a fixed, annotated
+program, which we refer to as ``the program''. ``The unannotated
+program'' means the annotated program stripped of all VCC annotations
+(i.e., the program as seen by the C compiler).
 
-Like many other methodologies, VCC seeks to provide \emph{modular}
-verification. This means that a program can be broken up into into
-``verification units'' (which in VCC are functions and data type
-definitions), each with a public specification, such that each unit
-can be verified independently, using only the specifications of the
-units it mentions (including the units mentioned in their
-specifications, etc.). 
+Due to an unfortunate historical legacy, the VCC type \vcc{\object}
+corresponds to what are in this document called pointers, whereas the
+word ``object'' means a particular subset of these pointers.
 
-VCC partitions the state into a number of objects, each with a number
-of fields. Each object has a two-state \Def{invariant} (a predicate on pairs
-of states) restricting how the entire state may change in a single
-atomic step; these invariants can mention arbitrary parts of the
-state. A 2-state invariant can be interpreted as an invariant on a
+\section{Overview}
+
+The program defines a fixed set of typed \Def{objects}, each with a
+collection of fields. A state of the program is given by the values of
+each of the object fields. Each object has a
+two-state \Def{invariant} (a predicate on ordered pairs of states, a
+prestate and a poststate), determined by its address and type; these
+invariants can mention arbitrary parts of the state. In this manual,
+the invariants of each type are presented by requirements of the form
+``this is an invariant of this type''; the invariant of an object is
+the conjunction of all invariants mandated herein.
+
+A 2-state invariant can be interpreted as an invariant on a
 single state by applying it to the transition from the state to itself
-(\Def{stuttering}). Define a state to be \Def{good} if all object
-invariants hold in that state, and a state transition to be good if it
-satisfies every object invariant. A sequence of states (finite or
-infinite) is good iff all of its states and transitions are good. VCC
-verification guarantees that all possible executions of the program
-are good. VCC does this inductively, by showing that the initial
-state is good, and that for every state transition induced by the program,
-assuming that the prestate of the transition is good, the transition
-is good and the poststate is good.
+(\Def{stuttering}). A state is \Def{good} if all object invariants
+hold in that state; a state transition is good if it satisfies every
+object invariant. A sequence of states (finite or infinite) is good
+iff all of its states and transitions are good.
 
-A transition is \emph{legal} if it preserves the invariants of all
-modified objects. An invariant of object \vcc{o} is \Def{admissible}
-iff (1) every legal state transition, starting from a good state,
-satisfies the invariant of \vcc{o}, and (2) every good transition,
-starting from a good state, results in a state from which stuttering
-satisfies the invariant of \vcc{o}. VCC proves its inductive step by
-proving that every object invariant is admissible and that each
-transition induced by each function is legal.  In VCC, every object
-has a type, and the (annotated) definition of a type determines the
-invariant of an object of that type; verifying a type definition means
-verifying that the invariants of objects of that type are admissible.
+A transition modifies an object if some field of the object differs
+between the prestate and poststate of the transition. A transition
+is \emph{legal} if its prestate is not good or if it preserves the
+invariants of all modified objects. An execution of the program is a
+sequence (finite or infinite) of states, such that the initial state
+is good and the transition from each nonterminal state of the sequence
+to its successor is legal. The program is good iff every execution of
+the program is good. Successful verification of the program shows that
+it is good. The program actually verified includes additional
+``ghost'' code and data not present in the unannotated program;
+however, succesful verification implies that every execution of the
+unannotated program (starting from a projection of a good state) is a
+projection of an execution of the program\footnote{This is because
+verification proves that all ghost code terminates, and does not
+change the concrete state.}. 
 
-VCC makes substantial use of \Def{ghost} data and code - data and code
-added to the program to facilitate reasoning, and removed when the
-program is compiled. Ghost code can additional data types (e.g.
-unbounded integers and maps) and operations (e.g. quantifiers) since
-it is never executed. Ghost code must terminate, and doesn't write to
-non-ghost (concrete) data; these conditions guarantee that the program
-without ghost code simulates the program with the ghost code. VCC
-provides a number of pieces of ghost data that are integrated into the
-programming methodology. In addition, the user can add ghost fields to
-compound data types, ghost arguments to functions, and ghost data and
-code to function bodies. Because user-defined ghost objects have
-invariants, they serve as ``first-class'' chunks of information that
-can be stored in data structures, passed in and out of functions, and
-so on.
+The invariant of object \vcc{o} is \Def{admissible} iff (1) every legal
+state transition, starting from a good state, satisfies the invariant
+of \vcc{o}, and (2) every good transition, starting from a good state,
+results in a state from which stuttering satisfies the invariant
+of \vcc{o}. A type is admissible if the invariant of each object of
+that type is admissible. The program is verified by proving that every
+type of the program is admissible. 
+
+A running instance of a function is represented in the model by a
+function activation object. Such an object has fields giving values of
+the local variables of the function, as well as a program counter that
+gives the location in the code where control of the activation
+sits. One (trivially admissible) invariant of a function activation is
+that if its program counter changes, then the change to the global
+state is given by the operational semantics of the program step being
+taken. A second invariant of a function activation, constructed
+according to the annotation of the function, says what should be true
+at each control point of the function; this invariant (which
+corresponds to a ``noninterference proof'' for the function
+annotation) is admissible by its construction. 
+The third invariant of a function activation is that any
+transition from the current state allowed by the operational semantics
+of the function text is legal; this invariant guarantees every
+sequence of program steps is a legal execution.  Proving admissibility
+of this invariant corresponds to proving ``local correctness'' for the
+function.
+
+Each concrete object field has a fixed heap location and
+representation size.  Each object has a field that indicates if the
+object is valid, and an invariant saying that if it is valid, then its
+fields don't overlap the fields of other valid objects. An invariant
+of each function activation is that it reads and writes only valid
+objects. This implies that every execution of good program is
+simulated by an execution where concrete field accesses are replaced
+by heap accesses, which gets us back to conventional C program
+semantics.
+
+
+
+
+\subsection{States}
+\vcc{\state} (large)\\
+The type of states. 
+\\\\
+\vcc{T \at(\state s, T e)}\\
+Returns the value of expression \vcc{e} evaluated in state \vcc{s}. 
+\\\\
+\vcc{\state \now()}\\
+The current state. 
+
+\subsubsection{Pointers}
+
+\vcc{\object} (type) (small)\\
+The type of pointers.
+
+The program text determines a fixed set of \Def{pointers}.  Each
+pointer is either primitive or an \Def{object}. 
+A pointer is characterized by the following (state-independent) parameters:
+\\\\
+\vcc{\natural \address(\object p)}\\
+The address of \vcc{p}. If \vcc{!\ghost(p)}, \vcc{\address(p) < UINT_PTR_MAX}.
+\\\\
+\vcc{\type \typeof(\object p)}\\
+The type of \vcc{p}. In C terms, this can be thought of as the type of
+object to which \vcc{p} points.
+\\\\
+\vcc{\bool \ghost(p)}\\
+True if \vcc{p} is a ghost pointer (i.e., points to the ghost
+heap). If not, we say \vcc{p} is concrete. 
+\\\\
+\vcc{\non_primitive_ptr(\object p)}\\
+True if \vcc{p} is an object. 
+\\\\
+\vcc{\object \embedding(\object p)}\\
+The object of which \vcc{p} is a part of. If \vcc{p} is itself an object, the
+result is undefined. If \vcc{p} is concrete and
+primitive, \vcc{\embedding(p)} is concrete.
+\\\\
+\vcc{size_t \sizeof_object(\object p)}\\
+Equivalent to \vcc{\sizeof(T)}, where \vcc{T} is the type
+of \vcc{*p}. This depends only on \vcc{\typeof(p)}. For any \vcc{p}, 
+\vcc{\sizeof_opject(p) > 0}.
+
+In a pure context, for pointers \vcc{p} and \vcc{q}, \vcc{p == q}
+iff \vcc{p} and \vcc{q} agree on all the parameters above.
+
+Every pointer of the program has a concrete footprint and a ghost
+footprint (each a set of addresses), defined as follows.
+If \vcc{p} is concrete/ghost primitive,
+its concrete/ghost footprint is the set of addresses
+\vcc{[\address(p),\address(p) + \sizeof_object(p))},
+and its ghost/concrete footprint is empty. 
+If \vcc{p} is an object, its concrete/ghost footprint is the union of
+the footprints of all concrete/ghost primitive pointers 
+\vcc{q} such that 
+\vcc{\embedding(q) == p}. 
+Intuitively, the concrete/ghost footprint of a pointer is that part of
+the concrete/ghost heap used to store its representation.
+
+Distinct primitive pointers with the same embedding do
+not overlap.  Distinct concrete pointers have have disjoint ghost
+footprints. If \vcc{p} is concrete and primitive, its embedding is
+concrete. If \vcc{p} is a concrete object, its concrete footprint is a
+subset of \vcc{[\address(p),\address(p) + \sizeof_object(p))}.
+
+\subsubsection{Objects}
+
+\subsubsubsection{Fields}
+Each object has a set of named \Def{fields}, each with a type
+(a \vcc{\type}), and each of which is either ghost or concrete. Each
+concrete field also has an offset (of type \vcc{size_t}). 
+The fields of an object are determined by its type. 
+
+For object \vcc{o} with field \vcc{f}, \vcc{&o->f} is a pointer whose
+embedding is \vcc{o}, whose type is the type of \vcc{f}, and which is
+ghost iff \vcc{o} is ghost or \vcc{f} is ghost. If \vcc{f} is a
+concrete field, \vcc{\address(&o->f) == \address(o) + offset},
+where \vcc{offset} is the offset of field \vcc{f}. 
+
+Every object has the following fields (all of which are ghost):
+\\\\
+\vcc{\bool o->\closed}\\
+True if \vcc{o} is closed.
+\\\\
+\vcc{\object o->\owner}\\
+The owner of \vcc{o}. 
+\\\\
+\vcc{\objset o->\owns}\\
+The set of objects owned by \vcc{o}, when \vcc{o}
+is \vcc{closed}. 
+\\\\
+\vcc{\bool o->\valid}\\
+True off \vcc{o} is valid. 
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Overview}
+\subsection{Program Model}
+
+\subsection{Verification}
+
+The annotation of a function defines an implicit invariant for the
+type of activations of the function; this invariant is a conjunction,
+one conjunct for each value of its program counter, of the form ``if
+control is here then this is true''. 
+
+\subsection{Modular Verification}
+
+A program consists of a number of verification units, some part of
+which constitutes its public specification (spec). The spec of
+unit \vcc{a} depends on the spec of unit \vcc{b} iff \vcc{a}
+and \vcc{b} are the same unit or \vcc{a} mentions some unit that
+depends on \vcc{b}. Each unit \vcc{a} is verified using its own text
+and the specs of those units on which units mentioned by \vcc{a}
+depend\
+\footnote{Caveat: VCC currently violates this
+modularity condition, by making use of the program call graph to
+detect cycles when verifying program termination.}
+.
 
 Each object has a Boolean ghost field that says whether it
 is \Def{closed}, and a ghost field that gives its \Def{owner} (an
@@ -319,7 +478,9 @@ programs without loops or function calls.
 
 \section{Program Structure}
 
+
 \subsection{Annotations}
+
 VCC annotations are of the form \vcc{_(tag stuff)}, where \vcc{tag} is
 a \Def{annotation tag} and \vcc{stuff} has balanced parentheses (after
 preprocessing). All such annotations must be preceded by inclusion of
@@ -327,14 +488,13 @@ the header \vcc{<vcc.h>}.  If the C flag \vcc{VERIFY} is not set,
 this header defines the macro \vcc{_()} to be the empty string,
 causing all annotations to be removed in preprocessing.
 
-Each VCC annotation is described with an entry of the form
+Each VCC annotation is described here with an entry of the form
 \noindent\vcc{_(tag args)} (class)\\
 where args is a sequence of 0 or more parameter declarations
 (including types) and ``class'' describes the lexical role of the
 annotation, which is one of the following:
 \begin{description}
-\item[command] an annotation that acts syntactically as a program 
-statement in ghost code;
+\item[command] an annotation that acts syntactically as a statement;
 \item[cast] an annotation that acts syntactically as a (type) cast in
 expressions (in concrete or ghost code);
 \item[contract] an annotation that appears as a specification clause
@@ -353,96 +513,62 @@ types and functions that can be used inside of annotations. These
 types and functions all have names starting with \vcc{\}. Their syntax
 is given using conventional C declarations. 
 
-\subsection{Contexts}
-An annotated program contains several types of context:
-\begin{itemize}
-\item A program context lies within a program block in a function
-definition. Annotations classified as \vcc{(command)} can appear only
-in a program context.
-\item A concrete context is part of the program that is not inside of a VCC annotation. 
-\item A ghost context is that part of the program that is within VCC
-annotations. Within a ghost context, real state can be read but not
-updated. 
-\item A pure context is a ghost context within which the state is not
+
+
+\subsection{Pure Contexts}
+A pure context is an annotation context within which the state is not
 allowed to change. (Note: the body of a pure function is not itself a
 pure contect.) Within a pure context, the state can be read but
 not updated. No implicit assertions (e.g. to avoid null dereferences)
 are implicitly added inside pure contexts. Only pure functions can be
 called in a pure context.
-\item An atomic context is a a context inside of an atomic action
-(i.e., within the scope of a block labelled \vcc{_(atomic)}
-or \vcc{_(ghost_atomic)}), or within the definition of a type
-invariant (i.e., inside of a \vcc{_(invariant)} inside of a type
-definition). 
-\end{itemize}
 
-\subsection{Objects}
-VCC organizes the state into a collection of objects, each with
-a number of fields. Every object has the ghost
-fields \vcc{\owner}, \vcc{\owns}, \vcc{\closed}, \vcc{\type}, \vcc{\valid},
-and \vcc{\version}. The remaining fields of an object are determined
-by its \vcc{\type} field. For example, a struct normally has a field
-for each nonprimitive member declared in the definition of its
-type. VCC objects are either instances of compound types (structs or
-unions) or array objects; there are no objects of primitive types. 
 
-As in C, many different objects share (alias) the same bits of
-physical memory. This means that an update to the state of
-one \vcc{\valid} object cannot change the state of
-another \vcc{\valid} object. All data access in VCC is
-through \vcc{\valid} objects, so accessing memory through a currently
-invalid object typically requires first invalidating any aliasing
-objects and validating the new object, a mechanism known as
-"reinterpretation" (section ??). 
+\section{State}
 
-\subsection{The Heap}
+\subsection{Addresses}
 
-Conceptually, the entire state of a program, including the state of
-the threads, is stored in two heaps, the concrete heap (inherited from
-C) and a ghost heap. The real heap maps real memory addresses to byte
-values. The ghost heap maps \vcc{\natural} to either either byte
-values or ghost type values. 
-The size and layout of objects of a concrete type on the ghost heap
-matches the layout of such objects on the concrete heap.  
+Note that fields starting with \vcc{\}
+cannot have their addresses taken.
+
 
 The ghost fields of all objects are stored on the ghost heap. Their
 address of a ghost field of an object does not have a predictable
 offset from the address of the object, but is a function of the
-address and type of the object.  
+address and type of the object. 
 
 VCC does not provide an initialization syntax for ghost fields of concrete objects. 
 
 Pointer types distinguish between pointers to real memory and pointers
 to guest memory; the * operator is extended polymorphically to apply
 to either type of pointer. The \vcc{&} operator is extended to apply
-to both real and ghost lvalues. 
+to both real and ghost lvalues.
 
-It is convenient to think of the heap as storing the previous state of
+It is convenient to think of the state as storing the previous state of
 an execution (at some well-known ghost address), and for every update
-to the state to update this location appropriately. In this manual, we
-use the following notations: 
+to the state to update this location appropriately. 
 \\\\
-\vcc{\last}\\
-The previous state of the execution. (Not allowed in VCC annotations.)
+\vcc{s->\last}\\
+The previous state of \vcc{s}. (Not allowed in VCC annotations.)
 \\\\
 \noindent\vcc{\stutter(s)}\\
 This is \vcc{s} with \vcc{\last} set to \vcc{s}, i.e., the effect of
 taking a step without changing the state. (Not allowed in VCC
 annotations.) 
 \\\\
-\vcc{\prev(e)}\\
-Defined as \vcc{\at(\last,e)}. In atomic contexts, this is equal
-to \vcc{\old(e)}. 
-\\\\
 \vcc{\at(s,e)}\\
 The evaluation of expression \vcc{e} in the state \vcc{s} (with all
 free variables replaced with their value in the current state).  
+
+When \vcc{\at} occurs (implicitly or explicitly) in the declaration of
+a function, purely local variables are implicitly replaced with their
+actual values at the state in which the form is evaluated. (For
+function preconditions and postconditions, this state is function entry.)
 \\\\
-\vcc{\notchanged(o)}\\
+\vcc{\unchanged(o)}\\
 For object \vcc{o}, this holds iff, for every field \vcc{f}
-of \vcc{o}, \vcc{o->f == \prev(o->f)}. (Not allowed in VCC
-annotations.) In atomic contexts, this is equal
-to \vcc{\unchanged(e)}. 
+of \vcc{o}, \vcc{o->f == \at(\last, o->f))}. 
+
 
 \subsection{Object Invariants}
 For each object \vcc{o}, there is a state
@@ -452,18 +578,19 @@ the current state, and so is not a field of \vcc{o}.) Define
 \begin{VCC}
 \good(s) <==> \forall \object o; \at(s, \invariant(o)) && \at(\stutter(s), \invariant(o))
 
-\legal(s) <==> \at(s, \good(\prev(s)) ==> \forall \object o; \notchanged(o) || \invariant(o))
+\legal(s) <==> \good(s->\last) ==> \forall \object o; \notchanged(o) || \invariant(o))
 
 \admissible(o) <==>
-        \forall(\state s; \legal(s) && \at(s,\notchanged(o)) ==> \at(s,\invariant(o)))
-        \forall(\state s; \legal(s) && \at(s,!\notchanged(o)) ==> \at(\stutter(s),\invariant(o))
+        \forall(\state s; \legal(s) && \at(s,\unchanged(o)) ==> \at(s,\invariant(o)))
+        \forall(\state s; \legal(s) && \at(s,!\unchanged(o)) ==> \at(\stutter(s),\invariant(o))
 \end{VCC}
-
 
 VCC proves that every state reached in an execution
 is \vcc{\good} by checking that every state update is legal (by
 verifying the code of each function) and by checking that each object
-invariant is admissible (by reasoning about the type definitions).  
+invariant is admissible (by reasoning about the type
+definitions). (Execution is assumed to start in a state where all
+objects are good.) 
 
 The invariant of an object is defined as follows, where \vcc{\inv2(o)}
 is a state predicate defined as part of the definition of \vcc{o}'s
@@ -476,10 +603,10 @@ type:
 	&& (o->\valid ==> 
  		 o->\owner->\valid 
  		 && o \in o->\owner->owns 
- 		 && (o->\claim_count ==> o->\closed)
+ 		 && (o->\claim_count > 0 ==> o->\closed)
  		 && (o->\closed || (o->\owner is a thread)))
 	&& (o->\closed ==> o->\valid && (\forall \object s; s \in o->\owns ==> s->\closed && s->\owner == o)
-        && (o->\closed || \prev(o->\closed) ==> \inv2(o))
+        && (o->\closed || \old(o->\closed) ==> \inv2(o))
         && (\forall \object o1; o1 != o && o1->\valid && o->\valid ==> <the \span(o1) and \span(o) have no common heap locations>)
 )
 \end{VCC}
@@ -542,7 +669,7 @@ requires a check of the invariant of \vcc{o->\owner}.
 
 \subsection{Ownership}
 Every object has an owner, given by its \vcc{\owner} field. An object
-can only be owned by a closed object. 
+can only be owned by a closed object. Threads own themselves.
 
 \noindent\vcc{\bool \wrapped(\object o)}\\
 Can appear only in a program context;
@@ -592,6 +719,7 @@ VCC uses the C preprocessor, so comments and macro expansion follow
 the rules of C.
 
 \section{Types}
+\label{sec:types}
 Types are classified as real or ghost, depending on whether they are
 defined in a real context or a ghost context.  
 
@@ -744,7 +872,7 @@ value of the first. The \vcc{+=} an \vcc{-=} are extended analogously.
 \vcc{\objset \everything()}\\
 \vcc{\objset \universe()}\\
 The set of all objects.
-
+\\\\
 \vcc{\bool \disjoint(\objset o1, \objset o2))}\\
 True iff \vcc{o1} and \vcc{o2} contain no common values. Note that
 this can be true even if each set contains pointers (of different
@@ -763,24 +891,8 @@ they trigger somewhat differently from maps.
 
 \subsubsection{States}
 
-\vcc{\state} (large)\\
-The type of states. States are first-class values, so they can be
-stored in ghost variables or ghost fields of data structures. 
-\\\\
-\vcc{T \at(\state s, T e)}\\
-Returns the value of expression \vcc{e} evaluated in state \vcc{s}. 
-\\\\
-\vcc{\state \now()}\\
-The current state. 
 
 \subsection{Pointer Types}
-In the extended program, a value \vcc{p} of pointer type includes not only the
-address \vcc{\address(p)} to which the pointer points, but also the type of the
-pointer. In addition, if \vcc{p} is a pointer to a (real or ghost)
-\vcc{\object} of primitive type, 
-the value includes an object \vcc{\embedding(o)} such that, for some
-field \vcc{f} of \vcc{\embedding(o)}, \vcc{\address(o) == \address(&o->f)}. 
-(Such an object is unique in any \vcc{\good} state.)
 When the \vcc{&} operator is applied to an expression of the
 form \vcc{o->f}, where \vcc{f} is of primitive type, the
 aforementioned object is \vcc{o}. When it is applied to a local
@@ -790,10 +902,6 @@ Within a pure context, the operator \vcc{==} applied to two pointers
 returns \vcc{\true} iff the pointers have equal addresses, their types
 are the same, and (if they point to primitive types) they have equal
 embeddings. 
-\\\\
-\vcc{_(\object \embedding(o))}\\
-\vcc{o} must be a pointer or a ghost pointer. If it is a pointer to a
-primitive type, this returns 
 \\\\
 \vcc{^T} (small)\\
 The type of pointers to ghost objects of type\vcc{T}. (\vcc{T} can be a real or ghost type.)
@@ -812,11 +920,6 @@ This operator is typically used when \vcc{p} points to a primitive
 field of struct that is a member of a union, and some other union
 member is currently \vcc{\valid}.  
 \\\\
-\vcc{\object} (small)\\ 
-The type of all typed pointers (to real or ghost memory). Note that
-these might be pointers to primitives, and so not all \vcc{\object}s
-are objects.
-\\\\
 \vcc{\claim} (small)\\
 The type of claims. 
 \\\\
@@ -830,6 +933,37 @@ The type of threads.
 \vcc{const \thread \me}\\
 Allowed only in a thread context. This is a pure local variable that
 gives the current thread. Its address may not be taken and 
+
+Threads are considered objects in VCC, but the details of their type
+are axiomatized. Part of the thread state is a local copy of 
+the whole system state. As a thread executes, reads and writes of
+memory (concrete and ghost) are applied to both its local state and
+the global state. (It is an invariant of verified programs that reads
+find the same values in the global and local copies.)  However,
+expressions arising in pure contexts are evaluated on the local state.
+When the thread is created, and just before each atomic action (i.e.,
+when control reaches an \vcc{_(atomic)} or \vcc{_(atomic_read)}), the
+local state is set to the global 
+state. It is an invariant of a verifying VCC program that the global
+versions (volatile and nonvolatile) of all objects owned by the thread
+agree in the local and global copies, so this copy operation is
+simulated when reasoning about the thread by moving to an arbitrary
+state without changing the versions of objects owned by the thread. 
+
+Each function declaration effectively introduces a type
+
+During execution, the thread state can be viewed as a stack of
+activation records, one for each currently active function call made
+by the thread. The state of each of these activation records includes
+values for its program counter and each of its purely local
+variables. Each record has an invariant that its state doesn't change
+except when it's at the top of the stack, and that when its state
+changes, the system state changes according to the operational
+semantics of the step it is taking. 
+
+Verification of a function implicitly constructs a global state
+predicate for each control point of the function. The type of activation
+
 
 \subsection{Compound Types}
 
@@ -1161,13 +1295,15 @@ the \vcc{struct} keyword in its type definition). Any type that is
 marked \vcc{claimable} has the following implicit fields and
 invariants:
 \begin{VCC}
-  volatile \natural \claim_cnt;
+  volatile \natural \claim_count;
   \objset \claimants;
   _(invariant claimants == \card(\claimants))
   _(invariant \claim_count ==> \this->\closed)
   _(invariant \forall \object o; o \in \claimants ==> \this \in o->\subjects)
   _(approves \this->\owner, \claimants)
 \end{VCC}
+(The \vcc{\claimants} field cannot appear in assertions,
+but \vcc{\claim_count} can.)
 
 For certain state predicates \vcc{p}, and every finite \vcc{\objset s}, 
 there is an infinite set of ghost
@@ -1176,7 +1312,7 @@ objects, called \Def{claims}, defined as follows:
   typedef _(claimable) struct \claim {
     volatile \bool \used;
     _(invariant \this->\closed ==> p)
-    _(invariant \forall \object o; o \in s ==>
+    _(invariant \forall \object o; o \in s && \this->\closed ==>
       o->\claimants->\claimable && \this \in o->\claimants)
     _(invariant \old(\used) ==> \used)
   } ^\claim;
@@ -1187,9 +1323,18 @@ We refer to \vcc{p} as the claimed property of such objects,
 and \vcc{s} as its claimed objects. 
 These claims exist for any object for which the above invariants
 are admissible.
+
+Conceptually, when there is an atomic update, the invariants of
+updated objects are checked first, assuming only the 1-state invariants of
+all objects in the prestate. (This is the legality check.)
+Next the invariants of all unupdated non-\vcc{\claim} objects are
+checked; this check assumes the 1-state of all objects in the
+prestate, and the invariants of all updated objects. Finally, the
+invariants of all claims are checked; this proof gets to additionally
+assume that all objects (including unmodified ones) satisfy their invariants.
 \\\\
 \noindent\vcc{\bool \claims(\claim c, p)}\\
-This holds if, in every \vcc{good} state in which \vcc{c} is
+This holds iff, in every \vcc{good} state in which \vcc{c} is
 closed, \vcc{p} holds. 
 \\\\
 \noindent\vcc{\bool \claims_object(\claim c, \object o)}\\
@@ -1197,7 +1342,9 @@ True iff \vcc{o} is one of the claimed objects of \vcc{c}.
 \\\\
 \noindent\vcc{\bool \active_claim(\claim c)}\\
 True iff \vcc{c} is closed. However, it has the effect of also
-asserting the invariant of \vcc{c}.
+asserting the invariant of \vcc{c}. Asserting or assuming \vcc{\active_claim(c)}
+in a state (perhaps implicitly) is the only way to trigger
+instantiation of the invariant of \vcc{c} in that state.
 \\\\
 \vcc{\bool \claims_claim(\claim c, \claim c1)}\\
 (Depricated) Equivalent to \vcc{\claims(c, c1->\closed && \valid_claim(c1))}
@@ -1205,21 +1352,20 @@ asserting the invariant of \vcc{c}.
 \vcc{\bool \claimable(\object o)}\\
 Equivalent to \vcc{o->\claimable}.
 \\\\
-\vcc{\claim \make_claim(\objset s, \bool p)} (special form)\\
-This expands to the following:
+\vcc{\claim \make_claim(\objset s, \bool p)} (special)\\
 \begin{enumerate}
 \item Assert that \vcc{p} holds.
-\item Assert that the corresponding claim
-type is admissible. (If not, VCC reports its inability to prove
-that \vcc{p} holds after ``a step of the machine''.) 
+\item In \vcc{p}, replace each subterm of the
+form \vcc{\when_claimed(e)} with the value of \vcc{e} in the
+current state.
 \item Let \vcc{c} be a claim with claimed property \vcc{p} and claimed
-objects \vcc{s} for which \vcc{!p->\used && !p->\closed}.
-\item \vcc{_(wrap c)}
+objects \vcc{o} for which \vcc{!c->\used && !c->\closed}. 
+\item Assert the admissibility of \vcc{c}.
+\item Atomically \vcc{_(wrap c)} and increment the \vcc{\claim_count}s of the objects of \vcc{c}. 
 \item \vcc{_(assert p)}
-\item Increment the \vcc{\claim_count}s of the objects of \vcc{c}. 
 \end{enumerate}
 
-\noindent\vcc{\claim \upgrade_claim(\claim c1,..., bool p))} (special form) \\
+\noindent\vcc{\claim \upgrade_claim(\claim c1,..., bool p))} (command) \\
 This creates a new claim that claims the invariants
 of \vcc{c1,c2,...} conjoined with \vcc{p}, while
 unwrapping \vcc{c1,c2,...}. (It thus writes \vcc{c1,...}, but does
@@ -1241,7 +1387,12 @@ and similarly for up to 4 distinct claims.
 \noindent\vcc{_(by_claim(\claim c, o->f)} (expr)\\
 This expression can appear only in a program context; \vcc{f} must be
 a nonvolatile field of \vcc{o}. It evaluates
-to \vcc{o->f}, but also assserts \vcc{\active_claim(c) && \claims(c,o->\closed)}.
+to \vcc{o->f}, but also assserts 
+\vcc{\active_claim(c) && \claims(c,o->\closed)}.
+
+Note: this should be generalized to volatile fields, where \vcc{c}
+guarantees that the field has the same value in all states
+where \vcc{c} is valid, but this extension is not yet supported.
 \\\\
 \noindent\vcc{bool \always_by_claim(\claim c, \object o)}\\
 \vcc{o} must be an identifier. This expression evaluates
@@ -1260,13 +1411,17 @@ the \vcc{\claim_cnt} of each object in \vcc{s}.
 invariant may be omitted in future, to allow the construction of
 objects that manage their own claims.)
 \\\\
-\vcc{T \when_claimed(T e)}\\
-This function can appear only inside of \vcc{\claims} or in the second
-argument to \vcc{\make_claim}. It returns the
-value of \vcc{e} in the state in which the claim was
-constructed, unless it is also inside an \vcc{\ensures} clause, in
-which case it returns the value of \vcc{e} in the state in which the
-function returned.  
+\vcc{T \when_claimed(T e)} (special)\\
+This macro can appear only inside of \vcc{\claims} or in the second
+argument to \vcc{\make_claim}. It translates to \vcc{\at(s,e)}, where
+\vcc{s} is the state in which the surrounding \vcc{\make_claim} is
+being executed, or the state in which the surrounding \vcc{\claims} is
+being evaluated. (If inside an \vcc{_(ensures)}, \vcc{s} is the state
+in which the function returned.)
+
+Within a program block, local variables (purely local or not) ocurring
+inside the second argument of \vcc{\claims} or \vcc{\make_claim} are
+implicitly wrapped in \vcc{\when_claimed}.
 
 \section{Declarations and Scoping}
 In general, declarations follow the C conventions regarding
@@ -1289,7 +1444,10 @@ forward.) This exception to the scoping rules of C is included to
 allow invariant to mention the fields of types that have not yet been
 declared (since C has no mechanism for forward declaration of fields).
 
-\section{Purely Local Variables}
+If the identifier \vcc{T} is not in use as an annotation tag, the
+top-level form \vcc{_(T <decl>)} abbreviates \vcc{_(ghost T <decl>)}.
+
+\subsection{Purely Local Variables}
 A purely local variable is a local variable of a function (or a
 function parameter) such that neither the variable nor any nested
 member of the variable (if it is of a compound type) is subject to
@@ -1299,13 +1457,16 @@ by VCC, because they can be modified by a program fragment only if it
 mentions the variable by name. (In particular, it cannot be modified
 by a function call.) Purely local variables are always considered
 writable, and so do not have to be mentioned in writes clauses for
-blocks. 
+blocks. Formal parameters of a function are always purely local.
+
+Note: The special treatment of purely local variables is likely to be
+eliminated in the near future.
 
 Note: A purely local variable of \vcc{struct} type is treated
 as a collection of purely local variables, one per field, and so each
 field gets separately the treatment described above.
 
-\section{Globals Variable Declarations}
+\subsection{Globals Variable Declarations}
 Global variables are owned by a single 
 \vcc{\bool \program_entry_point()}\\
 Can appear only in function contracts. It is equivalent to all global
@@ -1323,8 +1484,20 @@ program block. All specifications on function declarations or
 definitions of the same function must have the identical
 specifications.
 
-If the identifier \vcc{T} is not in use as an annotation tag, the
-top-level form \vcc{_(T <decl>)} abbreviates \vcc{_(ghost T <decl>)}.
+\subsubsection{Ghost Parameters}
+Before the closing parenthesis of the parameter list, ghost parameters
+to the function can be declared using the two forms below. Note that
+such parameters are not comma-separated.
+\\\\
+\vcc{_(out decl)} (special)\\
+Here, \vcc{decl} is an ordinary parameter declaration (i.e., one that
+could appear as a parameter of a ghost function). This has the effect
+of declaring an out parameter of the function. The declared parameter
+cannot be mentioned in \vcc{_(requires)} or \vcc{_(writes)}
+specifications, and is considered writable in the body of the
+function. 
+
+\subsubsection{Atomic Inline Functions}
 
 \vcc{_(atomic_inline)} (declarator)\\
 If a function is marked \vcc{_(atomic_inline)}, (1)calls to the
@@ -1366,11 +1539,13 @@ body, the writes set is set to the set of objects written in the
 writes clause.
 \\\\
 \vcc{_(reads o1,...)}\\
-This annotation can appear only on \vcc{_(pure)} functions. It causes
-VCC to check that, for any two states that differ only on the values
-of fields of \vcc{o1,...}, the function returns the same result. VCC
-also generates an axiom to this effect (to be used in the verification
-of other functions) unless the function has a \vcc{_(no_frameaxiom)}
+This annotation can appear only on \vcc{_(pure)} functions. If
+nultiple reads annotations are on the same function, their lists are
+concatenated to form a single list. This annotation introduces
+an additional proof obligation that, for any two states that differ only on the values
+of fields of \vcc{o1,...}, the function returns the same result. It also
+allows generation an axiom to that effect (to be used in the verification
+of other functions), unless the function is also annotated with \vcc{_(no_frameaxiom)}
 annotation. 
 \\\\
 \vcc{_(maintains \bool p)}\\
@@ -1397,13 +1572,11 @@ Equivalent to
 Equivalent to
 \begin{VCC}
   _(writes p)
-  _(requires \mutable(p))
-  _(ensures \mutable(p))
+  _(maintains \mutable(p))
 \end{VCC}
 
 \vcc{_(returns e)}\\
 Equivalent to \vcc{_(ensures \result == e)}
-
 
 \subsubsection{Ghost Parameters}
 
@@ -1417,26 +1590,33 @@ parameters (their names cannot conflict with names of other
 parameters, their scopes are the entire function declaration, etc.).
 
 \subsubsection{Pure Functions}
-A pure function is one that that can be treated as a mathematical
-function of the state, and so can be used in specifications and
-assertions. This mathematical function is defined to be an arbitrary
-one such that, for any state satisfying its preconditions, the result
-satisfies its postconditions. For states not satisfying its
-preconditions, the mathematical function takes on an arbitrary value
-of the result type. (Note: such a value always exists, because all
-value types are nonempty.)
-
-When a pure function is used in an impure context, its
-behavior is the same as an impure function. 
+A pure function is one that doesn't modify the state (as seen my its
+caller and other threads), and whose return value can be treated as a
+mathematical function of the state. Only pure functions can be used in
+specifications and assertions. This mathematical function is defined
+to be an arbitrary one such that, for any state satisfying its
+preconditions, the result satisfies its postconditions. For states not
+satisfying its preconditions, the mathematical function takes on an
+arbitrary value of the result type. (Note: such a value always exists,
+because all value types are nonempty.)
 
 \vcc{_(pure)}\\
 This declaration can appear only after the return type declaration of
 a function declaration or definition. A function marked in this way is
-not allowed to modify the state (real or ghost). In particular, (1) it
-must have an empty writes clause, (2) it can use \vcc{_(atomic read)}
-but not \vcc{_(atomic)} or \vcc{_(ghost_atomic)}, and (3) it can call
-only pure functions. All pure functions are subject to termination
-checking. 
+subject to the following restrictions:
+\begin{itemize}
+\item the function can assign only to local variables;
+\item its local variables must be purely local;
+\item its specification  must include a \vcc{_(decreases)} clause;
+\item it can use \vcc{_(ghost_atomic)} actions, but not other atomic actions;
+\item it can call only pure functions;
+\item if it is not a ghost function, its local variables must be
+initialized before they are read.
+\end{itemize}
+
+Note: VCC currently supports pure functions without function
+bodies, but with postconditions of particular forms. However, the
+restrictions on such functions are complex, and their use is deprecated.
 \\\\
 \vcc{_(def <decl>)}\\
 This is an abbreviation for 
@@ -1446,7 +1626,7 @@ This is an abbreviation for
 \vcc{_(abstract <decl>)}\\
 These are abbreviations for \vcc{_(ghost _(pure) <decl>)}. The latter
 is depricated.
-
+\\\\
 \subsubsection{Custom Admissibility Checks}
 \vcc{_(admissibility)} (function attribute)\\
 \vcc{_(admissibility)} declares a function as a custom admissibility check. The function
@@ -1478,7 +1658,7 @@ of \vcc{\natural}s, defined by
 <x1,...> = <0,x1,...>
 \end{VCC}
 the latter equation used to compare tuples of unequal length.
-
+\\\\
 \vcc{_(recursive_with f1,f2,...)}\\
 \\ 
 This annotation can appear only on the specification of a
@@ -1493,7 +1673,8 @@ publicly call \vcc{g}, then \vcc{g} does not transitively
 call \vcc{f}. The intention is that this property would be checked
 with a ``verification linker'' at program link time, but VCC currently
 makes this check only if the definitions of all pure functions
-involved are available at verification time.
+involved are available at verification time. Therefore, soundness is
+not guaranteed unless the bodies of all pure functions are available.
 
 Note: The soundness of safety checking for VCC depends on termination
 for all functions called within ghost code (including
@@ -1527,28 +1708,49 @@ than the measure of \vcc{f} on entry to \vcc{f}.
 
 If a \vcc{_(decreases)} clause is put on a loop, VCC asserts on any
 return to the head of the loop from within the loop that the measure
-on loop is smaller than the value of that measure on loop entry.
+on loop is smaller than the value of that measure on loop entry. If a
+\vcc{while} or \vcc{for} loop without a \vcc{_(decreases)} clause appears in the body of a function
+or loop with a \vcc{_(decreases)} clause, and the loop test is of the
+form \vcc{e1 < e2}, \vcc{e1 <= e2}, \vcc{e1 > e2}, \vcc{e1 >= e2},
+or \vcc{e1 != e2}, the loop is given a default clause 
+\vcc{_(decreases abs(e1 - e2))}, where \vcc{abs} is the absolute value function
+(on \vcc{\integer}). 
 
 
 \subsection{Function Calls}
+In a call to a function with declared \vcc{_(ghost)} or \vcc{_(out)}
+parameters, the corresponding arguments of a call must be filled with
+parameters of the form \vcc{_(ghost e)} or \vcc{_(out v)},
+where \vcc{e/v} is an expression/variable of suitable type. As in the
+declaration, these parameters must not be comma-separated.
 
-A call \vcc{v = f(args)} translates to
-\begin{enumerate} 
-\item evaluate each of the actual parameters, in left-to-right order,
-assigning the result of each to a fresh temporary local variable 
-\item assert the preconditions  of \vcc{f} (with the temporary locas substituted for the formal parameters)
-\item assert that all objects listed in the writes clause of the object are writable. 
+A call \vcc{v = f(args)}, where \vcc{v} and \vcc{args} are all pure
+local variables, is translated as follows:
+
+\begin{enumerate}
+\item
+assert the state is \vcc{\good}
+\item
+assert the preconditions  of \vcc{f} with actual parameters substituted for formal parameters
+\item 
+assert that all objects listed in the writes clauses are \vcc{\writable}
+and \vcc{\mutable} or \vcc{\wrapped}
 \item change the heap state arbitrarily
-\item assert that every object that was \vcc{thread_local} prior to the call and was not listed in the writes clauses of the function has the same version as it did before state change
-\item assert the postconditions of the call
+\item assume that every object that was \vcc{thread_local} prior to
+the call and was not listed in the writes clauses of the function has
+the same version as it did before state change 
+\item change any \vcc{_(out)} parameters arbitrarily
+\item assume the postconditions of the call
+\item assume the state is good
 \end{enumerate}	
 
 C allows the compiler great lattitude in reordering computations. For
 example, it allows the arguments to a functon call to be evaluated in
 any order, or even in parallel. VCC enforces stronger properties on
-programs so that the behavior allowed by C is equivalent to the
+function calls so that the behavior allowed by C is equivalent to the
 behavior of a naive translation of the program, where actual parameters
-are evaluated sequentially left-to-right. 
+are evaluated sequentially left-to-right. These conditions are roughly
+the following: <TODO>
 
 \section{Statements}
 In verifying a statement, VCC maintains an implicit local variable
@@ -1578,7 +1780,7 @@ This translates roughly as follows:
 \end{VCC}
 
 \vcc{void \unwrap(\object o, ...)}\\
-This command is allowed only in a non-atomic context. It translates roughly to
+This translates roughly to
 \begin{VCC}
   _(assert \wrapped(o) && \writable(o))
   _(ghost_atomic o {
@@ -1587,9 +1789,65 @@ This command is allowed only in a non-atomic context. It translates roughly to
       o1->\owner = \me;
       <add o1 to the writes set>
   })
-  <add o a
+  <add o the writes set>
 \end{VCC}
 
+\subsubsection{Unwrapping Blocks}
+An unwrapping block has the form
+\vcc{_(unwrapping \object o1, \object o2, ...) writes block} (command)\\
+where \vcc{writes} is a sequence of \vcc{_(writes)} annotations
+and \vcc{block} is a program block without a
+specification. Let \vcc{S} be the \vcc{\objset} be the set of objects
+listed in \vcc{writes}, interpreted at the entry to the unwrapping
+block. The block then translates as follows:
+
+\begin{VCC}
+_(ghost \state st = \now())
+_(ghost \objset W = \at(st, <set of objects listed in writes clauses>))
+_(ghost \object o1 = \at(st,o1))
+_(ghost \object o2 = \at(st,o2))
+...
+_(unwrap o1)
+_(unwrap o2)
+... 
+block
+...
+_(wrap \at(st,o2)) _(assert \domain(o2) == \at(st,\domain(o2)))
+_(wrap \at(st,o1)) _(assert \domain(o1) == \at(st,\domain(o1)))
+_(assert \forall \object s,x; s \in {o1,o2,...} && x \in \domain(s)
+  ==> (*x == \at(st,*x) || x \in W))
+\end{VCC}  
+where \vcc{o1,o2,...} are fresh variable names. If the the block has
+no writes clauses, the last assersion is omitted. If
+the \vcc{_(unwrapping)} is not followed by a program block, it is
+equivalent to a program block without writes clauses.
+\\\\
+\vcc{\bool \domain_updated_at(\object d, \objset s)}\\
+This macro translates to 
+\begin{VCC}
+_(unchanged \domain(d))
+&& (\forall \object o; 
+      \old(o \in \domain(d) && (\forall \object c; c \in s ==> !(o \in \domain(s))))
+      ==> \unchanged(o))
+\end{VCC}
+
+Currently, VCC will verify such a postcondition only under some
+very specific conditions. First, \vcc{s} must be syntactically
+presented as an explicit set of explicit paths through the domain
+of \vcc{d} (e.g., \vcc{d->a, d->b->c->e}). Second, the verification 
+will fail if \vcc{d} is unwrapped with \vcc{_(unwrap d)}. The only
+modifications allowed to \vcc{\domain(d)} are through 
+\begin{itemize}
+\item a direct assignment
+\item 
+a function call or block with a contract
+that writes \vcc{a}, such that the function or block specification
+implies (under the conditions in which it is called) 
+\vcc{_(ensures domain_updated_at(d, s1))} where 
+\vcc{\subset(s1,\at(st,s))) and where \vcc{st} is the state at entry to
+the containing function body
+\item an unwrapping block whose writes within \vcc{\domain(d)}
+\end{itemize}
 
 \subsection{Expression Statements}
 As in C, an expression, followed by a semicolon, is a statement; it is
@@ -1644,12 +1902,12 @@ error message if (but not necessarily only if) there exists an
 execution of the program in which that assertion fails.
 
 An explicit assertion of the form \vcc|_(assert {:bv} p)|
-tells VCC that \vcc{p} should be proved by bitwise reasoning. \vcc{p}
-cannot include free variables, cannot reference the heap, and its
-quantifications must be on finite types.
+requires \vcc{p} to be proved using bitwise reasoning. \vcc{p}
+cannot include free variables or reference the heap, and its
+quantifications must be over finite types.
 
 \vcc{_(assume b)}\\
-This creates a pure context, in which \vcc{b} must be a Boolean
+\vcc{b} must be a pure Boolean
 expression. The annotation tells VCC to assume that \vcc{b} holds
 whenever control reaches this location. Formally speaking, VCC
 considers only those executions in which no assumption is violated.
@@ -1664,7 +1922,7 @@ arbitrary one. This can be avoided by assuming something like
 \vcc{x!= x}.
 
 \vcc{_(assert b)}\\
-This creates a pure context, in which \vcc{b} must be a Boolean
+\vcc{b} must be a pure Boolean
 expression. In an execution of a program, this assertion \Def{fails}
 if \vcc{b} evaluates to \vcc{0}. The soundness of VCC requires that
 VCC should report an error if there is any execution in which this is
@@ -1674,7 +1932,7 @@ other side, and report an error even if none is possible.)
 \subsection{Ghost Statements}
 \vcc{_(ghost stuff)}\\
 The tag \vcc{ghost} can appear as a ghost function parameter
-(\ref{??}), as a ghost declaration (\ref{??}), or as a ghost
+(\ref{??}), as a ghost declaration, or as a ghost
 statement. Ghost statements follow the syntax of C statements, except
 that they can use extended VCC operators and functions. A ghost
 statement does not have to be terminated by a semicolon (like ordinary
@@ -1711,42 +1969,37 @@ _(assume 0)
 
 \end{VCC}
 
-Here, a loop test is considered part of the loop body itself; if the
-test succeeds, there is a loop exit to an implicit label just after the
+Here, the loop test is considered part of the loop body itself; normal
+loop exit translates to a \vcc{goto} to an implicit label just after the
 loop). For each annotation \vcc{_(ensures p)} on the loop, VCC asserts 
 \vcc{p} on any loop exit. On any loop exit, VCC adds to the writes set
 the value of the writes set on loop entry.
 
-VCC does not allow jumps into loops, but does allow jumps out of
-loops.
-
-\subsection{Goto Statement}
+VCC does not allow control transfer into the body of a loop, but does
+allow a \vcc{goto} to transfer control out of loops.
 Gotos within ghost code cannot use a target outside of
 the \vcc{_(ghost)} annotation in which the goto occurs.
 
-VCC requires that the control flow graph inside a function body is
+VCC requires that the control flow graph of a function body is
 reducible. 
 
 \subsection{Atomic Actions}
 
 \subsubsection{Closed Object Lists}
 The atomic actions all make use of \Def{closed object lists}. A closed
-object list is a nonempty, comma-separated list, each element of which is either
-an object or a set of objects, each element possibly preceded
+object list is a nonempty, comma-separated list of objects
+each possibly preceded
 by \vcc{_(read_only)}. To validate an object \vcc{o} in the list is to 
-\vcc{_(assert o->\closed)} and then \vcc{_(assume \inv(o))};
-to validate an object set is to assert that all
-objects in the set are \vcc{\closed}. To validate the entire list is
-to validate the elements in left-to-right order. A validation of the
-list consists of this sequence of assertions performed in a particular
-state. The read objects of a validation is the set of objects ocurring
-in the list, along with the union of sets ocurring in the list, as
-evaluated in the validation state. The set of write objects of a validation
-is defined the same way, but omitting those elements annotated
-as \vcc{_(read_only)}. 
-
-Caveat: VCC currently does not allow object sets. This should change
-in the future.
+\vcc{_(assert \active_claim(o))} if \vcc{o} is a \vcc{\claim} and to
+\vcc{_(assert o->\closed && \inv(o))} if it is not.
+To validate an object list is to validate its elements in
+left-to-right order. A validation of the list consists of this
+sequence of assertions performed in a particular state. The read
+objects of a validation is the set of objects ocurring in the list,
+along with the union of sets ocurring in the list, as evaluated in the
+validation state. The set of write objects of a validation is defined
+the same way, but omitting those elements annotated
+as \vcc{_(read_only)}.
 
 \subsubsection{Ghost Atomic Actions}
 A ghost atomic action has the form \vcc{_(ghost_atomic obs block)},
@@ -1825,13 +2078,11 @@ compiler and hardware platform on which the program executes guarantees that
 the accesses to volatile concrete memory within the
 atomic action in a way that appears to be atomic. 
 
-, only pure function calls are permitted, and 
-these are allowed only in full-stop states. 
-
-A full-stop state is a state in which all object invariants are known
-to hold. The only program points that are not guaranteed to be
-full-stop states are points within an atomic action after the state
-has been updated by an assignment.
+In addition to \vcc{_(atomic_inline)} functions, the atomic block can
+include calls to \vcc{_(pure)} functions. (Note, however, that such a
+function call after a write is likely to fail to establish the
+precondition that the state is \vcc{full_stop()}.) \vcc{_(wrap)}
+and \vcc{_(unwrap)} cannot be used after the \vcc{_(begin_update)}.
 
 \subsubsubsection{Atomic Operations}
 
@@ -1868,9 +2119,6 @@ when the function was called.
 \\\\
 \vcc{\nested(\object o)}\\
 True iff \vcc{o->\owner} is not a thread.
-\\\\
-\vcc{\non_primitive_ptr(void *o)}\\
-True iff the type of \vcc{o} is a pointer to an object type. 
 \\\\
 \vcc{\objset \span(\object o)}\\
 The set consisting of \vcc{o}, along with a pointer to each primative field of \vcc{o}.
@@ -1915,13 +2163,6 @@ Returns the sequential ownership domain of \vcc{o}.
 \vcc{_(\objset \vdomain(\object))}\\
 \\\\
 \vcc{_(bool \domain_updated_at(\object p, \objset wr))}\\
-\\\\
-\vcc{_(\type \typeof(\object o))}\\
-Returns the type of the thing pointed to by \vcc{o}
-(which is \vcc{o->\type} if \vcc{o} is an object).
-\\\\
-\vcc{\bool \ghost(\object o)}\\
-True iff \vcc{o} is a ghost object.
 \\
 \vcc{T ^\alloc_array<T>(\size_t s))}\\
 \vcc{T ^\alloc<T>()}\\
@@ -1929,8 +2170,7 @@ Here, \vcc{T} is a type name. \vcc{\alloc<T>()} allocates a fresh object
 of type \vcc{T} on the ghost heap, and returns a pointer to the new
 object. \vcc{\alloc_array<T>(s)} allocates an array of \vcc{s} such
 ghost objects.
-
-
+\\\\
 \vcc{_(bool \not_shared(\object))}\\
 \\\\
 \vcc{\bool \malloc_root(\object o))}\\
@@ -1990,13 +2230,18 @@ structured field \vcc{f} of type \vcc{T},
 \vcc{\bool \wrapped0(\object o)}
 Equivalent to \vcc{\wrapped(o) && o->\claim_count == 0)}.
 \\\\
+\vcc{T \old(T e)}\\
+Within an \vcc{\ensures} clause or the body of a
+function, \vcc{\old(e)} gives the
+value of \vcc{e} at function entry, after replacing any ocurrances of
+local variables in \vcc{e} with their current values.
+Within an object invariant, this expands to the prestate of the
+transition over which the invariant is evaluated. 
+\\
 \vcc{\bool \unchanged(e)}\\
 \vcc{\bool \same(e)}\\
 Equivalent to \vcc{(\old(e) == e)}. Note that \vcc{\old} has
 different meanings depending on context.\\
-\\\\
-\vcc{size_t \sizeof_object(\object o)}\\
-Equivalent to \vcc{\sizeof(T)}, where \vcc{T} is the type of \vcc{o}.
 
 
 \section{Implicit fields}
