@@ -334,9 +334,10 @@ namespace Microsoft.Research.Vcc
             | _ -> ()
 
           let contractsOnly = contractsOnly && 
-                              not (hasCustomAttr "atomic_inline" decl.CustomAttr) && 
-                              not (List.exists (fun n -> n = decl.Name) requestedFunctions)
-          // make sure that if the current function is explicitly requested or atomic_inline, then process its body
+                              not (hasCustomAttr CAST.AttrAtomicInline decl.CustomAttr) && 
+                              not (List.exists (fun n -> n = decl.Name) requestedFunctions) &&
+                              not (hasCustomAttr CAST.AttrDefinition decl.CustomAttr)
+          // make sure that if the current function is explicitly requested or atomic_inline or def, then process its body
           // coming here again to process the body in a second round does not work.
           
           if body = null || contractsOnly then
@@ -592,6 +593,13 @@ namespace Microsoft.Research.Vcc
                   match instance with
                     | C.Deref (_, inner) when instance.Type = inner.Type -> inner
                     | _ -> instance
+                let instance =
+                  match instance.Type with
+                   | C.Type.ObjectT
+                   | C.Ptr _ -> instance
+                   | t -> C.Expr.Macro ({ instance.Common with Type = C.PhysPtr t }, // TODO: Ptr kind
+                                        "&", [instance])
+
                 exprRes <- C.Expr.Macro({ec with Type = this.DoType def.Type}, v1Fn, [instance])           
               | None ->
 
@@ -826,7 +834,7 @@ namespace Microsoft.Research.Vcc
                   match fields with
                     | [] when not (VccScopedName.IsGroupType(typeDef)) && not td.IsSpec ->
                       if contract <> null && Seq.length contract.ContractFields > 0 then
-                        helper.Error (tok, 9620, "need at least one physical field in structure, got only spec fields", None)
+                        helper.Error (tok, 9620, "need at least one physical field in structure, got only ghost fields", None)
                       // forward declaration
                       C.Type.Ref td
                     | _ ->
@@ -1603,11 +1611,17 @@ namespace Microsoft.Research.Vcc
         let typeToCheck = this.DoType checkIfInstance.TypeToCheck
         let ec = this.ExprCommon checkIfInstance
         match typeToCheck with
-          | C.Ptr(_) -> helper.Warning(ec.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended", None)
+          | C.Ptr(_) -> helper.Warning(ec.Token, 9107, "'\\is' applied to a pointer type; this is probably not what you intended", None) // TODO update to new syntax, \is
           | _ -> ()
+        let operand = this.DoIExpression checkIfInstance.Operand
+        match operand.Type with 
+          | C.Ptr _ 
+          | C.Type.ObjectT
+          | C.Type.Claim -> ()
+          | t -> helper.Error (operand.Token, 9748, "Cannot apply '\\is' to argument of type '" + operand.Type.ToString() + "'")
         // set also the type in ExprCommon so we prevent pruning of the type
         let typeExpr = C.Expr.UserData({C.ExprCommon.Bogus with Type = typeToCheck}, typeToCheck ) 
-        exprRes <- C.Expr.Macro(ec, "\\is", [this.DoIExpression checkIfInstance.Operand; typeExpr ])
+        exprRes <- C.Expr.Macro(ec, "\\is", [operand; typeExpr ])
 
       member this.Visit (constant:ICompileTimeConstant) : unit =
 
@@ -2004,7 +2018,7 @@ namespace Microsoft.Research.Vcc
               match args with
                 | [_; C.Expr.Call(_, _, _, [C.Expr.Cast(_,_,e)])] ->
                   match e.Type with
-                    | C.Ptr(C.Ptr(_)) -> helper.Warning(e.Common.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended", None)
+                    | C.Ptr(C.Ptr(_)) -> helper.Warning(e.Common.Token, 9107, "'is' applied to a pointer type; this is probably not what you intended", None) // TODO update to new syntax, \is
                     | _ -> ()
                 | _ -> ()
             let mtc, tArgs =

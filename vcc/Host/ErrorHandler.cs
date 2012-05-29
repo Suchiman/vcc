@@ -47,7 +47,7 @@ namespace Microsoft.Research.Vcc
         if (this.DebugOnWarningOrError) System.Diagnostics.Debugger.Launch();
         bool isError = !error.IsWarning || WarningsAsErrors;
         if (!isError && GetWarningLevel(error.Code) > WarningLevel) continue;
-        if (isError) VccCommandLineHost.ErrorCount++;
+        if (isError) VccCommandLineHost.IncreaseErrorCount();
         CompositeSourceDocument/*?*/ compositeDocument = sourceLocation.SourceDocument as CompositeSourceDocument;
         if (compositeDocument != null) {
           foreach (ISourceLocation sl in compositeDocument.GetFragmentLocationsFor(sourceLocation)) {
@@ -304,7 +304,7 @@ namespace Microsoft.Research.Vcc
 
     public void ReportOutcomeMethodSummary(string methodName, IToken tok, VC.ConditionGeneration.Outcome outcome, string addInfo, double startTime, IEnumerable<string> proverWarnings)
     {
-      if (outcome != VC.ConditionGeneration.Outcome.Correct) VccCommandLineHost.ErrorCount++;
+      if (outcome != VC.ConditionGeneration.Outcome.Correct) VccCommandLineHost.IncreaseErrorCount();
       Logger.Instance.LogMethodSummary(methodName, tok.ToLocation(), (Outcome)(int)outcome, addInfo, GetTime() - startTime);
 
       if (!commandLineOptions.RunTestSuite) {

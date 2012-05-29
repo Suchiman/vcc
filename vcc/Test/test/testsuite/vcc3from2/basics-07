@@ -1,9 +1,0 @@
-#include <vcc.h>
-
-void bar(unsigned i) {
-   _(ghost bool map[unsigned]) 
-   _(ghost map = (\lambda unsigned j; (i==j || map[j])))
-}
-`
-Verification of bar succeeded.
-`

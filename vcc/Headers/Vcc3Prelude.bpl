@@ -28,6 +28,7 @@ type $struct;
 
 // used for constants describing position in the source code (debugging/model printing only)
 type $token;
+const $state_zero : $state; // for record/map initialization
 
 type $state;
 
@@ -218,6 +219,10 @@ axiom (forall p:$ptr, t:$ctype ::
   {$addr($phys_ptr_cast(p, t))}
   // {$addr(p), $phys_ptr_cast(p, t)}
   $addr($phys_ptr_cast(p, t)) == $addr(p));
+
+axiom (forall p:$ptr, t0:$ctype, t1:$ctype ::
+  {$phys_ptr_cast($phys_ptr_cast(p, t0), t1)}
+  $phys_ptr_cast($phys_ptr_cast(p, t0), t1) == $phys_ptr_cast(p, t1));
 
 function $addr0(p:$ptr) : int
   { $unchk_add_ptr($base(p), $field_offset($field(p))) }
@@ -1667,10 +1672,17 @@ procedure $wrap(o:$ptr, T:$ctype);
 ///////
 
 function $take_over(S:$state, l:$ptr, o:$ptr) : $state;
+function $start_release(S0:$state, S:$state) : $state;
 function $release(S0:$state, S:$state, #l:$ptr, #p:$ptr) : $state;
 
 axiom (forall S:$state, l:$ptr, p:$ptr :: {$take_over(S, l, p)}
   $f_owner($take_over(S, l, p)) == $f_owner(S)[p := l]);
+
+axiom (forall S0,S:$state :: {$start_release(S0, S)}
+  $f_owner($start_release(S0, S)) == $f_owner(S) &&
+  $f_timestamp($start_release(S0, S)) == $f_timestamp(S) &&
+  $current_timestamp($start_release(S0, S)) > $current_timestamp(S)
+  );
 
 axiom (forall S0,S:$state, l:$ptr, p:$ptr :: {$release(S0, S, l, p)}
   $f_owner($release(S0, S, l, p)) == $f_owner(S)[p := $me()] &&
@@ -1687,6 +1699,7 @@ procedure $static_unwrap(o:$ptr, S:$state);
 
   ensures $is_unwrapped(old($s), $s, o);
   ensures $f_owner($s) == $f_owner(S);
+  ensures $current_timestamp($s) == $current_timestamp(S);
   ensures $f_timestamp($s) == $f_timestamp(S)[o := $current_timestamp($s)];
 
 
@@ -2189,7 +2202,8 @@ axiom (forall p:$ptr, S1:$state, S2:$state, q:$ptr ::
 
 function $in_claim_domain(p:$ptr, c:$ptr) : bool;
 axiom (forall p:$ptr, c:$ptr :: {$in_claim_domain(p, c)}
-  (forall s:$state :: {$dont_instantiate_state(s)} $valid_claim(s, c) ==> $closed(s, p)) ==>
+  ((forall s:$state, q:$ptr :: {$closed(s, q)} $invok_state(s) && $closed(s, q) ==> $inv2_without_lemmas(s, s, q, $typ(q))) ==>
+   (forall s:$state :: {$dont_instantiate_state(s)} $valid_claim(s, c) ==> $closed(s, p))) ==>
     $in_claim_domain(p, c));
 
 function $by_claim(S:$state, c:$ptr, obj:$ptr, ptr:$ptr) : $ptr
@@ -3285,9 +3299,11 @@ procedure $split_blob(p:$ptr, off:int);
 
   ensures $mutable_root($s, $blob(p, off));
   ensures $owns($s, $blob(p, off)) == $set_empty();
+  ensures $in_range_phys_ptr($address_root($addr(p) + off, $blob_type($sizeof_object(p) - off)));
   ensures $mutable_root($s, $address_root($addr(p) + off, $blob_type($sizeof_object(p) - off)));
   ensures $owns($s, $address_root($addr(p) + off, $blob_type($sizeof_object(p) - off))) == $set_empty();
   ensures $modifies(old($s), $s, $set_singleton(p));
+  ensures $timestamp_post_strict(old($s), $s);
 
 procedure $join_blobs(a:$ptr, b:$ptr);
   // writes a, b

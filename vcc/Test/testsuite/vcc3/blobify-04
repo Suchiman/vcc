@@ -4,7 +4,7 @@ typedef unsigned char UINT8;
 typedef unsigned short UINT16;
 
 void foo(UINT8* buffer, UINT8 size)
-    _(writes \array_range(buffer, size))
+  _(writes \array_range(buffer, size))
 {
 }
 
@@ -14,7 +14,6 @@ void bar()
   UINT8 *ptr;
   UINT16 *buf2;
 
-
   _(blobify _(UINT16[2])buf)
   ptr = _(unblobify) _(root_array 4)(UINT8*)buf;
 
@@ -22,8 +21,6 @@ void bar()
 
   _(blobify \embedding(ptr))
   _(unblobify) _(UINT16[2])buf;
-
-
 }
 `
 Verification of foo succeeded.

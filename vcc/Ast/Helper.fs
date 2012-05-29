@@ -49,7 +49,7 @@ namespace Microsoft.Research.Vcc
       // 9100 <= code <= 9199; First available: 9128
       abstract member Warning : Token * int * string * Token option -> unit
 
-      // 9601 <= code <= 9799; First available: 9746
+      // 9601 <= code <= 9799; First available: 9751
       // For C++-related messages: 9801 <= code <= 9899; First available: 9804
       member this.Error(token, code, msg) = this.Error(token, code, msg, None)
 

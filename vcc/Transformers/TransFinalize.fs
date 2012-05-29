@@ -174,8 +174,8 @@ namespace Microsoft.Research.Vcc
           | BoolOp (_, "&&", e1, e2) as e when top -> self e1; self e2; false
           | Macro (_, "keeps", _) as e ->
             if not top then 
-              helper.Warning (e.Token, 9110, "keeps(...) (or set_in(..., owns(this))) is not allowed here; " +
-                                             "annotate the type '" + td.Name + "' with vcc(dynamic_owns)")
+              helper.Warning (e.Token, 9110, "\\mine(...) (or ... \\in \\owns(\\this)) is not allowed here; " +
+                                             "annotate the type '" + td.Name + "' with _(dynamic_owns)")
             true
           // 9111 for | Macro (_, "_vcc_set_in", _) as e ?
           | e when top ->
@@ -196,7 +196,7 @@ namespace Microsoft.Research.Vcc
         | CallMacro(_, "_vcc_owns", _, [_; expr]) as owns -> 
           match expr.Type with
             | Ptr(Type.Ref(td)) when staticOwns td ->
-              helper.Error(owns.Token, 9662, "Explicit reference to owns-set of type '" + td.Name + "', which is static. Use keeps(...) or mark '" + td.Name + "' with vcc(dynamic_owns).")
+              helper.Error(owns.Token, 9662, "Explicit reference to owns-set of type '" + td.Name + "', which is static. Use \\mine(...) or mark '" + td.Name + "' with _(dynamic_owns).")
               true
             | _ -> true
         | _ -> true
@@ -368,7 +368,7 @@ namespace Microsoft.Research.Vcc
     
       let reportErrorForOld self = function
         | Expr.Old(ec, Expr.Macro(_, "prestate", []), expr) ->
-          helper.Error(ec.Token, 9697, "old(...) is allowed only in two-state contexts")
+          helper.Error(ec.Token, 9697, "\\old(...) is allowed only in two-state contexts")
           false
         | CallMacro(ec, n, _, args) ->
           match helper.PureCallSignature n with
@@ -441,7 +441,7 @@ namespace Microsoft.Research.Vcc
       let errorForWhenClaimedOutsideOfClaim' _ = function
         | Macro(_, ("claim" | "_vcc_claims" | "upgrade_claim"), body) -> false
         | CallMacro(ec, "_vcc_when_claimed", _, _) ->
-          helper.Error(ec.Token, 9708, "'when_claimed' cannot be used outside of a claim.")
+          helper.Error(ec.Token, 9708, "'\\when_claimed' cannot be used outside of a claim.")
           false
         | _ -> true
 
@@ -460,12 +460,12 @@ namespace Microsoft.Research.Vcc
       let rec checkPolarity seenFunctions polarity  _ = function
         | CallMacro(ec, ("_vcc_inv"|"_vcc_inv2"), _, _) ->
           if (polarity <= 0) then
-            helper.Error(ec.Token, 9712, "Use of 'inv(...)' or 'inv2(...)' with " + polarityStatus polarity + " polarity.")
+            helper.Error(ec.Token, 9712, "Use of '\\inv(...)' or '\\inv2(...)' with " + polarityStatus polarity + " polarity.")
           true
         | Call(ec, fn, _, args) -> 
           checkPolarities seenFunctions 0 args
           if Set.contains fn.UniqueId seenFunctions then
-            helper.Error(ec.Token, 9712, "Encountered cyclic dependency for function '" + fn.Name + "' when checking for legal use of inv(...) or inv2(...)")
+            helper.Error(ec.Token, 9712, "Encountered cyclic dependency for function '" + fn.Name + "' when checking for legal use of \\inv(...) or \\inv2(...)")
           else checkPolarities (Set.add fn.UniqueId seenFunctions) polarity fn.Ensures
           false
         | _ when polarity = 0 -> true // stick on unknown
@@ -553,13 +553,13 @@ namespace Microsoft.Research.Vcc
     let rec errorWhenJumpingFromAtomic inAtomic _= function
       | Atomic(_, _, body) -> body.SelfMap(errorWhenJumpingFromAtomic true) |> ignore; None
       | Return(ec, _) when inAtomic ->
-        helper.Error(ec.Token, 9742, "returning from within atomic(...) is not allowed")
+        helper.Error(ec.Token, 9742, "returning from within _(atomic ...) is not allowed")
         None
       | Goto(ec, _) when inAtomic ->
-        helper.Error(ec.Token, 9742, "goto from within atomic(...) is not allowed")
+        helper.Error(ec.Token, 9742, "goto from within _(atomic ...) is not allowed")
         None
       | Label(ec, _) when inAtomic ->
-        helper.Error(ec.Token, 9742, "label withing atomic(...) is not allowed")
+        helper.Error(ec.Token, 9742, "label withing _(atomic ...) is not allowed")
         None
       | _ -> None
 
@@ -594,6 +594,54 @@ namespace Microsoft.Research.Vcc
 
     // ============================================================================================================
 
+    let errorForResultWhenThereIsNone decls = 
+
+      let reportErrorForResult = 
+        let reportErrorForResult' _ = function
+          | Result(ec) -> helper.Error(ec.Token, 9746, "Cannot use '\\result' in this context."); false
+          | _ -> true
+
+        List.iter (fun (expr:Expr) -> expr.SelfVisit(reportErrorForResult')) 
+
+      for d in decls do
+        match d with
+          | Top.FunctionDecl(fn) -> 
+            reportErrorForResult fn.Requires            
+            reportErrorForResult fn.Reads
+            reportErrorForResult fn.Writes
+            reportErrorForResult fn.Variants
+            if fn.RetType = Type.Void then reportErrorForResult fn.Ensures            
+          | _ -> ()
+      decls
+                  
+    // ============================================================================================================
+
+    let errorForMe decls =
+
+      let errorForMeInInvariant _ = function
+        | Macro(ec, "_vcc_me", []) ->
+          helper.Error(ec.Token, 9749, "Cannot refer to '\me' in invariant", None)
+          false
+        | _ -> true
+
+      let errorForAddressOfMe _ = function
+        | Macro(ec, "&", [Macro(_, "_vcc_me", [])]) ->
+          helper.Error(ec.Token, 9750, "Cannot take address of '\me'", None)
+          false
+        | _ -> true
+
+      decls |> deepVisitExpressions errorForAddressOfMe
+
+      for d in decls do
+        match d with
+          | Top.TypeDecl(td) ->
+            td.Invariants |> List.iter (fun (e:Expr) -> e.SelfVisit(errorForMeInInvariant))
+          | _ -> ()
+
+      decls
+
+    // ============================================================================================================
+
     helper.AddTransformer ("final-begin", TransHelper.DoNothing)
     
     helper.AddTransformer ("final-range-assumptions", TransHelper.Decl addRangeAssumptions)
@@ -604,8 +652,10 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("final-linearize", TransHelper.Decl (ToCoreC.linearizeDecls helper))
     helper.AddTransformer ("final-keeps-warning", TransHelper.Decl (List.map theKeepsWarning))
     helper.AddTransformer ("final-dynamic-owns", TransHelper.Decl errorForMissingDynamicOwns)
+    helper.AddTransformer ("final-error-result", TransHelper.Decl errorForResultWhenThereIsNone)
     helper.AddTransformer ("final-error-old", TransHelper.Decl errorForOldInOneStateContext)
     helper.AddTransformer ("final-error-pure", TransHelper.Decl errorForStateWriteInPureContext)
+    helper.AddTransformer ("final-error-me", TransHelper.Decl errorForMe)
     helper.AddTransformer ("final-error-when-claimed", TransHelper.Decl errorForWhenClaimedOutsideOfClaim)
     helper.AddTransformer ("final-error-arithmetic-in-trigger", TransHelper.Expr checkTriggerOps)
     helper.AddTransformer ("final-error-jump-from-atomic", TransHelper.Expr (errorWhenJumpingFromAtomic false))

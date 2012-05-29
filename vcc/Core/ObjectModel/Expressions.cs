@@ -3200,7 +3200,7 @@ namespace Microsoft.Research.Vcc {
       if (((VccCompilationHelper)this.Helper).CurrentlyResolvingOperator) return false;
       if (targetType.IsEnum) targetType = targetType.UnderlyingType.ResolvedType;
       if (TypeHelper.IsPrimitiveInteger(this.Type.ResolvedType) && TypeHelper.IsPrimitiveInteger(targetType)) {
-        return VccQualifiedName.IntegerConversionIsLosslessForBitField(this.Resolve(true) as Microsoft.Cci.Ast.FieldDefinition, targetType);
+        return VccQualifiedName.IntegerConversionIsLosslessForField(this.Resolve(true) as Microsoft.Cci.Ast.FieldDefinition, targetType);
       }
       return false;
     }
@@ -3232,6 +3232,19 @@ namespace Microsoft.Research.Vcc {
           }
         }
       }
+
+      IPointerTypeReference/*?*/ pointerQualifyingType = qualifyingType as IPointerTypeReference;
+      if (pointerQualifyingType != null)
+      {
+        ITypeDefinition type = pointerQualifyingType.TargetType.ResolvedType;
+        foreach (ITypeDefinitionMember member in type.Members)
+        {
+          INestedTypeDefinition nestedType = member as INestedTypeDefinition;
+          IFieldDefinition field = member as IFieldDefinition;
+          if (field != null && VccPointerScopedName.TypeIsNamedMember(field.Type.ResolvedType, this.SimpleName)) return field;
+        }
+      }
+
       return base.ResolveTypeMember(qualifyingType, ignoreAccessibility);
     }
   }
@@ -3274,7 +3287,7 @@ namespace Microsoft.Research.Vcc {
         INestedTypeDefinition nestedType = member as INestedTypeDefinition;
         if (nestedType != null && TypeIsMarkedAsGroup(nestedType.ResolvedType, this.SimpleName)) return nestedType;
         IFieldDefinition field = member as IFieldDefinition;
-        if (field != null && this.TypeIsNamedMember(field.Type.ResolvedType)) return field;
+        if (field != null && TypeIsNamedMember(field.Type.ResolvedType, this.SimpleName)) return field;
       }
       return null;
     }
@@ -3294,14 +3307,14 @@ namespace Microsoft.Research.Vcc {
       return false;
     }
 
-    bool TypeIsNamedMember(ITypeDefinition type) {
+    static internal bool TypeIsNamedMember(ITypeDefinition type, SimpleName name) {
       foreach (ICustomAttribute attr in type.Attributes) {
         if (TypeHelper.GetTypeName(attr.Type) == NamespaceHelper.SystemDiagnosticsContractsCodeContractString + ".StringVccAttr") {
           List<IMetadataExpression> args = new List<IMetadataExpression>(attr.Arguments);
           if (args.Count == 2) {
             IMetadataConstant attrStr = args[0] as IMetadataConstant;
-            IMetadataConstant name = args[1] as IMetadataConstant;
-            if (name != null && (string)attrStr.Value == "member_name" && this.NameTable.GetNameFor((string)name.Value) == this.SimpleName.Name)
+            IMetadataConstant memberName = args[1] as IMetadataConstant;
+            if (memberName != null && (string)attrStr.Value == "member_name" && ((string)memberName.Value) == name.Name.Value)
               return true;
           }
         }
@@ -3451,7 +3464,7 @@ namespace Microsoft.Research.Vcc {
 #pragma warning restore 168
       VccNamedTypeExpression namedType = this.ElementType as VccNamedTypeExpression;
       if (namedType != null && namedType.DidSilentlyResolveToVoid) {
-        // turn forward-declated pointers into obj_t
+        // turn forward-declared pointers into obj_t
         Expression typePtrRef = NamespaceHelper.CreateInSystemDiagnosticsContractsCodeContractExpr(this.Compilation.NameTable, "TypedPtr");
         typePtrRef.SetContainingExpression(this);
         return new VccNamedTypeExpression(typePtrRef).Resolve(0);
@@ -3732,12 +3745,38 @@ namespace Microsoft.Research.Vcc {
       return result;
     }
 
-    internal static bool IntegerConversionIsLosslessForBitField(Microsoft.Cci.Ast.FieldDefinition field, ITypeDefinition targetType) {
-      if (field != null && field.IsBitField) {
-        var exprSigned = TypeHelper.IsSignedPrimitiveInteger(field.Type.ResolvedType);
+    protected override ITypeDefinitionMember ResolveTypeMember(ITypeDefinition qualifyingType, bool ignoreAccessibility)
+    {
+      // when using the new syntax, \owns, \owner, etc. are defined as fields;
+      // these are supplied via a magic struct \TypeState in vccp.h
+      var typeStateFields = ((VccCompilation)this.Compilation).TypeStateFields;
+      if (typeStateFields != null) {
+        var typeContract = this.Compilation.ContractProvider.GetTypeContractFor(typeStateFields);
+        if (typeContract != null) {
+          foreach (var field in typeContract.ContractFields) {
+            if (field.Name.UniqueKey == this.SimpleName.Name.UniqueKey)
+              return field;
+          }
+        }
+      }
+
+      foreach (ITypeDefinitionMember member in qualifyingType.Members)
+      {
+        INestedTypeDefinition nestedType = member as INestedTypeDefinition;
+        IFieldDefinition field = member as IFieldDefinition;
+        if (field != null && VccPointerScopedName.TypeIsNamedMember(field.Type.ResolvedType, this.SimpleName)) return field;
+      }
+
+      return base.ResolveTypeMember(qualifyingType, ignoreAccessibility);
+    }
+
+    internal static bool IntegerConversionIsLosslessForField(Microsoft.Cci.Ast.FieldDefinition field, ITypeDefinition targetType) {
+      if (field != null) {
+        var fieldType = field.Type.ResolvedType;
+        var exprSigned = TypeHelper.IsSignedPrimitiveInteger(fieldType);
         var tgtSigned = TypeHelper.IsSignedPrimitiveInteger(targetType);
         var tgtSize = TypeHelper.SizeOfType(targetType) * 8;
-        var exprSize = field.BitLength;
+        var exprSize = field.IsBitField ? field.BitLength : TypeHelper.SizeOfType(fieldType) * 8;
         if (exprSigned == tgtSigned && exprSize <= tgtSize) return true;
         if (tgtSigned && exprSize < tgtSize) return true;
       }
@@ -3748,7 +3787,7 @@ namespace Microsoft.Research.Vcc {
       if (((VccCompilationHelper)this.Helper).CurrentlyResolvingOperator) return false;
       if (targetType.IsEnum) targetType = targetType.UnderlyingType.ResolvedType;
       if (TypeHelper.IsPrimitiveInteger(this.Type.ResolvedType) && TypeHelper.IsPrimitiveInteger(targetType)) {
-        return IntegerConversionIsLosslessForBitField(this.Resolve(true) as Microsoft.Cci.Ast.FieldDefinition, targetType);
+        return IntegerConversionIsLosslessForField(this.Resolve(true) as Microsoft.Cci.Ast.FieldDefinition, targetType);
       }
       return false;
     }
@@ -4953,6 +4992,162 @@ namespace Microsoft.Research.Vcc {
     {
       if (containingBlock == this.ContainingBlock) return this;
       return new VccTypeExpressionOf(containingBlock, this);
+    }
+  }
+
+  public class VccPostfixIncrement : PostfixIncrement
+  {
+    public VccPostfixIncrement(TargetExpression target, ISourceLocation sourceLocation)
+      : base(target, sourceLocation)
+    { }
+
+    protected VccPostfixIncrement(BlockStatement containingBlock, VccPostfixIncrement template)
+      : base(containingBlock, template)
+    {
+    }
+
+    protected override IEnumerable<IMethodDefinition> StandardOperators
+    {
+      get
+      {
+        BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
+        yield return dummyMethods.OpInt8;
+        yield return dummyMethods.OpUInt8;
+        yield return dummyMethods.OpInt16;
+        yield return dummyMethods.OpUInt16;
+        yield return dummyMethods.OpInt32;
+        yield return dummyMethods.OpUInt32;
+        yield return dummyMethods.OpInt64;
+        yield return dummyMethods.OpUInt64;
+        yield return dummyMethods.OpFloat32;
+        yield return dummyMethods.OpFloat64;
+        yield return dummyMethods.OpDecimal;
+        ITypeDefinition operandType = this.Operand.Type;
+        if (this.Helper.IsPointerType(operandType))
+          yield return dummyMethods.GetDummyOp(operandType, operandType);
+      }
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock)
+    {
+      return new VccPostfixIncrement(containingBlock, this);
+    }
+  }
+
+  public class VccPostfixDecrement : PostfixDecrement
+  {
+    public VccPostfixDecrement(TargetExpression target, ISourceLocation sourceLocation)
+      : base(target, sourceLocation)
+    { }
+
+    protected VccPostfixDecrement(BlockStatement containingBlock, VccPostfixDecrement template)
+      : base(containingBlock, template)
+    {
+    }
+
+    protected override IEnumerable<IMethodDefinition> StandardOperators
+    {
+      get
+      {
+        BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
+        yield return dummyMethods.OpInt8;
+        yield return dummyMethods.OpUInt8;
+        yield return dummyMethods.OpInt16;
+        yield return dummyMethods.OpUInt16;
+        yield return dummyMethods.OpInt32;
+        yield return dummyMethods.OpUInt32;
+        yield return dummyMethods.OpInt64;
+        yield return dummyMethods.OpUInt64;
+        yield return dummyMethods.OpFloat32;
+        yield return dummyMethods.OpFloat64;
+        yield return dummyMethods.OpDecimal;
+        ITypeDefinition operandType = this.Operand.Type;
+        if (this.Helper.IsPointerType(operandType))
+          yield return dummyMethods.GetDummyOp(operandType, operandType);
+      }
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock)
+    {
+      return new VccPostfixDecrement(containingBlock, this);
+    }
+  }
+
+  public class VccPrefixIncrement : PrefixIncrement
+  {
+    public VccPrefixIncrement(TargetExpression target, ISourceLocation sourceLocation)
+      : base(target, sourceLocation)
+    { }
+
+    protected VccPrefixIncrement(BlockStatement containingBlock, VccPrefixIncrement template)
+      : base(containingBlock, template)
+    {
+    }
+
+    protected override IEnumerable<IMethodDefinition> StandardOperators
+    {
+      get
+      {
+        BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
+        yield return dummyMethods.OpInt8;
+        yield return dummyMethods.OpUInt8;
+        yield return dummyMethods.OpInt16;
+        yield return dummyMethods.OpUInt16;
+        yield return dummyMethods.OpInt32;
+        yield return dummyMethods.OpUInt32;
+        yield return dummyMethods.OpInt64;
+        yield return dummyMethods.OpUInt64;
+        yield return dummyMethods.OpFloat32;
+        yield return dummyMethods.OpFloat64;
+        yield return dummyMethods.OpDecimal;
+        ITypeDefinition operandType = this.Operand.Type;
+        if (this.Helper.IsPointerType(operandType))
+          yield return dummyMethods.GetDummyOp(operandType, operandType);
+      }
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock)
+    {
+      return new VccPrefixIncrement(containingBlock, this);
+    }
+  }
+
+  public class VccPrefixDecrement : PrefixDecrement
+  {
+    public VccPrefixDecrement(TargetExpression target, ISourceLocation sourceLocation)
+      : base(target, sourceLocation)
+    { }
+
+    protected VccPrefixDecrement(BlockStatement containingBlock, VccPrefixDecrement template)
+      : base(containingBlock, template)
+    {
+    }
+
+    protected override IEnumerable<IMethodDefinition> StandardOperators
+    {
+      get
+      {
+        BuiltinMethods dummyMethods = this.Compilation.BuiltinMethods;
+        yield return dummyMethods.OpInt8;
+        yield return dummyMethods.OpUInt8;
+        yield return dummyMethods.OpInt16;
+        yield return dummyMethods.OpUInt16;
+        yield return dummyMethods.OpInt32;
+        yield return dummyMethods.OpUInt32;
+        yield return dummyMethods.OpInt64;
+        yield return dummyMethods.OpUInt64;
+        yield return dummyMethods.OpFloat32;
+        yield return dummyMethods.OpFloat64;
+        yield return dummyMethods.OpDecimal;
+        ITypeDefinition operandType = this.Operand.Type;
+        if (this.Helper.IsPointerType(operandType))
+          yield return dummyMethods.GetDummyOp(operandType, operandType);
+      }
+    }
+
+    public override Expression MakeCopyFor(BlockStatement containingBlock)
+    {
+      return new VccPrefixDecrement(containingBlock, this);
     }
   }
 }

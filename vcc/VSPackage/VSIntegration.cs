@@ -66,6 +66,7 @@
         internal static void WriteToPane(string message)
         {
             VerificationOutputpane.OutputStringThreadSafe(message + "\n");
+      VerificationOutputpane.FlushToTaskList();
         }
 
         #endregion

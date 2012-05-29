@@ -6,7 +6,7 @@ _(volatile_owns)
 struct X {
 
   struct T t;
-  _(ghost volatile bool f)
+  _(ghost volatile \bool f)
   _(invariant f || \mine(&t))
 };
 

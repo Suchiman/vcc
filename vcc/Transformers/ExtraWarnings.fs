@@ -239,7 +239,7 @@ namespace Microsoft.Research.Vcc
 
       let doWarn self = function
         | Expr.Old(_, Macro (_, "prestate", []), e) as expr when not (mentionsVolatile e) ->
-          helper.Warning(expr.Token, 9115, "'old' in invariant does not refer to volatile state")
+          helper.Warning(expr.Token, 9115, "'\\old' in invariant does not refer to volatile state")
           true
         | _ -> true
       
@@ -247,10 +247,21 @@ namespace Microsoft.Research.Vcc
           
       decls
 
-  // ============================================================================================================          
+    // ============================================================================================================          
+
+    let warnForWritesOnPureFunctions =
+      let doDecl = function
+        | Top.FunctionDecl(fn) as decl when fn.IsPure && fn.Writes <> [] ->
+          helper.Error (fn.Token, 9623, "writes specified on a pure function", None)
+          decl
+        | decl -> decl
+      List.map doDecl
+
+    // ============================================================================================================
 
     helper.AddTransformer ("warn-begin", TransHelper.DoNothing)
     helper.AddTransformer ("warn-two-state-inv-without-volatile", TransHelper.Decl warnForOldWithoutVolatiles)
     helper.AddTransformer ("warn-unchecked-ghost-loops", TransHelper.Decl warnForUncheckedGhostLoops)
+    helper.AddTransformer ("warn-writes-on-pure-functions", TransHelper.Decl warnForWritesOnPureFunctions)
     helper.AddTransformer ("warn-end", TransHelper.DoNothing)
 

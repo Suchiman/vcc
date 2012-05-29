@@ -106,7 +106,7 @@ namespace Microsoft.Research.Vcc
   let mkFieldRef (f:Field) = Macro ({ bogusEC with Type = Type.FieldT }, "field",  [Expr.UserData(bogusEC, f)]) 
   
   let typeExpr t =
-    let c = { ExprCommon.Bogus with Type = PhysPtr t } // ptr kind does not matter here because it will ve stripped of again later
+    let c = { ExprCommon.Bogus with Type = PhysPtr t } // ptr kind does not matter here because it will be stripped of again later
     Expr.Macro ({ ExprCommon.Bogus with Type = Type.Math "\\type" }, "_vcc_typeof", [Expr.Cast (c, Processed, mkInt 0)])
       
   let boolOp op (a:Expr) b =
@@ -309,7 +309,7 @@ namespace Microsoft.Research.Vcc
   // Warning: this function gets rid of multiplication so possible overflow check is gone
   // This usually is OK in spec context.
   let extractArraySize (helper:TransHelper.TransEnv) (expr:Expr) (elementType:Type) (byteCount:Expr) =
-    let typeSz =new bigint(elementType.SizeOf)
+    let typeSz = new bigint(elementType.SizeOf)
     let byteCount =
       match byteCount with
         | Cast (_, _, e) -> e

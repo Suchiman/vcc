@@ -190,6 +190,7 @@ namespace Microsoft.Research.Vcc
                   "unwrap_post_claimable",  "..pp";
                   "wrap_post",              "..pp";
                   "take_over",              ".pp";
+                  "start_release",          "..";
                   "release",                "..pp";
                   "expect_unreachable",     "";
                   "possibly_unreachable",   "";

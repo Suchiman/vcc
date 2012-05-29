@@ -2887,13 +2887,13 @@ namespace Microsoft.Research.Vcc.Parsing {
       //^ operatorToken == Token.Multiply || operatorToken == Token.Plus || operatorToken == Token.Subtract || operatorToken == Token.SubtractOne;
     {
       switch (operatorToken) {
-        case Token.AddOne: return new PrefixIncrement(new TargetExpression(operand), slb);
+        case Token.AddOne: return new VccPrefixIncrement(new TargetExpression(operand), slb);
         case Token.BitwiseNot: return new OnesComplement(operand, slb);
         case Token.LogicalNot: return new LogicalNot(operand, slb);
         case Token.Multiply: return new VccAddressDereference(operand, slb);
         case Token.Plus: return new UnaryPlus(operand, slb);
         case Token.Subtract: return new UnaryNegation(operand, slb);
-        case Token.SubtractOne: return new PrefixDecrement(new TargetExpression(operand), slb);
+        case Token.SubtractOne: return new VccPrefixDecrement(new TargetExpression(operand), slb);
         case Token.BitwiseAnd: 
           VccPointerScopedName pointerScopedName = operand as VccPointerScopedName;
           if (pointerScopedName != null)
@@ -2951,13 +2951,13 @@ namespace Microsoft.Research.Vcc.Parsing {
             SourceLocationBuilder slb = new SourceLocationBuilder(expression.SourceLocation);
             slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
             this.GetNextToken();
-            expression = new PostfixIncrement(new TargetExpression(expression), slb);
+            expression = new VccPostfixIncrement(new TargetExpression(expression), slb);
             break;
           case Token.SubtractOne:
             slb = new SourceLocationBuilder(expression.SourceLocation);
             slb.UpdateToSpan(this.scanner.SourceLocationOfLastScannedToken);
             this.GetNextToken();
-            expression = new PostfixDecrement(new TargetExpression(expression), slb);
+            expression = new VccPostfixDecrement(new TargetExpression(expression), slb);
             break;
           case Token.LessThan:
             Expression exp = this.ParseTypeArgumentList(expression, followers);
@@ -2990,7 +2990,7 @@ namespace Microsoft.Research.Vcc.Parsing {
           SimpleName name = this.ParseSimpleName(followers|Token.Dot);
           if (name.Name.Value == "__this")
             expression = new VccThisReference(name.SourceLocation);
-          else if (this.resultIsAKeyword && name.Name.UniqueKey == this.compilation.NameTable.Result.UniqueKey)
+          else if (this.resultIsAKeyword && name.Name.Value == "\\result")
             expression = new VccReturnValue(name.SourceLocation);
           else
             expression = name;

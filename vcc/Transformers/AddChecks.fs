@@ -190,7 +190,7 @@ namespace Microsoft.Research.Vcc
                 Some (Some prestate, Some curstate1, curstate2, pre @ save @ save1 @ changeOwner,
                   None, dyns @ [this], stas, post @ check)
               | t -> 
-                helper.Error (tok, 9621, "call to wrap(...) with an improper type: " + t.ToString(), None)
+                helper.Error (tok, 9621, "call to _(wrap ...) with an improper type: " + t.ToString(), None)
                 None
 
       let unwrapExpr expr callComm this = function
@@ -218,6 +218,7 @@ namespace Microsoft.Research.Vcc
             let initOwns, tmpowns = genTmpOwns()
             let assumeOwns = Expr.MkAssume (mkEq (mkRef tmpowns) (Macro ({ bogusEC with Type = Type.PtrSet }, "_vcc_owns", [this])))
             let (curstate, save1) = saveState "prestate" curstate
+            let startRelease = VarWrite (bogusEC, [curstate], pureEx (Macro (bogusState, "_vcc_start_release", [mkRef curstate; mkRef curstate])))
             let props = checkInvariant prestate (fun e -> not (isOnUnwrap e)) 0 "OOPS" this
             let now = Macro (bogusState, "_vcc_current_state", [])
             let updateFor obj =
@@ -227,7 +228,7 @@ namespace Microsoft.Research.Vcc
                Expr.MkAssume (pureEx (Macro (boolBogusEC(), "_vcc_typed", [obj])))]
             let addOwnees = extractKeeps updateFor props
             Some (Some prestate, Some curstate, initOwns @ all_save @ save @ save1,
-              pre @ [checkWrap; checkWr; assumeInv] @ addOwnees @ [assumeOwns],
+              pre @ [checkWrap; checkWr; startRelease; assumeInv] @ addOwnees @ [assumeOwns],
               Some curstate, dyns, stas @ [this], post @ check)
           | _ -> 
             match this.Type with
@@ -241,7 +242,7 @@ namespace Microsoft.Research.Vcc
                 Some (Some prestate, curstate, all_save @ save,
                   pre @ [checkWrap; assumeInv], None, dyns @ [this], stas, post @ check)
               | t -> 
-                helper.Error (tok, 9621, "call to unwrap(...) with an improper type: " + t.ToString(), None)
+                helper.Error (tok, 9621, "call to _(unwrap ...) with an improper type: " + t.ToString(), None)
                 None
             
       let makeBlock es =
@@ -333,13 +334,6 @@ namespace Microsoft.Research.Vcc
       | Macro (_, "spec", [body]) ->
         Some (body.SelfCtxMap (ctx.IsPure, addMemoryChecks true))
         
-      | Call (c, ({ Name = "_vcc_from_bytes"|"_vcc_to_bytes"} as fn), _, args) as call ->
-        let obj = args.Head
-        let w = Macro ({ obj.Common with Type = Type.PtrSet }, "_vcc_extent", [obj])
-        let prop = afmte 8510 "{1} is writable in call to {0}" [call; w]
-        Some (Expr.MkBlock [Expr.MkAssert (Expr.Macro (prop, "writes_check", [w])); 
-                            Macro (c, fn.Name, List.map self args)])
-      
       | Macro (c, (("_vcc_wrap_set"|"_vcc_unwrap_set") as name), args) ->
         let makeCheck n expr =
           let prop =
@@ -551,10 +545,10 @@ namespace Microsoft.Research.Vcc
       | Expr.Assert (_, Expr.Macro (_, "_vcc_bv_lemma", [e]), _) -> 
         let reportCheckedOpsInBvLemma' self = function 
           | Expr.Cast(ec, (Checked|Processed), _) ->
-            helper.Error (ec.Token, 9659, "casts in bv_lemma(...) need to be unchecked (expression: " + ec.Token.Value + ")", None)
+            helper.Error (ec.Token, 9659, "casts in _(assert {:bv} ...) need to be unchecked (expression: " + ec.Token.Value + ")", None)
             None
           | Expr.Prim (ec, Op (("+"|"-"|"*"|"/"|"%"), Checked), _) ->
-            helper.Error (ec.Token, 9659, "operators in bv_lemma(...) need to be unchecked (expression: " + ec.Token.Value + ")", None)
+            helper.Error (ec.Token, 9659, "operators in _(assert {:bv} ...) need to be unchecked (expression: " + ec.Token.Value + ")", None)
             None
           | _ -> None
         let _ = e.Map(false, reportCheckedOpsInBvLemma')

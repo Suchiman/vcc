@@ -1,6 +1,6 @@
 #include <vcc.h>
 
-_(abstract bool P(int q, int x))
+_(abstract \bool P(int q, int x))
 
 struct A {
   volatile int x;

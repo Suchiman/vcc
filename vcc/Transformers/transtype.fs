@@ -372,14 +372,17 @@ namespace Microsoft.Research.Vcc
             | _ -> false
             isValidType' true
           (tdIsRecord || not fld.IsSpec) && fld.Type.SizeOf = td.SizeOf && isValidType fld.Type
-        match List.tryFind (fun (fld:Field) -> hasCustomAttr AttrBackingMember fld.CustomAttr) (td.Fields) with
-        | Some fld ->
-           if isValidField fld then 
-             Some fld 
-           else 
-             helper.Error (fld.Token, 9633, "'" + fld.Name + "' cannot be used as a backing member for type '" + td.Name + "'", Some(td.Token))
-             None
-        | _ -> None
+        match List.filter (fun (fld:Field) -> hasCustomAttr AttrBackingMember fld.CustomAttr) (td.Fields) with
+          | [] -> None
+          | [fld] ->
+             if isValidField fld then 
+               Some fld 
+             else 
+               helper.Error (fld.Token, 9633, "'" + fld.Name + "' cannot be used as a backing member for type '" + td.Name + "'", Some(td.Token))
+               None
+          | fld0 :: fld1 :: _ ->
+            helper.Error (fld0.Token, 9747, "More than one field marked as backing_member", Some(fld1.Token))
+            None
     
       let backingField (fld : Field) =
         let rec getPrimitiveType = function

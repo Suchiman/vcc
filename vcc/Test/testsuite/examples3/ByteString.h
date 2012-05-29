@@ -23,13 +23,13 @@ typedef _(record) struct ByteString {
 } ByteString;
 )
 
-_(def bool valid(ByteString s)
+_(def \bool valid(ByteString s)
 {
     return s.length >= 0 && (\forall \integer i; (i < 0 || s.length <= i) ==> (s.bytes[i] == (BYTE) 0));
 }
 )
 
-_(logic bool nonempty(ByteString s) = valid(s) && s.length > 0)
+_(logic \bool nonempty(ByteString s) = valid(s) && s.length > 0)
 
 _(def ByteString empty()
 {
@@ -107,7 +107,7 @@ _(def ByteString from_array(BYTE a[], \integer size)
 }
 )
 
-_(def bool contains_byte_string(BYTE a[], ByteString s)
+_(def \bool contains_byte_string(BYTE a[], ByteString s)
     _(reads \universe())
     _(requires valid(s))
 {
