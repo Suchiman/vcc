@@ -35,7 +35,9 @@ namespace Microsoft.Research.Vcc
           Some e
         | _ -> None
  
+
   // ============================================================================================================          
+
   let rec doHandleComparison helper self = function
     | Expr.Prim (c, op, [Expr.Cast ({ Type = Integer _ }, _, a1); Expr.Cast ({ Type = Integer _ }, _, a2)]) 
       when op.IsEqOrIneq && a1.Type = Type.Bool && a2.Type = Type.Bool -> 
@@ -52,6 +54,9 @@ namespace Microsoft.Research.Vcc
       Some (self (Expr.MkDot (c, e, f)))
     | _ -> None
   
+
+  // ============================================================================================================          
+
   let doHandleConversions = 
     let rec doHandleConversions' inGroupInvariant self = function
       | Expr.Cast ({ Type = ObjectT}, _, e) -> 
@@ -59,7 +64,7 @@ namespace Microsoft.Research.Vcc
           | Ptr _ | ObjectT | Claim -> Some (self e)
           | _ -> None
       | Expr.Cast ({ Type = Ptr(t1) } as ec, cs, Expr.Cast ({ Type = (ObjectT | Ptr(Type.Ref(_) | Void)) }, _, e')) when t1 <> Void -> Some (self (Cast(ec, cs, e')))
-      | Expr.Cast ({ Type = t1 }, (Processed|Unchecked), Expr.Cast (_, (Processed|Unchecked), e')) when e'.Type = t1 -> Some (self e')
+      | Expr.Cast ({ Type = t1 }, (Processed|Unchecked), Expr.Cast ({ Type = t2 }, (Processed|Unchecked), e')) when t1.IsPtr && t2.IsPtr && e'.Type = t1 -> Some (self e')
       | Expr.Cast ({ Type = Bool }, _, Expr.Cast (_, _, e')) when e'.Type = Bool -> Some (self e')
       | Expr.Cast ({ Type = PtrSoP(_, isSpec) } as c, _, Expr.IntLiteral (_, ZeroBigInt)) -> 
         Some (self (Expr.Cast (c, Processed, Expr.Macro ({c with Type = Type.MkPtr(Void, isSpec)}, "null", []))))
@@ -240,7 +245,6 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
 
     let deepSplitConjunctions self = 
-      // TODO: support in new syntax
       let aux self = function
         | Quant (ec, q) ->
           let q = { q with Body = self q.Body }
@@ -268,6 +272,16 @@ namespace Microsoft.Research.Vcc
             | x :: xs -> 
               Some (List.fold mkAnd (mkQ x) (List.map mkQ xs))
         | CallMacro (_, "_vcc_split_conjunctions", [], [e]) -> Some(self e) // strip nested occurrences of split_conjunctions
+        | CallMacro(ec, ("_vcc_inv2"), [], [e]) ->
+          let stripLabelsAndSubstituteThis subst (expr : Expr) = 
+            let stripLabelsAndSubstituteThis' self = function
+              | Macro(_, "labeled_invariant", [_; inv]) -> Some(self inv)
+              | This(_) -> Some(subst)
+              | _ -> None
+            expr.SelfMap(stripLabelsAndSubstituteThis')
+          match e.Type with 
+            | Ptr(Type.Ref(td)) ->  Some(td.Invariants |> List.map (stripLabelsAndSubstituteThis e) |> List.fold mkAnd Expr.True)
+            | _ -> None
         | _ -> None
       function 
         | CallMacro (_, "_vcc_split_conjunctions", [], [e]) ->
@@ -765,51 +779,13 @@ namespace Microsoft.Research.Vcc
           | Block(_, stmts, _) -> recurse tgt stmts
           | _ -> tgt
         and recurse = List.fold foldBackFieldAssignments' 
-        recurse (Macro({ec with Type = Type.MathStruct}, "vs_zero",  []))
+        recurse (Macro(ec, "vs_zero",  []))
         
       function
         | Block(ec, stmts, _) when shouldHandle (ec.Type) ->
             match splitOfLast stmts with 
               | Ref(ec, v), stmts' -> Some(foldBackFieldAssignments ec v stmts')
               | _ -> None        
-        | _ -> None
-    
-    // ============================================================================================================
-    
-    let normalizeReinterpretation self = 
-      let asArray sz (obj:Expr) =
-        let msg () = "as_array((uint8_t*)" + obj.Token.Value + ", " + sz.ToString() + ")"
-        let bec = { forwardingToken obj.Token None msg with Type = PhysPtr Type.Byte } // TODO Ptr kind
-        Macro (bec, "_vcc_as_array", [Cast (bec, Unchecked, obj); sz])
-      let typeId (obj:Expr) =
-        Macro ({ obj.Common with Type = Type.Math "\\type" }, "_vcc_typeof", [obj])
-      function
-        | Call (c, ({ Name = "_vcc_from_bytes" } as fn), _, [CallMacro (_, "_vcc_as_array", [], [arg; sz]) as arr; preserveZero]) ->
-          let eltSz =
-            match arg.Type with
-              | Ptr t -> mkInt t.SizeOf
-              | _ ->
-                helper.Error (c.Token, 9684, "wrong type of object in from_bytes(as_array(...))", None)
-                mkInt 1
-          let sz = Prim (sz.Common, Op("*", Processed), [eltSz; sz])
-          Some (Stmt (c, Call (c, fn, [], [asArray sz arg; typeId arr; preserveZero])))
-        
-        | Call (c, ({ Name = "_vcc_from_bytes" } as fn), _, [obj; preserveZero]) ->
-          let sz =
-            match obj.Type with
-              | Ptr t ->
-                if not t.IsComposite then
-                  helper.Error (c.Token, 9700, "reinterpretation to a primitive type is not supported; please use a single-element array instead")
-                t.SizeOf
-              // Seems to be never reached
-              // | Array (_, _) as a -> a.SizeOf
-              | _ -> 
-                helper.Error (c.Token, 9684, "wrong type of object in from_bytes(...)", None)
-                1
-          Some (Stmt (c, Call (c, fn, [], [asArray (mkInt sz) obj; typeId obj; preserveZero])))
-        | CallMacro (c, "_vcc_from_bytes", _, _) ->
-          helper.Error (c.Token, 9685, "wrong number of arguments to from_bytes(...)", None)
-          None
         | _ -> None
     
     // ============================================================================================================
@@ -934,10 +910,10 @@ namespace Microsoft.Research.Vcc
 
       let expand = function
         | Top.FunctionDecl f ->
-          let (macros, reqs) = List.partition isMacroCall f.Requires
+          let (macros, ens) = List.partition isMacroCall f.Ensures
           let contr = collectExpansions macros
-          f.Requires <- reqs @ contr.Requires
-          f.Ensures <- f.Ensures @ contr.Ensures
+          f.Requires <- f.Requires @ contr.Requires
+          f.Ensures <- ens @ contr.Ensures
           f.Writes <- f.Writes @ contr.Writes
           f.Reads <- f.Reads @ contr.Reads
           f.Variants <- f.Variants @ contr.Decreases
@@ -945,10 +921,10 @@ namespace Microsoft.Research.Vcc
 
       let expandBlockContracts self = function
         | Block(ec, stmts, Some(contract)) ->
-          let (macros, reqs) = List.partition isMacroCall contract.Requires
+          let (macros, ens) = List.partition isMacroCall contract.Ensures
           let contr = collectExpansions macros
-          let contract' = { contract with Requires = reqs @ contr.Requires;
-                                          Ensures = contract.Ensures @ contr.Ensures;
+          let contract' = { contract with Requires = contract.Requires @ contr.Requires;
+                                          Ensures = ens @ contr.Ensures;
                                           Writes = contract.Writes @ contr.Writes;
                                           Reads = contract.Reads @ contr.Reads;
                                           Decreases = contract.Decreases @ contr.Decreases }
@@ -1368,7 +1344,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("split-assertions", TransHelper.Expr splitConjunctionsInAssertions)
     helper.AddTransformer ("norm-writes", TransHelper.Decl normalizeWrites)
     helper.AddTransformer ("norm-atomic-inline", TransHelper.Decl inlineAtomics)
-    helper.AddTransformer ("norm-reintp", TransHelper.Expr normalizeReinterpretation)
     helper.AddTransformer ("norm-on-unwrap", TransHelper.Decl normalizeOnUnwrap)
     helper.AddTransformer ("norm-strings", TransHelper.Decl desugarStringLiterals)
     helper.AddTransformer ("norm-end", TransHelper.DoNothing)

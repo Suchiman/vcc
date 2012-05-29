@@ -362,7 +362,7 @@ namespace Microsoft.Research.Vcc
         
       let warnForIneffectiveOld token expr =
         if not (bContains "$s" expr) then
-          helper.Warning (token, 9106, "'old', 'in_state', or 'when_claimed' in '" + token.Value + "' has no effect")
+          helper.Warning (token, 9106, "'\\old', '\\at', or '\\when_claimed' in '" + token.Value + "' has no effect")
 
       let claimStateId = ref 0
 
@@ -1533,7 +1533,7 @@ namespace Microsoft.Research.Vcc
                                   "_vcc_wrap_set"|"_vcc_unwrap_set"|
                                   "_vcc_unblobify_into") as name), args) -> 
               doCall c [] None name [] args
-            | C.Expr.Stmt (_, C.Expr.Macro (c, (("_vcc_unwrap"|"_vcc_wrap"|"_vcc_deep_unwrap"|"_vcc_from_bytes"|"_vcc_to_bytes") as name), args)) ->
+            | C.Expr.Stmt (_, C.Expr.Macro (c, (("_vcc_unwrap"|"_vcc_wrap"|"_vcc_deep_unwrap") as name), args)) ->
               doCall c [] None name [] args         
               
             | C.Expr.VarWrite (c, [v], C.Expr.Macro(c', "_vcc_new_club", [l])) ->

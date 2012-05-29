@@ -7,8 +7,8 @@
 
 #define MAX_BIT 32
 
-_(typedef bool intset[\integer])
-_(def bool validBits(intset s)
+_(typedef \bool intset[\integer])
+_(def \bool validBits(intset s)
 {
   return \forall \integer i; s[i] ==> i >= 0 && i < MAX_BIT;
 })
@@ -47,11 +47,11 @@ _(def \integer min_elt(intset s)
   SET(n, 16) || SET(n, 17) || SET(n, 18) || SET(n, 19) || SET(n, 20) || SET(n, 21) || SET(n, 22) || SET(n, 23) || \
   SET(n, 24) || SET(n, 25) || SET(n, 26) || SET(n, 27) || SET(n, 28) || SET(n, 29) || SET(n, 30) || SET(n, 31)
 
-_(abstract bool lemma_first_bit(unsigned x)
+_(abstract \bool lemma_first_bit(unsigned x)
    _(ensures x != 0 ==> bits(FB(x)) == singleton(min_elt(bits(x))))
    _(ensures \result)
 {
-  _(ghost bool b = bits(FB(x)) == singleton(min_elt(bits(x))))
+  _(ghost \bool b = bits(FB(x)) == singleton(min_elt(bits(x))))
   _(assert {:bv} \forall unsigned x, i; SET(FB(x), i) ==> SET(x, i))
   _(assert {:bv} \forall unsigned x, i, j; SET(x, i) && SET(FB(x), j) ==> i >= j)
   _(assert {:bv} \forall unsigned x; {bits(x)} x != 0 ==> ONE_SET(x))
@@ -60,7 +60,7 @@ _(abstract bool lemma_first_bit(unsigned x)
   return \true;
 })
 
-_(abstract bool lemma_sum(unsigned x, unsigned y)
+_(abstract \bool lemma_sum(unsigned x, unsigned y)
    _(ensures bits(x|y) == \lambda \integer i; bits(x)[i] || bits(y)[i])
    _(ensures \result)
 {
@@ -68,7 +68,7 @@ _(abstract bool lemma_sum(unsigned x, unsigned y)
   return \true;
 })
 
-_(abstract bool lemma_sub(unsigned x, unsigned y)
+_(abstract \bool lemma_sub(unsigned x, unsigned y)
    _(ensures bits(x&~y) == \lambda \integer i; bits(x)[i] && !bits(y)[i])
    _(ensures \result)
 {
@@ -76,9 +76,9 @@ _(abstract bool lemma_sub(unsigned x, unsigned y)
   return \true;
 })
 
-_(def bool mark2(unsigned x, \integer y) { return \true; })
+_(def \bool mark2(unsigned x, \integer y) { return \true; })
 
-_(abstract bool lemma_succ(unsigned x)
+_(abstract \bool lemma_succ(unsigned x)
    _(ensures bits(_(unchecked)(x * 2)) == \lambda \integer i; i < 32 && i != 0 && bits(x)[i-1])
    _(ensures \result)
 {
@@ -87,7 +87,7 @@ _(abstract bool lemma_succ(unsigned x)
   return \true;
 })
 
-_(abstract bool lemma_pred(unsigned x)
+_(abstract \bool lemma_pred(unsigned x)
    _(ensures bits(_(unchecked)(x / 2)) == \lambda \integer i; i >= 0 && bits(x)[i+1])
    _(ensures \result)
 {

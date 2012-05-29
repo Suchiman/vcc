@@ -70,8 +70,8 @@ _(ghost _(dynamic_owns) struct _LIST_MANAGER
     // an Flink pointer. Except if the Flink points to the list head, which implies
     // the end of the list.
     //
-    // The {sk_hack(keeps(p->Flink))} trigger introduces a witness of
-    // a keeps(p->Flink) entry, that is required for the prove to succeed.
+    // The {:hint \mine(p->Flink)} trigger introduces a witness of
+    // a \mine(p->Flink) entry, that is required for the prove to succeed.
     _(invariant \forall PLIST_ENTRY p; {\mine(p)} {:hint \mine(p->Flink)}
         \mine(p) && p->Flink != ListHead ==> index[p] + 1 == index[p->Flink])
 

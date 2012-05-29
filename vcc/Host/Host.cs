@@ -58,7 +58,7 @@ namespace Microsoft.Research.Vcc
               return 0;
           }
 
-          if (errorCount > 0)
+          if (errorCount > 0 || fileErrorCount > 0)
           {
               Console.Error.WriteLine("Exiting with 1 - error parsing arguments.");
               return 1;
@@ -284,12 +284,17 @@ namespace Microsoft.Research.Vcc
 // ReSharper restore AssignNullToNotNullAttribute
     }
 
+    static int fileErrorCount;
     static int errorCount;
 
-    public static int ErrorCount
+    public static void IncreaseErrorCount(bool isFileSpecific = true)
     {
-      get { return errorCount; }
-      set { errorCount = value; }
+      if (isFileSpecific) { fileErrorCount++; } else { errorCount++; }
+    }
+
+    public static void ResetErrorCount()
+    {
+      fileErrorCount = errorCount = 0;
     }
 
     static void RunPlugin(VccOptions commandLineOptions)
@@ -325,7 +330,7 @@ namespace Microsoft.Research.Vcc
       programSources.Add(new VccSourceDocument(helper, docName, Path.GetFullPath(fileName), instream));
       if (0 != Felt2Cast2Plugin(fileName, commandLineOptions, hostEnvironment, assem)) 
       {
-          errorCount++;
+          fileErrorCount++;
       }
     }
 
@@ -429,7 +434,7 @@ namespace Microsoft.Research.Vcc
           swVisitor.Stop();
         }
 
-        if (errorCount > 0) return 0;
+        if (fileErrorCount > 0) return 0;
 
         try
         {
@@ -437,7 +442,7 @@ namespace Microsoft.Research.Vcc
           if (currentPlugin.IsModular())
           {
             var fv = currentPlugin.GetFunctionVerifier(fileName, helperenv, res);
-            if (helperenv.ShouldContinue && errorCount == 0)
+            if (helperenv.ShouldContinue && fileErrorCount == 0)
               VerifyFunctions(commandLineOptions, fileName, assem.Name.ToString(), fv);
           }
           else
@@ -447,6 +452,8 @@ namespace Microsoft.Research.Vcc
         }
         finally
         {
+          errorCount += fileErrorCount;
+          fileErrorCount = 0;
           swPlugin.Stop();
         }
 

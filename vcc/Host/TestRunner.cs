@@ -75,8 +75,8 @@ namespace Microsoft.Research.Vcc
       {
         if (fi.Name.StartsWith(".")) continue;
         if (fi.Name.Contains(vccSplitSuffix)) continue;
-        if (fi.Extension != ".c" && fi.Extension != "" && !fi.Extension.StartsWith(".ns"))
-          continue; // remove *.ns* case eventually
+        if (fi.Extension != ".c" && fi.Extension != "")
+          continue;
 
         if (trmt != null) trmt.Queue(fi);
         else
@@ -270,7 +270,7 @@ namespace Microsoft.Research.Vcc
     private static int RunTest(CciErrorHandler errorHandler, string suiteName, string fileNameWithoutExt,
                                string test, VccOptions commandLineOptions, List<string> compilerParameters) {
 
-      VccCommandLineHost.ErrorCount = 0;
+      VccCommandLineHost.ResetErrorCount();
       string fileNameC = fileNameWithoutExt + ".c";
       string fileNameI = fileNameWithoutExt + ".i";
 
@@ -294,6 +294,7 @@ namespace Microsoft.Research.Vcc
 
       bool errorsInPreprocessor;
       var f = CCompilerHelper.Preprocess(options, out errorsInPreprocessor);
+      if (errorsInPreprocessor) return -1;
       var st = f.First();
       test = st.ReadToEnd();
       st.Close();

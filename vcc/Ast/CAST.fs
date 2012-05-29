@@ -326,7 +326,7 @@ module Microsoft.Research.Vcc.CAST
     | Array of Type * int
     | TypeIdT
     | SecLabel of Expr option
-    | Claim                // the claim_t in C is actually Claim*
+    | Claim                // the \claim in C is actually Claim*
     | Map of Type * Type   // t1 -> t2
     | ObjectT
     | MathInteger of MathIntKind
@@ -347,10 +347,10 @@ module Microsoft.Research.Vcc.CAST
         | Array (t, sz) -> t.WriteTo b; wr ("[" + sz.ToString() + "]")
         | Map (t1, t2) -> wr "("; t1.WriteTo b; wr " -> "; t2.WriteTo b; wr ")"
         | SecLabel _ -> wr "label_t"
-        | Claim -> wr "claim_t"
-        | ObjectT -> wr "obj_t"
-        | MathInteger MathIntKind.Signed -> wr "mathint"
-        | MathInteger MathIntKind.Unsigned -> wr "mathnat"
+        | Claim -> wr "\\claim"
+        | ObjectT -> wr "\\object"
+        | MathInteger MathIntKind.Signed -> wr "\\integer"
+        | MathInteger MathIntKind.Unsigned -> wr "\\natural"
         | TypeVar({Name = id}) -> wr id
     
     override this.ToString () = toString (this.WriteTo)

@@ -1,7 +1,7 @@
 #include <vcc.h>
 
 _(ghost typedef \integer imap[\integer])
-_(ghost typedef bool iset[\integer])
+_(ghost typedef \bool iset[\integer])
 
 _(def \integer foo(\integer x)
 {
@@ -52,22 +52,22 @@ _(def iset mux_fail2(\integer x)
 
 
 
-_(def bool fa0(\integer x)
+_(def \bool fa0(\integer x)
 {
   return \forall \integer y; 0 < y && y < x ==> fa0(y);
 })
 
-_(def bool fa1(\integer x)
+_(def \bool fa1(\integer x)
 {
   return \forall \integer y; {fa1(y)} 0 < y && y < x ==> fa1(x - 1);
 })
 
-_(def bool fa0_fail(\integer x)
+_(def \bool fa0_fail(\integer x)
 {
   return \forall \integer y; 0 < y && y <= x ==> fa0_fail(y);
 })
 
-_(def bool fa1_fail(\integer x)
+_(def \bool fa1_fail(\integer x)
 {
   return \forall \integer y; {fa1_fail(y)} 0 < y && y < x ==> fa1_fail(x);
 })

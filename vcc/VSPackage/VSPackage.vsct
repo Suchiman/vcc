@@ -15,13 +15,13 @@
         defining some of the constants that we will use inside the file. -->
 
   <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
-  <Extern href="stdidcmd.h"/>
+  <Extern href="stdidcmd.h" />
 
   <!--This header contains the command ids for the menus provided by the shell. -->
-  <Extern href="vsshlids.h"/>
+  <Extern href="vsshlids.h" />
 
   <!--Definition of some VSCT specific constants. In this sample we use it for the IDs inside the guidOfficeIcon group. -->
-  <Extern href="msobtnid.h"/>
+  <!--<Extern href="msobtnid.h" xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" />-->
 
   <!--The Commands section is where we the commands, menus and menu groups are defined.
       This section uses a Guid to identify the package that provides the command defined inside it. -->
@@ -59,15 +59,15 @@
     <Groups>
 
       <Group guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" priority="0x0600">
-        <Parent guid="guidVerifyCmdSet" id="cmdidVerifyMenu"/>
+        <Parent guid="guidVerifyCmdSet" id="cmdidVerifyMenu" />
       </Group>
 
       <Group guid="guidVerifyCmdSet" id="cmdidContextMenuGroup" priority="0x0000">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
       </Group>
 
       <Group guid="guidVerifyCmdSet" id="cmdidMathSymbolGroup" priority="0x0000">
-        <Parent guid="guidVerifyCmdSet" id="cmdidMathSymbolToolbar"/>
+        <Parent guid="guidVerifyCmdSet" id="cmdidMathSymbolToolbar" />
       </Group>
         
     </Groups>
@@ -84,61 +84,61 @@
               <CommandFlag>DynamicVisibility</CommandFlag>
           If you do not want an image next to your command, remove the Icon node or set it to <Icon guid="guidOfficeIcon" id="msotcidNoIcon" /> -->
 
-      <Button guid="guidVerifyCmdSet" id="cmdidVerifyActiveFile" priority="0x0102" type ="Button">
+      <Button guid="guidVerifyCmdSet" id="cmdidVerifyActiveFile" priority="0x0102" type="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
-        <Icon guid="guidImages" id ="bmpPicF"/>
+        <Icon guid="guidImages" id="bmpPicF" />
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
           <ButtonText>Verify Active File</ButtonText>
         </Strings>
       </Button>
 
-      <Button guid="guidVerifyCmdSet" id="cmdidVerifyActiveFileWithoutIncludes" priority="0x0103" type ="Button">
+      <Button guid="guidVerifyCmdSet" id="cmdidVerifyActiveFileWithoutIncludes" priority="0x0103" type="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
-        <Icon guid="guidImages" id ="bmpPicF"/>
+        <Icon guid="guidImages" id="bmpPicF" />
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
           <ButtonText>Verify Active File Without Includes</ButtonText>
         </Strings>
       </Button>
 
-      <Button guid="guidVerifyCmdSet" id="cmdidOptions" priority="0x0101" type ="Button">
+      <Button guid="guidVerifyCmdSet" id="cmdidOptions" priority="0x0101" type="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
-        <Icon guid="guidImages" id ="bmpPicO"/>
+        <Icon guid="guidImages" id="bmpPicO" />
         <Strings>
           <ButtonText>Vcc Options...</ButtonText>
         </Strings>
       </Button>
 
-      <Button guid ="guidVerifyCmdSet" id ="cmdidVerifyThis" priority ="0x0106" type ="Button">
-        <Parent guid ="guidVerifyCmdSet" id ="cmdidMyMenuGroup"/>
-        <Icon guid="guidImages" id ="bmpPicT"/>
+      <Button guid="guidVerifyCmdSet" id="cmdidVerifyThis" priority="0x0106" type="Button">
+        <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
+        <Icon guid="guidImages" id="bmpPicT" />
         <CommandFlag>DefaultDisabled</CommandFlag>
         <Strings>
           <ButtonText>Verify This</ButtonText>
         </Strings>
       </Button>
 
-      <Button guid ="guidVerifyCmdSet" id ="cmdidReVerify" priority ="0x0108" type ="Button">
-        <Parent guid ="guidVerifyCmdSet" id ="cmdidMyMenuGroup"/>
-        <Icon guid="guidImages" id ="bmpPicR"/>
+      <Button guid="guidVerifyCmdSet" id="cmdidReVerify" priority="0x0108" type="Button">
+        <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
+        <Icon guid="guidImages" id="bmpPicR" />
         <CommandFlag>DefaultDisabled</CommandFlag>
         <Strings>
           <ButtonText>Re-verify</ButtonText>
         </Strings>
       </Button>
 
-      <Button guid="guidVerifyCmdSet" id="cmdidCustomVerify" priority="0x0110" type ="Button">
+      <Button guid="guidVerifyCmdSet" id="cmdidCustomVerify" priority="0x0110" type="Button">
         <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
-        <Icon guid="guidImages" id="bmpPicArrows"/>
+        <Icon guid="guidImages" id="bmpPicArrows" />
         <Strings>
           <ButtonText>Custom Verify...</ButtonText>
         </Strings>
       </Button>
 
       <Button guid="guidVerifyCmdSet" id="cmdidCancel" priority="0x0112" type="Button">
-        <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup"/>
-        <Icon guid="guidImages" id ="bmpPicX"/>
+        <Parent guid="guidVerifyCmdSet" id="cmdidMyMenuGroup" />
+        <Icon guid="guidImages" id="bmpPicX" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
@@ -147,8 +147,8 @@
       </Button>
 
       <Button guid="guidVerifyCmdSet" id="cmdidContextVerifyActiveFile" priority="0x0100" type="Button">
-        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
-        <Icon guid="guidImages" id ="bmpPicF"/>
+        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup" />
+        <Icon guid="guidImages" id="bmpPicF" />
         <CommandFlag>TextChanges</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -158,8 +158,8 @@
       </Button>
 
       <Button guid="guidVerifyCmdSet" id="cmdidContextVerifyActiveFileWithoutIncludes" priority="0x0100" type="Button">
-        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
-        <Icon guid="guidImages" id ="bmpPicF"/>
+        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup" />
+        <Icon guid="guidImages" id="bmpPicF" />
         <CommandFlag>TextChanges</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -169,8 +169,8 @@
       </Button>
 
       <Button guid="guidVerifyCmdSet" id="cmdidContextVerifyThis" priority="0x0103" type="Button">
-        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
-        <Icon guid="guidImages" id ="bmpPicT"/>
+        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup" />
+        <Icon guid="guidImages" id="bmpPicT" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
@@ -179,8 +179,8 @@
       </Button>
 
       <Button guid="guidVerifyCmdSet" id="cmdidContextReVerify" priority="0x0104" type="Button">
-        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
-        <Icon guid="guidImages" id ="bmpPicR"/>
+        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup" />
+        <Icon guid="guidImages" id="bmpPicR" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
@@ -189,8 +189,8 @@
       </Button>
 
       <Button guid="guidVerifyCmdSet" id="cmdidContextCustomVerify" priority="0x0106" type="Button">
-        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
-        <Icon guid="guidImages" id="bmpPicArrows"/>
+        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup" />
+        <Icon guid="guidImages" id="bmpPicArrows" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
@@ -199,8 +199,8 @@
       </Button>
 
       <Button guid="guidVerifyCmdSet" id="cmdidContextCancel" priority="0x0108" type="Button">
-        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
-        <Icon guid="guidImages" id ="bmpPicX"/>
+        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup" />
+        <Icon guid="guidImages" id="bmpPicX" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
@@ -209,8 +209,8 @@
       </Button>
 
       <Button guid="guidVerifyCmdSet" id="cmdidShowErrorModel" priority="0x010a" type="Button">
-        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup"/>
-        <Icon guid="guidImages" id ="bmpPicErrorModel"/>
+        <Parent guid="guidVerifyCmdSet" id="cmdidContextMenuGroup" />
+        <Icon guid="guidImages" id="bmpPicErrorModel" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
         <Strings>
@@ -219,48 +219,48 @@
       </Button>
 
         <Button guid="guidVerifyCmdSet" id="cmdidMathSymbolForall" priority="0x001" type="Button">
-            <Parent guid="guidVerifyCmdSet" id="cmdidMathSymbolGroup"/>
-            <Icon guid="guidImages" id ="bmpPicForall"/>
+            <Parent guid="guidVerifyCmdSet" id="cmdidMathSymbolGroup" />
+            <Icon guid="guidImages" id="bmpPicForall" />
             <Strings>
                 <ButtonText>\forall</ButtonText>
             </Strings>
         </Button>
 
         <Button guid="guidVerifyCmdSet" id="cmdidMathSymbolExists" priority="0x002" type="Button">
-            <Parent guid="guidVerifyCmdSet" id="cmdidMathSymbolGroup"/>
-            <Icon guid="guidImages" id ="bmpPicExists"/>
+            <Parent guid="guidVerifyCmdSet" id="cmdidMathSymbolGroup" />
+            <Icon guid="guidImages" id="bmpPicExists" />
             <Strings>
                 <ButtonText>\exists</ButtonText>
             </Strings>
         </Button>
 
         <Button guid="guidVerifyCmdSet" id="cmdidMathSymbolLambda" priority="0x003" type="Button">
-            <Parent guid="guidVerifyCmdSet" id="cmdidMathSymbolGroup"/>
-            <Icon guid="guidImages" id ="bmpPicLambda"/>
+            <Parent guid="guidVerifyCmdSet" id="cmdidMathSymbolGroup" />
+            <Icon guid="guidImages" id="bmpPicLambda" />
             <Strings>
                 <ButtonText>\lambda</ButtonText>
             </Strings>
         </Button>
 
         <Button guid="guidVerifyCmdSet" id="cmdidMathSymbolIn" priority="0x004" type="Button">
-            <Parent guid="guidVerifyCmdSet" id="cmdidMathSymbolGroup"/>
-            <Icon guid="guidImages" id ="bmpPicSetIn"/>
+            <Parent guid="guidVerifyCmdSet" id="cmdidMathSymbolGroup" />
+            <Icon guid="guidImages" id="bmpPicSetIn" />
             <Strings>
                 <ButtonText>\in</ButtonText>
             </Strings>
         </Button>
 
         <Button guid="guidVerifyCmdSet" id="cmdidMathSymbolUnion" priority="0x005" type="Button">
-            <Parent guid="guidVerifyCmdSet" id="cmdidMathSymbolGroup"/>
-            <Icon guid="guidImages" id ="bmpPicUnion"/>
+            <Parent guid="guidVerifyCmdSet" id="cmdidMathSymbolGroup" />
+            <Icon guid="guidImages" id="bmpPicUnion" />
             <Strings>
                 <ButtonText>\union</ButtonText>
             </Strings>
         </Button>
 
         <Button guid="guidVerifyCmdSet" id="cmdidMathSymbolIntersection" priority="0x006" type="Button">
-            <Parent guid="guidVerifyCmdSet" id="cmdidMathSymbolGroup"/>
-            <Icon guid="guidImages" id ="bmpPicIntersection"/>
+            <Parent guid="guidVerifyCmdSet" id="cmdidMathSymbolGroup" />
+            <Icon guid="guidImages" id="bmpPicIntersection" />
             <Strings>
                 <ButtonText>\inter</ButtonText>
             </Strings>
@@ -274,21 +274,18 @@
             bitmap strip containing the bitmaps and then there are the numeric ids of the elements used 
             inside a button definition. An important aspect of this declaration is that the element id 
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
-      <Bitmap 
-          guid="guidImages" 
-          href="Resources\Images_32bit.png" 
-          usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicErrorModel, bmpPicF, bmpPicR, bmpPicT, bmpPicO, bmpPicBvd, bmpPicForall, bmpPicExists, bmpPicLambda, bmpPicSetIn, bmpPicIntersection, bmpPicUnion"/>
+      <Bitmap guid="guidImages" href="Resources\Images_32bit.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicErrorModel, bmpPicF, bmpPicR, bmpPicT, bmpPicO, bmpPicBvd, bmpPicForall, bmpPicExists, bmpPicLambda, bmpPicSetIn, bmpPicIntersection, bmpPicUnion" />
     </Bitmaps>
   </Commands>
 
   <KeyBindings>
-    <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidVerifyActiveFile" key1="V" key2="F" mod1="ALT" mod2="ALT" />
-    <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidVerifyActiveFileWithoutIncludes" key1="V" key2="I" mod1="ALT" mod2="ALT" />
-    <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidCancel" key1="V" key2="C" mod1="ALT" mod2="ALT" />
-    <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidReVerify" key1="V" key2="R" mod1="ALT" mod2="ALT" />
-    <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidVerifyThis" key1="V" key2="T" mod1="ALT" mod2="ALT" />
-    <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidOptions" key1="V" key2="O" mod1="ALT" mod2="ALT" />
-    <KeyBinding editor="guidVSStd97" guid ="guidVerifyCmdSet" id="cmdidCustomVerify" key1="V" key2="B" mod1="ALT" mod2="ALT" />
+    <KeyBinding editor="guidVSStd97" guid="guidVerifyCmdSet" id="cmdidVerifyActiveFile" key1="V" key2="F" mod1="ALT" mod2="ALT" />
+    <KeyBinding editor="guidVSStd97" guid="guidVerifyCmdSet" id="cmdidVerifyActiveFileWithoutIncludes" key1="V" key2="I" mod1="ALT" mod2="ALT" />
+    <KeyBinding editor="guidVSStd97" guid="guidVerifyCmdSet" id="cmdidCancel" key1="V" key2="C" mod1="ALT" mod2="ALT" />
+    <KeyBinding editor="guidVSStd97" guid="guidVerifyCmdSet" id="cmdidReVerify" key1="V" key2="R" mod1="ALT" mod2="ALT" />
+    <KeyBinding editor="guidVSStd97" guid="guidVerifyCmdSet" id="cmdidVerifyThis" key1="V" key2="T" mod1="ALT" mod2="ALT" />
+    <KeyBinding editor="guidVSStd97" guid="guidVerifyCmdSet" id="cmdidOptions" key1="V" key2="O" mod1="ALT" mod2="ALT" />
+    <KeyBinding editor="guidVSStd97" guid="guidVerifyCmdSet" id="cmdidCustomVerify" key1="V" key2="B" mod1="ALT" mod2="ALT" />
   </KeyBindings>
 
   <Symbols>
@@ -297,45 +294,45 @@
 
     <!-- This is the guid used to group the menu commands together -->
     <GuidSymbol name="guidVerifyCmdSet" value="{7c3dd686-d502-4019-8b44-67b2efb94304}">
-      <IDSymbol name="cmdidVerifyMenu" value="0x1021"/>
+      <IDSymbol name="cmdidVerifyMenu" value="0x1021" />
       <IDSymbol name="cmdidMyMenuGroup" value="0x1020" />
       <IDSymbol name="cmdidContextMenuGroup" value="0x1022" />
       <IDSymbol name="cmdidVerifyActiveFile" value="0x0102" />
       <IDSymbol name="cmdidVerifyActiveFileWithoutIncludes" value="0x0103" />
-      <IDSymbol name="cmdidVerifyThis" value="0x0115"/>
-      <IDSymbol name="cmdidReVerify" value="0x0112"/>
+      <IDSymbol name="cmdidVerifyThis" value="0x0115" />
+      <IDSymbol name="cmdidReVerify" value="0x0112" />
       <IDSymbol name="cmdidCustomVerify" value="0x0111" />
       <IDSymbol name="cmdidCancel" value="0x0105" />
-      <IDSymbol name="cmdidOptions" value="0x0116"/>
-      <IDSymbol name="cmdidContextVerifyActiveFile" value="0x0106"/>
-      <IDSymbol name="cmdidContextVerifyActiveFileWithoutIncludes" value="0x0107"/>
-      <IDSymbol name="cmdidContextVerifyThis" value="0x0114"/>
-      <IDSymbol name="cmdidContextReVerify" value="0x0113"/>
+      <IDSymbol name="cmdidOptions" value="0x0116" />
+      <IDSymbol name="cmdidContextVerifyActiveFile" value="0x0106" />
+      <IDSymbol name="cmdidContextVerifyActiveFileWithoutIncludes" value="0x0107" />
+      <IDSymbol name="cmdidContextVerifyThis" value="0x0114" />
+      <IDSymbol name="cmdidContextReVerify" value="0x0113" />
       <IDSymbol name="cmdidContextCustomVerify" value="0x0109" />
-      <IDSymbol name="cmdidContextCancel" value="0x0110"/>
-      <IDSymbol name="cmdidShowErrorModel" value="0x0117"/>
-      <IDSymbol name="cmdidMathSymbolToolbar" value="0x0200"/>
-      <IDSymbol name="cmdidMathSymbolGroup" value ="0x0210"/>
-      <IDSymbol name="cmdidMathSymbolForall" value ="0x0220"/>
-      <IDSymbol name="cmdidMathSymbolExists" value ="0x0221"/>
-      <IDSymbol name="cmdidMathSymbolIn" value ="0x0222"/>
-      <IDSymbol name="cmdidMathSymbolUnion" value ="0x0223"/>
-      <IDSymbol name="cmdidMathSymbolIntersection" value ="0x0224"/>
-      <IDSymbol name="cmdidMathSymbolLambda" value ="0x0225"/>
+      <IDSymbol name="cmdidContextCancel" value="0x0110" />
+      <IDSymbol name="cmdidShowErrorModel" value="0x0117" />
+      <IDSymbol name="cmdidMathSymbolToolbar" value="0x0200" />
+      <IDSymbol name="cmdidMathSymbolGroup" value="0x0210" />
+      <IDSymbol name="cmdidMathSymbolForall" value="0x0220" />
+      <IDSymbol name="cmdidMathSymbolExists" value="0x0221" />
+      <IDSymbol name="cmdidMathSymbolIn" value="0x0222" />
+      <IDSymbol name="cmdidMathSymbolUnion" value="0x0223" />
+      <IDSymbol name="cmdidMathSymbolIntersection" value="0x0224" />
+      <IDSymbol name="cmdidMathSymbolLambda" value="0x0225" />
     </GuidSymbol>
 
-    <GuidSymbol name="guidImages" value="{3cf37389-040e-4b6a-ae89-b51a048cf747}" >
+    <GuidSymbol name="guidImages" value="{3cf37389-040e-4b6a-ae89-b51a048cf747}">
       <IDSymbol name="bmpPic1" value="1" />
       <IDSymbol name="bmpPic2" value="2" />
       <IDSymbol name="bmpPicSearch" value="3" />
       <IDSymbol name="bmpPicX" value="4" />
       <IDSymbol name="bmpPicArrows" value="5" />
-      <IDSymbol name="bmpPicErrorModel" value="6"/>
-      <IDSymbol name="bmpPicF" value="7"/>
-      <IDSymbol name="bmpPicR" value="8"/>
-      <IDSymbol name="bmpPicT" value="9"/>
+      <IDSymbol name="bmpPicErrorModel" value="6" />
+      <IDSymbol name="bmpPicF" value="7" />
+      <IDSymbol name="bmpPicR" value="8" />
+      <IDSymbol name="bmpPicT" value="9" />
       <IDSymbol name="bmpPicO" value="10" />
-      <IDSymbol name="bmpPicBvd" value="11"/>
+      <IDSymbol name="bmpPicBvd" value="11" />
       <IDSymbol name="bmpPicForall" value="12" />
       <IDSymbol name="bmpPicExists" value="13" />
       <IDSymbol name="bmpPicLambda" value="14" />

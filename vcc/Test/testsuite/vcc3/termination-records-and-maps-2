@@ -21,7 +21,7 @@ _(def II foo2()
   return \lambda int x; x;
 })
 
-_(def bool foo3(II m)
+_(def \bool foo3(II m)
 {
   return \forall int k; m[k] > 0;
 })

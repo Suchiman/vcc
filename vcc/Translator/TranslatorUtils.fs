@@ -236,9 +236,11 @@ namespace Microsoft.Research.Vcc
           | C.Type.Claim -> er "^^claim"
           | C.Type.SecLabel _ -> er "^^label"
           | C.Type.TypeVar({Name = id}) -> er ("^^TV#" + id)
-          | C.Type.Volatile(t) -> 
+          | C.Type.Volatile(C.Type.Ref(_)) -> 
             if t.IsPtr then helper.Panic("volatile type modifier survived")
-            toTypeId'  false t
+            er "$$bogus_volatile$$"
+          | C.Type.Volatile(t) -> 
+            toTypeId' false t
             
       let toTypeId = toTypeId' false
       

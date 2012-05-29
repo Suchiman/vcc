@@ -211,7 +211,7 @@ namespace Microsoft.Research.Vcc
         | _ -> None
     
       let propagateKnownValue ctx self = 
-        let assertEq cond expectedValue = Expr.MkAssert (Expr.Prim (afmte 8533 "{0} has the value {1} specified by known(...)" [cond; expectedValue], Op("==", CheckedStatus.Unchecked), [cond; expectedValue]))
+        let assertEq cond expectedValue = Expr.MkAssert (Expr.Prim (afmte 8533 "{0} has the value {1} specified by _(known ...)" [cond; expectedValue], Op("==", CheckedStatus.Unchecked), [cond; expectedValue]))
         function
         | Expr.Macro(c, "_vcc_known", [expr; knownValue]) when not ctx.IsPure ->
           let e, ea = splitKnown (self expr)
@@ -474,7 +474,7 @@ namespace Microsoft.Research.Vcc
             match f.Type with
               | ObjectT -> ()
               | _ ->
-                helper.Error (approvers.[f], 9673, "approver field '" + f.Name + "' should have obj_t type, it has '" + f.Type.ToString() + "'")
+                helper.Error (approvers.[f], 9673, "approver field '" + f.Name + "' should have \\object type, it has '" + f.Type.ToString() + "'")
             if not (selfApproved.ContainsKey f) && f.IsVolatile then
               helper.Error (approvers.[f], 9672, "volatile field '" + f.Name + "' is an approver, but not a self-approver")
           d :: axioms
@@ -585,19 +585,24 @@ namespace Microsoft.Research.Vcc
          ( *s_).y = 12;
        }
      *)
-    let rec replaceWithPointers (subst:Dict<_,_>) _ = function
+    let rec replaceWithPointers (subst:Dict<_,_>) inClaim _ = function
       | Expr.Macro (c, "&", [Expr.Ref (_, v)]) ->
         match subst.TryGetValue v with
           | true, (v', _) -> Some (Expr.Ref (c, v'))
           | _ -> None
       | Expr.Ref (c, v) ->
         match subst.TryGetValue v with
-          | true, (v', _) -> Some (Expr.Deref (c, Expr.Ref ({ c with Type = v'.Type }, v')))
+          | true, (v', _) -> 
+            let result = Expr.Deref (c, Expr.Ref ({ c with Type = v'.Type }, v'))
+            let result = if inClaim then Old(c,  Macro(bogusEC, "_vcc_when_claimed", []), result) else result
+            Some (result)
           | _ -> None
       | Expr.VarDecl (_, v, _) ->
         match subst.TryGetValue v with
           | true, (_, decl) -> Some(decl)
           | false, _ -> None
+      | Expr.Macro(ec, "claim", args) ->
+        Some(Expr.Macro(ec, "claim", List.map (fun (expr:Expr) -> expr.SelfMap(replaceWithPointers subst true)) args))
       | _ -> None
 
     let heapifyAddressedLocals decls =
@@ -650,7 +655,7 @@ namespace Microsoft.Research.Vcc
             fnTok := { !fnTok with Token = d.Token }
             List.iter (fun (e:Expr) -> e.SelfVisit (findThem false)) (d.Reads @ d.Writes @ d.Requires @ d.Ensures)
             b.SelfVisit (findThem true)
-            let b = b.SelfMap (replaceWithPointers addressableLocals)
+            let b = b.SelfMap (replaceWithPointers addressableLocals false)
             let outParDecls = [ for (v, (_, expr)) in !addressableLocalsList do if v.Kind = VarKind.OutParameter then yield expr ]
             let b = Expr.MkBlock(outParDecls @ [b])
             d.Body <- Some b
@@ -685,7 +690,7 @@ namespace Microsoft.Research.Vcc
             | _ -> ga
         | t -> t
         
-      decls |> List.map handle |> List.concat |> List.map replaceVarsInGeneratedAxioms |> deepMapExpressions (replaceWithPointers globalSubst)  
+      decls |> List.map handle |> List.concat |> List.map replaceVarsInGeneratedAxioms |> deepMapExpressions (replaceWithPointers globalSubst false)  
 
    
     // ============================================================================================================
@@ -857,9 +862,9 @@ namespace Microsoft.Research.Vcc
           false
         | CallMacro(_, "spec", _, _) 
         | CallMacro(_, ("_vcc_unwrap"|"_vcc_wrap"|"_vcc_wrap_non_owns"|"_vcc_wrap_set"|"_vcc_unwrap_set"|"_vcc_alloc"|"_vcc_free"|"_vcc_stack_alloc"), _, _)
-        | CallMacro(_, ("_vcc_from_bytes"|"_vcc_to_bytes"|"_vcc_havoc_others"), _, _)
+        | CallMacro(_, ("_vcc_havoc_others"), _, _)
         | CallMacro(_, ("_vcc_bump_volatile_version"|"_vcc_deep_unwrap"|"_vcc_union_reinterpret"|"_vcc_reads_havoc"),_ , _)
-        | CallMacro(_, ("_vcc_set_owns"|"_vcc_set_closed_owner"|"_vcc_set_closed_owns"|"_vcc_split_array"|"_vcc_join_arrays"),_ , _)
+        | CallMacro(_, ("_vcc_set_owns"|"_vcc_set_closed_owner"|"_vcc_set_closed_owns"),_ , _)
         | CallMacro(_, ("_vcc_giveup_closed_owner"), _, _)
         | CallMacro(_, "unclaim", _, _) 
         | CallMacro(_, "by_claim", _, [_; _; _]) ->

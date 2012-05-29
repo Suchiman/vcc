@@ -1,7 +1,7 @@
-#include <vcc2test.h>
+#include <vcc.h>
 
-
-_(logic bool fresh_object(\object ptr) = \object_root(ptr) && \mutable(ptr) && \fresh(ptr))
+_(logic \bool fresh_object(\object ptr) =
+  \object_root(ptr) && \mutable(ptr) && \fresh(ptr))
 
 _(abstract \object ticket_blob(\claim c)
 {
@@ -46,7 +46,7 @@ void clr(struct B *b)
 
     for (i = 0; i < b->size; ++i)
       _(writes \array_range(BUF(b), b->size))
-    { 
+    {
       BUF(b)[i] = 0;
     }
   }

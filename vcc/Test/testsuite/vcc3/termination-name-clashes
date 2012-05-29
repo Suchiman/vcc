@@ -4,14 +4,14 @@ _(abstract \integer PRNGen(\integer seed) {return;})
 
 _(typedef _(record) struct {
     \integer root;
-    bool foo[\integer][\integer];
+    \bool foo[\integer][\integer];
 } log;)
 
-_(def bool bar[\integer][\integer](log L, \integer seed)
+_(def \bool bar[\integer][\integer](log L, \integer seed)
   
 {
-  bool res[\integer][\integer];
-  bool innerMap[\integer];
+  \bool res[\integer][\integer];
+  \bool innerMap[\integer];
   
   innerMap = \lambda \integer k; k == PRNGen(seed) || L.foo[L.root][k];
   res = \lambda \integer k; k == L.root ? innerMap : L.foo[k];

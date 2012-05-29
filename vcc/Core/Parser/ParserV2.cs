@@ -518,7 +518,7 @@ namespace Microsoft.Research.Vcc.Parsing
         name = new GenericInstanceExpression(name, new TypeExpression[] { tp }, loc);
       }
       var call = this.CheckedExpressionIfRequested(new VccMethodCall(name, parameters.AsReadOnly(), slb));
-      contract.AddPrecondition(new Precondition(call, null, call.SourceLocation));
+      contract.AddPostcondition(new Postcondition(call, call.SourceLocation));
     }
 
     protected override List<Parameter> ParseParameterList(TokenSet followers) {
