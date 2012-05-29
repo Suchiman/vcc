@@ -24,23 +24,26 @@
   morecomment=[is]{//--}{//--},
 }[tex]
 
-\lstnewenvironment{VCC}[1][]{%
-  \lstset{%
-    floatplacement={tbp},
-    captionpos=b,language=VCC,#1
-    }}{}%
+%% \lstnewenvironment{VCC}[1][]{%
+%%   \lstset{%
+%%     floatplacement={tbp},
+%%     captionpos=b,language=VCC,#1
+%%     }}{}%
 
-\lstnewenvironment{VCC2}[1][0.45]
-    {\global\let\lst@intname\@empty
-     \gdef\lst@sample{}%
-    \setbox0=\hbox\bgroup
-         \setkeys{lst}{floatplacement={tbp},captionpos=b,language=VCC}
-         }
-    {\egroup%
-      \noindent\begin{minipage}{#1\linewidth}\hbox to\linewidth{\box0\hss}\end{minipage}}
+%% \lstnewenvironment{VCC2}[1][0.45]
+%%     {\global\let\lst@intname\@empty
+%%      \gdef\lst@sample{}%
+%%     \setbox0=\hbox\bgroup
+%%          \setkeys{lst}{floatplacement={tbp},captionpos=b,language=VCC}
+%%          }
+%%     {\egroup%
+%%       \noindent\begin{minipage}{#1\linewidth}\hbox to\linewidth{\box0\hss}\end{minipage}}
 
-\def\vcc{%
-    \lstinline[language=VCC,keywordstyle=]}
+% eliminate keyword highlighting for the manual
+%\def\vcc{%
+%    \lstinline[language=VCC,keywordstyle=]}
+\def\vcc{\tt}
+\newenvironment{VCC}{\begin{verbatim}}{\end{verbatim}}
 
 \newcommand\vccInput[2][]{{\lstset{language=VCC}\lstinputlisting[#1]{#2}}}
 \newcommand\vccInputSC[2][]{{\lstset{language=VCC,morecomment=[is]{/*}{*/}}\lstinputlisting[#1]{#2}}}
