@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Transformers</RootNamespace>
     <AssemblyName>Microsoft.Research.Vcc.Transformers</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>Transformers</Name>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
