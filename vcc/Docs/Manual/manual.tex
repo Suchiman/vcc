@@ -741,7 +741,9 @@ stuct {
   volatile \natural \volatile_version; 
 
   _(invariant \forall \object o1; \this->\closed && o1 \in \this->\owns ==> o1->\owner == \this)
-  _(invariant :\ownerOb \unchanged(\owner) || (\inv2(\old(\owner)) && \inv2(\owner)))
+  _(invariant :\ownerOb \unchanged(\owner) 
+                        || ((\inv2(\old(\owner)) || <\old(\owner) not of compound type>)
+                            && (\inv2(\owner) || <\owner not of compound type>)))
   _(invariant :\ownerOb \owner->\closed)
   _(invariant :\ownerOb \this \in \owner->\owns)
   _(invariant :\ownerOb \claim_count > 0 ==> \closed)
@@ -750,11 +752,10 @@ stuct {
   _(invariant \closed ==> \valid)
   _(invariant \closed && (\forall \object s; s \in \owns 
                 ==> s->\closed && s->\owner == \this))
-  _(invariant \closed || \old(\this->\closed) ==> \inv2(\this))
+  _(invariant \closed || \old(\this->\closed) && <\this of compound type> ==> \inv2(\this))
   _(invariant \old(\version) <= \this->\version)
   _(invariant \old(\volatile_version)  <= \this->\volatile_version)
   _(invariant \unchanged(\version) ==> \unchanged(\this->\closed))
-  _(invariant \closed || \old(\closed) ==> \inv2s(\old(\now()), \now(), \this))
 
   // the following for every nonvolatile field f
   _(invariant \closed && \old(\closed) ==> \unchanged(\this->f))
@@ -768,7 +769,7 @@ stuct {
             (<\approves(\this->\owner,f) is a top-level conjunct of an invariant of this type>
                ==> \unchanged(\volatile_version) || !\closed(\this) || \unchanged(f))
          && (<\approves(e,f) is a top-level conjunct of an invariant of this type>
-               ==> \unchanged(f) || \owner \is \thread || \inv2(\owner)))
+               ==> \unchanged(f) || <\owner not compound> || \inv2(\owner)))
 \end{VCC}
 
 The fields \vcc{\version} and \vcc{\volatile_version}, and the
@@ -776,18 +777,6 @@ group \vcc{\ownerOb}, are not allowed in annotations. Also, in
 annotations, fields beginning with \vcc{\} can appear only following
 the \vcc{->} operator\footnote{This restriction should be
 eliminated.}. 
-\\\\
-\vcc{\bool \inv2s(\state s1,\state s2,\object o)}\\
-If \vcc{o} is an object, this is true iff the invariant of object \vcc{o} holds in state \vcc{s2},
-but with \vcc{s2->\last} replaced with \vcc{s1}. If \vcc{o} is not an
-object, the result is undefined. Within an object invariant, this
-function can appear only with positive polarity.  
-\\\\
-\noindent\vcc{\bool \inv2(\object o)}\\
-True iff \vcc{\inv2s(\old(\now()),\now(),o)}.
-\\\\
-\vcc{\bool \inv(\object o)}\\
-True iff \vcc{\inv2s(\now(), \now(), o)}.
 \\\\
 \vcc{\bool \wrapped(\object o)} (thread)\\
 True iff \vcc{o->\owner == \me && o->\closed}.
@@ -888,9 +877,23 @@ the entire type definition.
 
 \subsubsection{Invariants}
 
-\vcc{_(invariant \bool \pure e)} (member)\\
+\vcc{\bool \inv2s(\pure \state s1,\pure \state s2,\pure \object o)}\\
+If \vcc{o} is not of a user-defined compound type, the result is 
+undefined. Otherwise, it returns \vcc{\at(s2,p)}, where \vcc{p}
+is the conjunction of all of the
+user-defined type invariants in the definition of the type of \vcc{o},
+with \vcc{\old(e)} replaced by \vcc{\at(s1,e)} and
+with \vcc{o} substituted for \vcc{\this}.
+\\\\
+\noindent\vcc{\bool \inv2(\object o)}\\
+True iff \vcc{\inv2s(\old(\now()),\now(),o)}.
+\\\\
+\vcc{\bool \inv(\object o)}\\
+True iff \vcc{\inv2s(\now(), \now(), o)}.
 
-An object invariant can mention any part of the state, including
+\vcc{_(invariant \bool \pure e)} (member)\\
+This defines an explicit invariant for the type in which it occurs.
+\vcc{e} can mention any part of the state, including
 static global variables. However, as there is no thread context, it
 cannot mention \vcc{\me}.
 
@@ -919,15 +922,15 @@ Ghost struct declarations need not declare any members (unlike in C).
 
 The infix \vcc{.} operator (selecting a field of a \vcc{struct}
 or \vcc{union} is extended in both arguments, to ghost objects and to
-records (on the left) and to ghost field names (on the right).
+records (on the left) and to ghost field names (on the right)\footnote{
+Caveat: VCC currently does not support this operator when the name begins
+with \vcc{\ }; the \vcc{->} operator must be used instead.}.
 
-Note: VCC currently does not support this operator when the name begins
-with \vcc{\}; the \vcc{->} operator must be used instead.
 
 The infix \vcc{->} operator (selecting a member of a struct or union
 pointed to by the first argument) is extended to ghost pointers and
 pointers to ghost types and to pointers to records on the left, and to
-ghost fields on the right. 
+ghost fields on the right.
 
 VCC currently does not allow arrays of size 0 at the end of a struct.
 
