@@ -9,7 +9,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>VccSyntaxCoverter</RootNamespace>
     <AssemblyName>VccSyntaxConverter</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <Name>VccSyntaxCoverter</Name>
     <TargetFrameworkProfile />
     <SccProjectName>SAK</SccProjectName>
