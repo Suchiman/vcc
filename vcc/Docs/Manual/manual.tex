@@ -716,7 +716,6 @@ member is currently \vcc{\valid}.
 
 \subsubsection{Objects}
 
-\subsubsubsection{Fields}
 Each object has a set of named \Def{fields}, each with a type
 (a \vcc{\type}), and each of which is either ghost or concrete. Each
 concrete field also has an offset (of type \vcc{size_t}). 
@@ -759,23 +758,19 @@ stuct {
 
   // the following for every nonvolatile field f
   _(invariant \closed && \old(\closed) ==> \unchanged(\this->f))
-\end{VCC}
-If \vcc{T} is a user-defined struct or union type, and \vcc{\approves(\this->\owner,f)}
-is a top level conjunct of a user-defined invariant of the type, then
-the following invariant is included:
-\begin{VCC}
-  _(invariant \unchanged(\volatile_version) || !\closed(\this) || \unchanged(f))
-\end{VCC}
-If \vcc{T} is a user-defined struct or union type, and \vcc{\approves(e,f)}
-is a top level conjunct of a user-defined invariant of the type, then
-the following invariant is included:
-\begin{VCC}
-  _(invariant \unchanged(f) || \owner \is \thread || \inv2(\owner))
+  _(invariant <this is a user-defined compound type> ==>
+        (<type not marked _(volatile_owns)> && \old(\closed) && \closed ==> \unchanged(\owns))
+     && (<type not marked _(dynamic_owns)> &&  \old(!\closed) && \closed ==> 
+            \forall \object o; o \in \this->\owns <==>
+                <there is an invariant of this type with a top-level
+                 conjunct of the form \mine(e), and \old(e) == o>)
+     && (\forall <field f>;
+            (<\approves(\this->\owner,f) is a top-level conjunct of an invariant of this type>
+               ==> \unchanged(\volatile_version) || !\closed(\this) || \unchanged(f))
+         && (<\approves(e,f) is a top-level conjunct of an invariant of this type>
+               ==> \unchanged(f) || \owner \is \thread || \inv2(\owner)))
 \end{VCC}
 
-\begin{VCC}
-}
-\end{VCC}
 The fields \vcc{\version} and \vcc{\volatile_version}, and the
 group \vcc{\ownerOb}, are not allowed in annotations. Also, in
 annotations, fields beginning with \vcc{\} can appear only following
@@ -793,60 +788,15 @@ True iff \vcc{\inv2s(\old(\now()),\now(),o)}.
 \\\\
 \vcc{\bool \inv(\object o)}\\
 True iff \vcc{\inv2s(\now(), \now(), o)}.
- 
-
-\section{Versions}
-
-object \vcc{o} that is owned by a thread
-\label{sec:approval}
-\vcc{_(bump_volatile_version o)} (statement)\\
-This translates to 
-\begin{VCC}
-{
-  \natural n;
-  _(assume n > o->\volatile_version)    
-  _(assert \wrapped(o) ==> \writable(o))
-  _(assert o->\owner == \me)
-  o->\volatile_version = n;
-}
-\end{VCC}
-This is the only operation that changes the \vcc{\volatile_version}
-field of an object. This restriction allows \vcc{o->\volatile_version}
-to be treated essentially as \vcc{o->\version}. 
 \\\\
-\vcc{\bool \approves(\object o, f ))} (special)\\
-In addition to the invariants added by
-
-and \vcc{o} is not in the writes clause of the call or block, then the
-call or block does not change the value of \vcc{o->f}. Moreover, if
-\vcc{o} is not owned by a thread, then any change to \vcc{o->f}
-requires a check of the invariant of \vcc{o->\owner}.
-
-\subsubsubsection{Ownership}
-
-\noindent\vcc{\bool \wrapped(\object o)} (thread)\\
+\vcc{\bool \wrapped(\object o)} (thread)\\
 True iff \vcc{o->\owner == \me && o->\closed}.
 \\\\
-\noindent\vcc{_(dynamic_owns)} (compound)\\
+\vcc{_(dynamic_owns)} (compound)\\
 \vcc{_(volatile_owns)} (compound)\\
-These cannot both appear on the same type definition. If a compound
-type declaration is not marked \vcc{_(volatile_owns)}, then the type
-gets as an implicit invariant
-\begin{VCC}
-  _(invariant \this->\closed ==> \unchanged(\this->\owns))
-\end{VCC}
-
-If, in addition, the type is not marked \vcc{_(dynamic_owns)}, then
-the type gets as an implicit invariant
-\begin{VCC}
-  _(invariant \old(!\closed) && \closed ==> 
-       \forall \object o; o \in \this->\owns <==>
-          <there is an invariant of this type with a top-level
-           conjunct of the form \mine(e), and \old(e) == o>)
-\end{VCC}
-In this case, \vcc{_(wrap o)} automatically sets \vcc{o->\owns} to
-satisfy this invariant.
-
+These cannot both appear on the same type definition. See the
+invariants above and the definition of \vcc{_(wrap)} for their meaning.
+\\\\
 \noindent\vcc{\bool \mine(\object o1)} (invariant)\\
 True iff \vcc{(o1 \in \this->\owns)}.
 If the object type is not marked \vcc{_(dynamic_owns)}
@@ -873,6 +823,32 @@ The current state.
 For primitive pointer \vcc{o}, this translates to \vcc{o* == \old(o*)} 
 For object \vcc{o}, this holds iff, for every field \vcc{f}
 of \vcc{o}, \vcc{\unchanged(o->f)}.
+
+\subsubsubsection{Approval}
+\label{sec:approval}
+\vcc{_(bump_volatile_version o)} (statement)\\
+This translates to 
+\begin{VCC}
+{
+  \natural n;
+  _(assume n > o->\volatile_version)    
+  _(assert \wrapped(o) ==> \writable(o))
+  _(assert o->\owner == \me)
+  o->\volatile_version = n;
+}
+\end{VCC}
+This is the only operation that changes the \vcc{\volatile_version}
+field of an object. This restriction allows \vcc{o->\volatile_version}
+to be treated essentially as \vcc{o->\version}. 
+\\\\
+\vcc{\bool \approves(\object o, f ))} (special)\\
+In addition to the invariants added by
+
+and \vcc{o} is not in the writes clause of the call or block, then the
+call or block does not change the value of \vcc{o->f}. Moreover, if
+\vcc{o} is not owned by a thread, then any change to \vcc{o->f}
+requires a check of the invariant of \vcc{o->\owner}.
+
 
 \subsubsection{Threads}
 \vcc{\thread} (small) \\
