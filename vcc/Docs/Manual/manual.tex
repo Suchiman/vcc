@@ -460,14 +460,17 @@ values are equal to the \vcc{\natural} numbers \vcc{0} and \vcc{1}, respectively
 
 \subsubsubsection{Quantifications}
 
+\vcc{\forall <decl>; \pure \bool p} (expression)
+\vcc{\exists <decl>; \pure \bool p} (expression)
+
 A quantification has one of the forms
-\vcc{\forall <decl>; p} (universal quantification) or 
-\vcc{\exists <decl>; p} (existential quantification), 
-where \vcc{<decl>} is a variable declaration, and \vcc{p}
-is an expression. (Optionally, pattern matchings can appear after the
-semicolon (section ??)). A universal/existential quantification evaluates
-to \vcc{\true} iff \vcc{p} evaluates to a non-\vcc{\false} value for
-each/some possible instantiation of the quantified vvariables.
+where \vcc{<decl>} is a variable declaration. In each variable
+declarations, the scope of the declared variable is to the end of the
+expression. Optional patterns may appear after the semicolon
+(section ??)). 
+The first/second of these evaluates to 
+\vcc{\true} iff \vcc{p} evaluates to a non-\vcc{\false} value for
+each/some possible instantiation of the quantified variables.
 
 \subsubsection{Numeric Types}
 
