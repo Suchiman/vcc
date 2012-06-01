@@ -883,18 +883,12 @@ of a \vcc{_(ghost)}  annotation. Ghost fields may be of any concrete
 or ghost type. Ghost fields are stored on the ghost heap, even if they
 are of concrete type.
 
+In annotations of a compound type, the scope of a member name includes
+the entire type definition.
+
 \subsubsection{Invariants}
-An explicit object invariant is an annotation of the form \vcc{_(invariant e)}
-ocurring at the level of member declarations of a structured
-type. Within \vcc{e}, the context is considered pure and ghost, 
-and all members of the type being declared are
-considered to be in scope, even if they are not declared until later
-in the type declaration. The keyword \vcc{\this} refers to the
-instance of the object for which the invariant is being applied. An
-ocurrance of a name \vcc{f}, not beginning with \vcc{\}, that is
-declared as a member of the type is synonymous with \vcc{\this->f}. 
-Within an object invariant, \vcc{\old(e)} translates essentially
-to \vcc{\at(\stutter(\now()->\last), e)}.
+
+\vcc{_(invariant \bool \pure e)} (member)\\
 
 An object invariant can mention any part of the state, including
 static global variables. However, as there is no thread context, it
@@ -909,6 +903,16 @@ written in the form \vcc{_(invariant \on_unwrap(\this,p))}.
 
 Only compound types can have explicit object invariants. Other object
 types have additional implicit object invariants.
+
+\vcc{:lemma} (special)
+If the \vcc{invariant} tag is followed by \vcc{:lemma}, then it is
+asserted that the invariant given follows from the other (non-lemma)
+invariants of the type. When wrapping, upwrapping, or updating an
+object of this type, invariants so marked do not have to be checked.
+
+\vcc{T \this} (pure)\\
+An ocurrance of a name \vcc{f}, not beginning with \vcc{\}, that is
+declared as a member of the type is synonymous with \vcc{\this->f}. 
 
 \subsubsection{Structs}
 Ghost struct declarations need not declare any members (unlike in C).
