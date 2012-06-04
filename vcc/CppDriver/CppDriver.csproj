@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Microsoft.Research.Vcc.Cpp</RootNamespace>
     <AssemblyName>Microsoft.Research.Vcc.Cpp</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
@@ -60,7 +60,7 @@
     <Reference Include="Core">
       <HintPath>..\Boogie\Core.dll</HintPath>
     </Reference>
-    <Reference Include="FSharp.Core, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="FSharp.Core" />
     <Reference Include="Graph">
       <HintPath>..\Boogie\Graph.dll</HintPath>
     </Reference>
