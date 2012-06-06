@@ -287,21 +287,20 @@ prove by induction on executions that if all object types are
 admissible, the program is good. The program is verified by proving
 that every type of the program is admissible.
 
-
 Associated with each running instance of a function is a
 function \Def{activation} object, whose fields give the program
-counter, the values of its local variables, the thread executing the
-function, and some other information described later. This object has
-three primary invariants. The first invariant is that when the program
-counter of the activation changes, the global state changes according
-to the operational semantics of executed program step. The second
-invariant, generated from annotations on the function, say what
-properties should hold at each control point of the activation. 
-(These invariants are admissible by their construction.) The
-third invariant says that every transition from the current state
-allowed by the operational semantics of the code is legal; this
-invariant guarantees that every sequence of program steps is a legal
-execution. 
+counter, the values of its local variables, the \Def{thread} object
+executing the function (typically the thread of its caller), and some
+other information described later. This object has three primary
+invariants. The first invariant is that when the program counter of
+the activation changes, the global state changes according to the
+operational semantics of executed program step. The second invariant,
+generated from annotations on the function, say what properties should
+hold at each control point of the activation.  (These invariants are
+admissible by their construction.) The third invariant says that every
+transition from the current state allowed by the operational semantics
+of the code is legal; this invariant guarantees that every sequence of
+program steps is a legal execution.
 
 Each object field is either \Def{concrete} or \Def{ghost}; concrete
 fields correspond to data present in a running program. 
@@ -321,26 +320,38 @@ the projection of an execution of the program, which allows properties
 of the program to be projected to properties of the unannotated
 program. 
 
-Each object has a Boolean ghost field that says whether it
-is \Def{closed}, and a ghost field that gives its \Def{owner}. Objects
-owned by a thread are (in the context of that thread) said to
-be \Def{mutable} when open (i.e., not closed) and \Def{wrapped} when
-closed. For an object of a user-defined type, user-define invariants
-are guaranteed to hold only when the object is closed.  When an object
-is open, only its owner can read or write it. Thus, sequential code
-normally operates on mutable objects, without having to check object
-invariants. Fields of closed objects can be updated only if they are
-marked as \Def{volatile}; such fields can be updated only by
-explicitly marked \Def{atomic action}s. 
+Each valid object has a Boolean ghost field that says whether it
+is \Def{closed}, and a ghost field that gives its \Def{owner} (which
+is also an object). In the context of a thrad, an object owned by the
+thread is said to be \Def{wrapped} if it is closed, and \Def{mutable}
+if it is open (not closed). Only threads can own open objects.
+User-defined object invariants are guaranteed to hold only when the
+object is closed. The owner of an open object has ``exclusive'' use of
+the object, and so can operate on it sequentially.  Fields of closed
+objects can be updated only if they are marked as \Def{volatile}; such
+fields can be updated only by explicitly marked \Def{atomic action}s.
 
-
+Each thread has a field that gives its ``local copy'' of the global state.
+When an activation updates an object, it also updates the local copy
+of its thread; when it reads an object, it reads from the local copy. 
+Just before each atomic action, the thread updates its local copy to
+match the global state. Verification guarantees that when a thread
+reads a field of an object, the local and global copies agree on the
+value of the field. However, assertions that mention objects not
+directly readable by the thread (without using an atomic action) might
+reference fields where the local and global copies disagree; thus,
+assertions that appear in the annotation of a thread are guaranteed to
+correspond to global assertions only at the beginning of an atomic
+action. This machinery allows us to ``pretend'' that threads are
+interrupted by other threads only just before entering explicit atomic
+actions. 
 
 \section{Preprocessing}
 
 VCC requires programs being verified to \vcc{#include <vcc.h>}. This
 should precede any annotations (after expansion of \vcc{#include}
 directives). 
- 
+\\\\
 VCC reserves (in both the program and the unannotated program) the
 preprocessor macro names \vcc{VERIFY}\footnote{ The explicit use
 of \vcc{#ifdef VERIFY} is deprecated.  }, \vcc{_VCC_H}, and the
@@ -352,7 +363,7 @@ macro. If \vcc{VERIFY} is not set, \vcc{_()} is defined as whitespace,
 resulting in the unannotated program. VCC assumes that the unannotated
 program is a legal C program, i.e. one that a conformant C compiler
 would accept.
-
+\\\\
 VCC uses the C preprocessor, so comments and macro expansion follow
 the rules of C. Preprocessor commands are permitted inside of annotations.
 
@@ -360,11 +371,11 @@ the rules of C. Preprocessor commands are permitted inside of annotations.
 
 VCC reserves identifiers starting with \vcc{\}, using them as function
 names, field names, or operators. 
-
+\\\\
 VCC adds the following infix operators. Each has the given
 associativity, and precedence that lies somewhere strictly between that
 of the given C operators. The specified unicode characters can also be used.
-
+\\\\
 \begin{tabbing}
 operator \= unicode \= code \= associativity \= precedence\\
 \\
@@ -387,6 +398,9 @@ expressions:
 \end{VCC}
 The scope of the variables declared in the declarators in the first production 
 extends to the end of the expression.
+
+The syntax of types is extended with the type constructions defined in
+section \ref{sec:types}.
 
 \subsection{Annotations}
 
@@ -416,18 +430,18 @@ Several VCC annotations allow a variable number of arguments of the
 same type. In such cases, we write the argument as a single typed
 argument followed by an ellipsis; the actual parameters are to be 
 comma separated iff the ellipsis is preceded by a comma.
-
+\\\\
 In addition to annotations, VCC also provides a number of additional
 types and functions that can be used inside of annotations. These
 types and functions all have names starting with \vcc{\}. Their syntax
 is given using conventional C declarations. 
-
+\\\\
 Certain annotations create a \Def{pure context} where state changes
 are not permitted, certain constructs are not allowed, and type
 promotions are somewhat different.  Such contexts are
 marked \vcc{:pure} in this manual; this keyword does not apepar in
 annotations.
-
+\\\\
 Certain annotations, constants, and functions can appear only in
 inside of certain contexts: 
 \begin{description}
@@ -444,7 +458,7 @@ inside the declaration of a compound type definition.
 \label{sec:types}
 Types are classified as real or ghost, depending on whether they are
 defined in a real context or a ghost context.  
-
+\\\\
 VCC types, like types in C, can be considered sets of values. In C,
 each type has a fixed finite size (i.e., the number of bytes needed to
 represent any value of that type), and therefore represents a finite
@@ -457,7 +471,7 @@ the class of its largest member (including ghost fields), so while a C
 compound type without ghost fields is finite, one with ghost fields
 might be small or large. The class of an array type is the class of
 its base type.
-
+\\\\
 All types can be classified as either \Def{primitive} types
 or \Def{object} types. Object types are compound (\vcc{struct}
 or \vcc{union}) types, array object types, \vcc{\thread}s, 
@@ -484,7 +498,7 @@ a \vcc{\natural} is equivalent to applying some unknown (but fixed)
 function from \vcc{integer} to \vcc{natural}. In any context, casting
 any integral type to \vcc{\bool} yields \vcc{\true} if the argument
 is \vcc{==} to \vcc{0} and \vcc{\false} otherwise.
-
+\\\\
 An arithmetic operator instance is said to occur in
 an \vcc{\unchecked} context if it is is a subterm of an expression
 marked \vcc{_(unchecked)}; otherwise, it is said to be checked. The
@@ -492,7 +506,7 @@ result of an expression of arithmetic type is implicitly cast
 to \vcc{\integer} if (1) the context is pure and checked, or (2) it is
 subject to a binary arithmetic operator and the other operand
 is \vcc{\natural} or \vcc{\integer}.
-
+\\\\
 The C arithmetic operators are extended to the types \vcc{\natural}
 and \vcc{\integer} with the obvious interpretation\footnote{
 Caveat: Because of compiler limitations, VCC currently does not allow
@@ -529,7 +543,7 @@ introduces \vcc{v} as a variable of type \vcc{T}.
 If \vcc{T1} is the
 type of \vcc{e}, this expression has type \vcc{T1[T]}; the resulting
 value maps each \vcc{v} to the corresponding value of \vcc{e}.
-\\
+\\\\
 If \vcc{e} is a map of
 type \vcc{T1[T2]} and \vcc{x} is a value of type \vcc{T2},
 then \vcc{e[x]} is an expression of type \vcc{T1}, whose value is
@@ -555,11 +569,11 @@ declares each \vcc{ctor} to be a constructor of values of
 type \vcc{T}. Types can be mutually recursive, but a type cannot be referenced
 before being declared. The form \vcc{_(type T)} declares \vcc{T} as a
 type without defining it.
-
+\\\\
 The \vcc{==}, \vcc{!=}, and \vcc{=} operators are extended to \vcc{T}, but
 it is an error to apply them to compare an argument of type \vcc{T}
 and an argument of another type, or to assign between such mismatched types.
-
+\\\\
 The C \vcc{switch} statement is extended to inductive types as
 follows: if \vcc{v} is an expression of type, VCC allows the program statement 
 \begin{VCC}
@@ -608,8 +622,8 @@ A pointer is characterized by the following (state-independent) parameters:
 \\\\
 \vcc{\natural \addr(\object p)}\\
 The address of \vcc{p}. If \vcc{!\ghost(p)}, 
-\vcc{\addr(p) < UINT_PTR_MAX}.
-\\\
+\vcc{\addr(p) + \sizeof_object(p) < UINT_PTR_MAX}.
+\\\\
 \vcc{\type \typeof(\object p)}\\
 The type of \vcc{p}. In C terms, this can be thought of as the type of
 object to which \vcc{p} points.
@@ -622,18 +636,17 @@ heap). If not, we say \vcc{p} is concrete.
 True if \vcc{p} is an object. 
 \\\\
 \vcc{\object \embedding(\object p)}\\
-The object of which \vcc{p} is a part of. If \vcc{p} is itself an object, the
+The object of which \vcc{p} is a part of. If \vcc{p} is an object, the
 result is undefined. If \vcc{p} is concrete and
 primitive, \vcc{\embedding(p)} is concrete.
 \\\\
 \vcc{size_t \sizeof_object(\object p)}\\
 Equivalent to \vcc{\sizeof(T)}, where \vcc{T} is the type
-of \vcc{*p}. This depends only on \vcc{\typeof(p)}. For any \vcc{p}, 
-\vcc{\sizeof_opject(p) > 0}.
+of \vcc{*p}. This depends only on \vcc{\typeof(p)}. 
 \\\\
 In a pure context, for pointers \vcc{p} and \vcc{q}, \vcc{p == q}
 iff \vcc{p} and \vcc{q} agree on all the parameters above.
-
+\\\\
 Every pointer of the program has a footprint (a set of addresses)
 defined as follows.  If \vcc{p} is concrete primitive, its footprint
 is the set of addresses
@@ -649,50 +662,58 @@ footprint is a subset of
 \vcc{e \is T} (expr)\footnote{Deprecated}\\
 \vcc{e} must be a pointer, and \vcc{T} a primitive type. 
 True iff \vcc{\typeof(e)} is \vcc{T}.
-
+\\\\
 VCC does not allow C's silent promotion of an expression of
 type \vcc{(void *)} to another pointer type; such a promotion requires
 an explicit cast\footnote{This is justified on the grounds that it avoids
 potential errors without changing the compiled code.}.
 
 \subsubsection{Pointer Sets}
-The type \vcc{\objset} represents sets of typed pointers.
-\\\\
-The Boolean infix operator \vcc{\in} takes an
-\vcc{\object} as its first argument and an \vcc{\objset} as its second,
-and returns \vcc{\true} iff the first argument is an
-element of the second.
 
-TODO: example
-The infix \vcc{+} and {-} operators are extended to operate on
-an \vcc{\objset} and a \vcc{\object}, and return the result of adding
-(respectively, removing) the value of the second argument from the
-value of the first. The \vcc{+=} an \vcc{-=} are extended analogously.
+\vcc{typedef \bool \objset[\object];} \\
+\vcc{\objset} is the type of sets of pointers. While the definition
+above will be its eventual semantics, it is currently treated 
+as a distinct type (because it is triggerred differently from other
+maps). 
 \\\\
-\vcc{\objset \everything()}\\
-\vcc{\objset \universe()}\\
-The set of all pointers.
+\vcc{_(pure) \bool \in(\object o, \objset s)} (infix operator)\\
+\vcc{_(ensures \result <==> s[o])}\footnote{
+Caveat: this is not its actual definition, for type reasons, but
+conveys the meaning.}
 \\\\
-\vcc{\bool \disjoint(\objset o1, \objset o2))}\\
-True iff \vcc{o1} and \vcc{o2} contain no common values. Note that
-this can be true even if each set contains pointers (of different
-types) with the same address.\\
+\vcc{_(pure) \objset +(\objset s, \object o)} (infix operator)\\
+\vcc{_(ensures \forall \object o1; o1 \in \result <==> o1 == o || o1 \in s)}
 \\\\
-\vcc{\bool \subset(\objset s1, \objset s2)}\\
-True iff \vcc{o1} is a subset of \vcc{o2}.
+\vcc{_(pure) \objset -(\objset s, \object o)} (infix operator)\\
+\vcc{_(ensures \forall \object o1; o1 \in \result <==> o1 != o && o1 \in s)}\\
+(\vcc{+=} and \vcc{-=} are extended analogously.)
 \\\\
-\vcc{\objset \diff(\objset s1, \objset s2)}\\
-This is an infix operator that returns the union of the sets \vcc{s1}
-and \vcc{s2}.
+\vcc{_(pure) \objset \universe()}\\
+\vcc{_(ensures \forall \object o; o \in \result)}
+\\\\
+\vcc{_(pure) \objset \everything()}\\
+\vcc{_(ensures \result == \universe())}
+\\\\
+\vcc{_(pure) \bool \disjoint(\objset o1, \objset o2))} (infix operator)\\
+\vcc{_(ensures \result <==> \forall \object o; !(o \in s1) || !(o \in s2))}
+\\\\
+\vcc{_(pure) \bool \subset(\objset s1, \objset s2)} (infix operator)\\
+\vcc{_(ensures \result <==> \forall \object o; o \in s1 ==> o \in s2)}
+\\\\
+\vcc{_(pure) \objset \diff(\objset s1, \objset s2)} (infix operator)\\
+\vcc{_(ensures \forall \object o; o \in \result <==> o \in s1 && !(o \in s2))}
+\\\\
+\vcc{_(pure) \objset \inter(\objset s1, \objset s2)} (infix operator)
+\vcc{_(ensures \forall \object o; o \in \result <==> o \in s1 || o \in s2)}
 
-\subsection{Primitive Pointers}
+\subsubsection{Primitive Pointers}
 When the \vcc{&} operator is applied to an expression of the
 form \vcc{o->f}, where \vcc{f} is of primitive type, the
 aforementioned object is \vcc{o}. When it is applied to a local
 variable, it is the object containing the variable.
 \\\\
 \vcc{_(retype)} (cast)\\
-This operator is well-defined only when oeprating on a pointer \vcc{p} to a
+This operator is well-defined only when operating on a pointer \vcc{p} to a
 primitive type. If there is a \vcc{\valid} object \vcc{o} with a field \vcc{f}
 such that \vcc{&o->f} and \vcc{p} point have the same base type and
 the same address, then this operator returns \vcc{&o->f}. Otherwise,
@@ -704,51 +725,71 @@ member is currently \vcc{\valid}.
 
 \subsubsection{Objects}
 
-Each object has a set of named \Def{fields}, each with a type
-(a \vcc{\type}), and each of which is either ghost or concrete. Each
+Each object has a set of named, typed fields, 
+each of which is either ghost or concrete. Each
 concrete field also has an offset (of type \vcc{size_t}). 
 The fields of an object are determined by its type. 
-
-For object \vcc{o} with field \vcc{f}, \vcc{&o->f} is a pointer whose
-embedding is \vcc{o}, whose type is the type of \vcc{f}, and which is
+\\\\
+For object \vcc{o} with field \vcc{f} of primitive type \vcc{T}, 
+\vcc{&o->f} is a pointer of type \vcc{T}, with 
+embedding \vcc{o}, which is
 ghost iff \vcc{o} is ghost or \vcc{f} is ghost. If \vcc{f} is a
 concrete field, \vcc{\addr(&o->f) == \addr(o) + offset},
-where \vcc{offset} is the offset of field \vcc{f}. 
-
-Every object has the following fields and invariants. Note that these
+where \vcc{offset} is the offset of \vcc{f}. 
+\\\\
+If a concrete object type has padding as part of its representation, the
+padding is essentially treated as concrete (nonvolatile) fields of
+primitive types with unknown field names.
+\\\\
+Every object\footnote{This does not include the \vcc{:ownerOb} groups defined
+below.} has the following fields and invariants. Note that these
 are true invariants, holding in all states, not only when the object
-is \vcc{\closed}.
+is \vcc{\closed}. The fields \vcc{\version}, \vcc{\volatile_version},
+and \vcc{\blobifiable} below, and the
+group \vcc{\ownerOb}, are not allowed in annotations. Also, in
+annotations, fields beginning with \vcc{\} can appear only following
+the \vcc{->} operator\footnote{This restriction should be
+eliminated.}. 
+
 \begin{VCC}
-stuct {
-  _(group \ownerOb)
+stuct <ObjectType> {
   volatile \bool \closed;
-  _(:\ownerOb) volatile \bool \owner;
   volatile \objset \owns; 
   volatile \bool \valid;  
   volatile \natural \version;
   volatile \natural \volatile_version; 
   volatile \natural \claim_count;
+  volatile \bool \blobifiable;
 
-  _(invariant \forall \object o1; \this->\closed && o1 \in \this->\owns ==> o1->\owner == \this)
+  _(group \ownerOb)
+  _(:\ownerOb) volatile \bool \owner;
+
   _(invariant :\ownerOb \unchanged(\owner) 
-                        || ((\inv2(\old(\owner)) || <\old(\owner) not of compound type>)
-                            && (\inv2(\owner) || <\owner not of compound type>)))
+                        || ((\inv2(\old(\owner)) || <\old(\owner) compound>)
+                            && (\inv2(\owner) || <\owner not compound>)))
   _(invariant :\ownerOb \owner->\closed)
   _(invariant :\ownerOb \this \in \owner->\owns)
-  _(invariant :\ownerOb \claim_count > 0 ==> \closed)
-  _(invariant :\ownerOb \approves(\owner,\claim_count))
   _(invariant :\ownerOb \closed || (\owner \is \thread))
+
+  _(invariant \forall \object o1; \this->\closed && o1 \in \this->\owns 
+                                  ==> o1->\owner == \this)
   _(invariant \closed ==> \valid)
   _(invariant \closed && (\forall \object s; s \in \owns 
-                ==> s->\closed && s->\owner == \this))
-  _(invariant \closed || \old(\this->\closed) && <\this of compound type> ==> \inv2(\this))
-  _(invariant \old(\version) <= \this->\version)
-  _(invariant \old(\volatile_version)  <= \this->\volatile_version)
-  _(invariant \unchanged(\version) ==> \unchanged(\this->\closed))
+              ==> s->\closed && s->\owner == \this))
+  _(invariant (\closed || \old(\this->\closed)) && <\this compound> 
+              ==> \inv2(\this))
 
-  // the following for every nonvolatile field f
-  _(invariant \closed && \old(\closed) ==> \unchanged(\this->f))
-  _(invariant <this is a user-defined compound type> ==>
+  _(invariant \old(\version) <= \version)
+  _(invariant \unchanged(\version) ==> \unchanged(\closed))
+  _(invariant \old(\volatile_version)  <= \this->\volatile_version)
+  _(invariant \approves(\owner,\volatile_version))
+  _(invariant \forall <field f>; <f nonvolatile> && \closed && \old(\closed) 
+                                 ==> \unchanged(f))
+
+  _(invariant \claim_count > 0 ==> \closed)
+  _(invariant \approves(\owner,\claim_count))\end{VCC}
+
+  _(invariant <\this compound> ==>
         (<type not marked _(volatile_owns)> && \old(\closed) && \closed ==> \unchanged(\owns))
      && (<type not marked _(dynamic_owns)> &&  \old(!\closed) && \closed ==> 
             \forall \object o; o \in \this->\owns <==>
@@ -757,13 +798,9 @@ stuct {
      && (\forall <field f>;
             (<\approves(\this->\owner,f) is a top-level conjunct of an invariant of this type>
                ==> \unchanged(\volatile_version) || !\closed(\this) || \unchanged(f))))
-\end{VCC}
 
-The fields \vcc{\version} and \vcc{\volatile_version}, and the
-group \vcc{\ownerOb}, are not allowed in annotations. Also, in
-annotations, fields beginning with \vcc{\} can appear only following
-the \vcc{->} operator\footnote{This restriction should be
-eliminated.}. 
+  _(invariant \old(\vald) && \valid ==> \unchanged(\blobifiable))
+\end{VCC}
 \\\\
 \vcc{\bool \wrapped(\object o)} (thread)\\
 True iff \vcc{o->\owner == \me && o->\closed}.
@@ -778,6 +815,17 @@ True iff \vcc{(o1 \in \this->\owns)}.
 If the object type is not marked \vcc{_(dynamic_owns)}
 or \vcc{_(volatile_owns)}, this function can only be used as the
 outermost function of a top-level conjunct of an invariant.
+
+\vcc{\bool \approves(\object o, f ))} (special)\\
+This function can appear only as a top-level conjunct of an object
+invariant of a type \vcc{T}, \vcc{f} must be a field of \vcc{T},
+and \vcc{o} must be a field of \vcc{T} or the expression 
+\vcc{\this->\owner}. If \vcc{o} is a field other than \vcc{\owner}, 
+\vcc{\approves(o,o)} must also be a top-level conjunt of an invariant
+of \vcc{T}. \vcc{\approves(o,f)} translates to
+\vcc{\unchanged(f) || !o || \inv2(f) || (<o is a thread> && !\unchanged(\volatile_version))}
+. 
+
 
 \subsection{States}
 \vcc{\state} (large)\\
@@ -800,34 +848,6 @@ For primitive pointer \vcc{o}, this translates to \vcc{o* == \old(o*)}
 For object \vcc{o}, this holds iff, for every field \vcc{f}
 of \vcc{o}, \vcc{\unchanged(o->f)}.
 
-\subsubsubsection{Approval}
-\label{sec:approval}
-\vcc{_(bump_volatile_version o)} (statement)\\
-This translates to 
-\begin{VCC}
-{
-  \natural n;
-  _(assume n > o->\volatile_version)    
-  _(assert \wrapped(o) ==> \writable(o))
-  _(assert o->\owner == \me)
-  o->\volatile_version = n;
-}
-\end{VCC}
-This is the only operation that changes the \vcc{\volatile_version}
-field of an object. This restriction allows \vcc{o->\volatile_version}
-to be treated essentially as \vcc{o->\version}. 
-\\\\
-\vcc{\bool \approves(\object o, f ))} (special)\\
-This function can appear only as a top-level conjunct of an object
-invariant of a type \vcc{T}, \vcc{f} must be a field of \vcc{T},
-and \vcc{o} must be a field of \vcc{T} or the expression 
-\vcc{\this->\owner}. If \vcc{o} is a field other than \vcc{\owner}, 
-\vcc{\approves(o,o)} must also be a top-level conjunt of an invariant
-of \vcc{T}. \vcc{\approves(o,f)} translates to
-\vcc{\unchanged(f) || !o || \inv2(f) || (<o is a thread> && !\unchanged(\volatile_version))}
-. 
-Note, however, that if \vcc{\approves(\this->\owner,f)} appears in 
-
 \subsubsection{Threads}
 \vcc{\thread} (small) \\
 The type of threads. 
@@ -836,92 +856,100 @@ The type of threads.
 not check this, and should be fixed.})\\
 This is a pure local variable that gives the current
 thread. 
-\\\\
-Threads are objects, but the details of their type
-are axiomatized. Part of the thread state is a local copy of 
-the whole system state. As a thread executes, its reads and writes of
-memory (concrete and ghost) are applied to both its local state and
-the global state. (It is an invariant of verified programs that reads
-find the same values in the global and local copies.)  However,
-expressions arising in pure contexts are evaluated on the local state.
-When the thread is created, and just before each atomic action (i.e.,
-when control reaches an \vcc{_(atomic)} or \vcc{_(atomic_read)}), the
-local state is set to the global 
-state. It is an invariant of a verifying VCC program that the global
-versions (volatile and nonvolatile) of all objects owned by the thread
-agree in the local and global copies, so this copy operation is
-simulated when reasoning about the thread by moving to an arbitrary
-state without changing the versions of objects owned by the thread. 
 
 \subsection{Compound Types}
  
 \subsubsection{Ghost Fields}
 Within a compound type, a field is ghost is it occurs inside the scope
 of a \vcc{_(ghost)}  annotation. Ghost fields may be of any concrete
-or ghost type. Ghost fields are stored on the ghost heap, even if they
-are of concrete type.
+or ghost type. 
 
 In annotations of a compound type, the scope of a member name includes
 the entire type definition.
 
 \subsubsection{Invariants}
 
-\vcc{\bool \inv2s(:pure \state s1,:pure \state s2,:pure \object o)}\\
+\vcc{_(pure) \bool \inv2s(:pure \state s1,:pure \state s2,:pure \object o)}\\
 If \vcc{o} is not of a user-defined compound type, the result is 
 undefined. Otherwise, it returns \vcc{\at(s2,p)}, where \vcc{p}
-is the conjunction of all of the
-user-defined type invariants in the definition of the type of \vcc{o},
+is the conjunction of all explicit 
+type invariants in the definition of the type of \vcc{o},
 with \vcc{\old(e)} replaced by \vcc{\at(s1,e)} and
-with \vcc{o} substituted for \vcc{\this}.
+with \vcc{\this} replaced with \vcc{o}.
 \\\\
-\noindent\vcc{\bool \inv2(\object o)}\\
-True iff \vcc{\inv2s(\old(\now()),\now(),o)}.
+\begin{VCC}
+_(pure) \bool \inv2(:pure \object o)
+{ \return \inv2s(\old(\now()),\now(),o); }
+\end{VCC}
 \\\\
-\vcc{\bool \inv(\object o)}\\
-True iff \vcc{\inv2s(\now(), \now(), o)}.
+\begin{VCC}
+_(pure) \bool \inv(\object o)
+{ return \inv2s(\now(), \now(), o); }
+\end{VCC}
 
 \vcc{_(invariant \bool :pure e)} (member)\\
 This defines an explicit invariant for the type in which it occurs.
 \vcc{e} can mention any part of the state, including
 static global variables. However, as there is no thread context, it
 cannot mention \vcc{\me}.
-
+\\\\
 An invariant in the declaration of type \vcc{T} forbids unwrapping if
 it can be violated in an object \vcc{o} of type \vcc{T} by
 unwrapping \vcc{o}. An invariant that forbids unwrapping must be
 written in the form \vcc{_(invariant \on_unwrap(\this,p))}. 
 \vcc{\on_unwrap(o,p)} translates to 
 \vcc{(\old(\this->\closed) && !\this->\closed ==> p)}.
-
+\\\\
 Only compound types can have explicit object invariants. Other object
 types have additional implicit object invariants.
-
+\\\\
 \vcc{:lemma} (special)
 If the \vcc{invariant} tag is followed by \vcc{:lemma}, then it is
 asserted that the invariant given follows from the other (non-lemma)
 invariants of the type. When wrapping, upwrapping, or updating an
-object of this type, invariants so marked do not have to be checked.
-
-\vcc{T \this} :pure\\
-An ocurrance of a name \vcc{f}, not beginning with \vcc{\}, that is
-declared as a member of the type is synonymous with \vcc{\this->f}. 
+object of this type, invariants so marked do not have to be checked
+\footnote{Caveat: currently, \vcc{:lemma} invariants of the form 
+\vcc{\on_unwrap(...)} are ignored.}.
+\\\\
+\vcc{const \object \this}\\
+This can be used only in object invariants, where it refers to the
+object whose invariant is being defined.
 
 \subsubsection{Structs}
-Ghost struct declarations need not declare any members (unlike in C).
 
 The infix \vcc{.} operator (selecting a field of a \vcc{struct}
 or \vcc{union} is extended in both arguments, to ghost objects and to
 records (on the left) and to ghost field names (on the right)\footnote{
 Caveat: VCC currently does not support this operator when the name begins
 with \vcc{\ }; the \vcc{->} operator must be used instead.}.
-
-
+\\\\
 The infix \vcc{->} operator (selecting a member of a struct or union
 pointed to by the first argument) is extended to ghost pointers and
 pointers to ghost types and to pointers to records on the left, and to
 ghost fields on the right.
-
+\\\\
+Ghost struct declarations need not declare any members (unlike in C).
+\\\\
 VCC currently does not allow arrays of size 0 at the end of a struct.
+\\\\
+\vcc{_(inline)} (member)\\
+This annotation must come directly before declaration of a member with
+a \vcc{struct} type. The effect is that the inner object is not considered to be an
+true object; instead, its fields are semantically fields of the
+parent struct. Invariants of the inner struct are omitted.
+\\\\
+A type definition of structure type defines two types, the usual one
+and a volatile type. The volatile type differs from the nonvolatile
+type only in that all of its explicit fields are volatile and it has
+none of the explicit invariants of the original type. Instead, the
+type gets an implicit invariant that each of its fields is
+owner-approved. 
+\\\\
+When a field of struct type is marked as \vcc{volatile}, and that
+field is of a struct type, the instance is of the volatile variant of
+that type. If the type is inlined, the individual fields are inlined
+as usual, but each of the fields is as if it was declared to be
+volatile. 
 
 \subsubsubsection{Groups}
 A group object is an artificial object that lies inside a
@@ -957,45 +985,26 @@ the current \vcc{struct}. It follows the same rules as ordinary object
 invariants; in particular, it can mention members of \vcc{G} that are
 not yet declared.
 
-\subsubsubsection{Inlining}
-
-\vcc{_(inline)} (member)\\
-This annotation must come directly before declaration of a member of compound
-type. The effect is that the inner object is not considered to be an
-true object; instead, its fields are semantically fields of the
-parent struct. Invariants of the inner struct are omitted.
-
-\subsubsubsection{Volatile structs}
-A type definition of structure type defines two types, the usual one
-and a volatile type. The volatile type differs from the nonvolatile
-type only in that all of its explicit fields are volatile and it has
-none of the explicit invariants of the original type. Instead, the
-type gets an implicit invariant that each of its fields is
-owner-approved. 
-
-When a field of struct type is marked as \vcc{volatile}, and that
-field is of a struct type, the instance is of the volatile variant of
-that type. If the type is inlined, the individual fields are inlined
-as usual, but each of the fields is as if it was declared to be
-volatile. 
-
 \subsubsection{Unions}
 If a union includes a member of primitive type, exactly one of
 these members must be be marked \vcc{_(backing_member)}. The size of
 each backing member must be at least as large as the size of the other
-members of the union. It is a vcc error to take the address of a
-primitive non-backing-member of a union. 
-
+members of the union. It is a vcc error to apply \vcc{&} to a 
+primitive non-backing-member of a union. However, all concrete members of a
+union have the same address.
+\\\\
 Members of ghost union types do not necessarily alias, so assignment
 through one member need not be reflected in the value of another
 member.  
-
+\\\\
 In any state, if a union is \vcc{\valid}, exactly one of its members
-is \vcc{\valid}. When a union is created (by \vcc{\unblobify}), the
-backing member is made active by default; otherwise, the first member
-is made active by default. 
+is \vcc{\valid}. When a union is created (by an explicit or
+implicit \vcc{\unblobify}), this member is the backing member (if
+there is one), and is otherwise the first member of the \vcc{union}.
 
 \subsubsection{Record Types}
+\vcc{_(record)}\\
+\\\\
 A record is like a C struct or union, except that it is treated as a single
 abstract value. It is declared using the same syntax as the
 declaration of a \vcc{struct} type, but with the following
@@ -1006,12 +1015,11 @@ differences:
 \item The fields of a record type cannot be marked as volatile.
 \item Record types have no invariants.
 \item Fields of a record cannot be of struct types or array types (but
-can be of map type). 
+can be of map type or record type). 
 \item If a field of a record is of union type, it must have
 a \vcc{_(backing_member)}.
 \end{itemize}
 
-\vcc{_(record)}\\
 If \vcc{e} is an expression of record type with
 fields \vcc{f1,f2,...}, and \vcc{e1,e2,...} are expressions that are
 assignment compatible with the types of fields \vcc{f1,f2,...}
@@ -1021,42 +1029,42 @@ respectively, then
 \end{VCC}
 is equal to the record \vcc{e} with the fields \vcc{f1,f2,...} set
 to the values \vcc{e1,e2,...} respectively.
-
+\\\\
 An assignment to a field of a record type are translated in the
 obvious way.
 
-
-\subsection{Array object types}
+\subsection{Array Object Types}
 An array object is an object that serves as a container for an array
 (typically of primitive type). They are typically used to allow
 ownership transfer of the elements of the array.
-
-An array  object type is  defined by the  base type and length  of the
+\\\\
+An array object type is defined by the base type and length of the
 array. If the base type of the array is a primitive type, the elements
-of the array are effectively fields  of the array. If the base type of
-the array is nonprimitive, the  array object has no fields (other than
-those present  in all objects), and  so is not very  useful. Note that
-VCC's array types  are not the same as the  apparently similar C array
-types; array  object types  cannot be defined  via typedef, nor  can a
-variable  be declared  to have  an array  object type.  Expressions of
+of the array are effectively fields of the array. If the base type of
+the array is nonprimitive, the array object has no fields (other than
+those present in all objects), and so is not very useful. Note that
+array object types are distinct from C array
+types; array object types cannot be defined via \vcc{typedef}, nor can
+a variable be declared to have an array object type. Expressions of
 array object type can only be created by casting: if \vcc{T} is a type
-and    \vcc{e}   is    an   expression    of   integral    type,   the
-expression  \vcc{(T[e]) v}  casts \vcc{v}  to  a pointer  to an  array
-object with  base type  \vcc{T} and length  \vcc{e} (where  \vcc{e} is
-evaluated in the current state).  Note that this syntax doesn't create
-a conflict with ordinary C array types, because C does not allow casts
-to array types.
-
-If the base type of an array is declared as volatile, the array has
-the implicit invariant that all changes to the array are
+and \vcc{e} is an expression of integral type, the
+expression \vcc{(T[e]) v} casts \vcc{v} to a pointer to an array
+object with base type \vcc{T} and length \vcc{e} (where \vcc{e} is
+evaluated in the current state)\footnote{Note that this syntax doesn't
+create a conflict with ordinary C array types, because C does not
+allow casts to array types.}.
+If the base type of an array is volatile, the array object has
+an implicit invariant that all changes to the array are
 owner-approved.
 \\\\
-\vcc{void \join_arrays(\object a1, \object a2)} (statement)\\
+\begin{VCC}
+coid \join_arrays(\object a1, \object a2)} (statement)\\
 \vcc{a1} and \vcc{a2} must be \vcc{\mutable}, \vcc{\writable} array objects with the same
 base type, and \vcc{a1} must immediately precede \vcc{a2}. Execution 
 invalidates these objects and makes valid the array object of the same
-type, with starting addres the same as that of \vcc{a1}, and length
+type, with starting address the same as that of \vcc{a1}, and length
 the sum of the two lengths. The new array is \vcc{\mutable}.
+\end{VCC}
 \\\\
 \vcc{void \split_array(\object a, \size_t s)} (statement)\\
 \vcc{a} must be a \vcc{\mutable}, \vcc{\writable} array object. This
@@ -1080,7 +1088,12 @@ object). The outermost object made from the blob is said to be
 ``blobifiable''; only blobifiable objects can be blobified. (This is
 to avoid accidentally making multiple objects of the same type with
 the same address.) 
-
+\\\\
+When a new object is allocated (either through a call to \vcc{malloc} or
+entry to a block with with a local variable that is not purely local),
+it is implicitly created as a blob of appropriate size and allignment,
+then implicitly unblobified to the object of specified type.
+\\\\
 To change a piece of memory from holding one type of object to holding
 another, the first object must turned into a blob, this bloc might be 
 merge with other blobs or split into smaller blocs, and finally a blob
@@ -1120,7 +1133,8 @@ the same result as \vcc{_(blob  \sizeof(o)) o}.
 Applying this to object \vcc{o}
 \vcc{requires} that there is a \vcc{\wrapped} blob with the same
 address and size as \vcc{o}. The effect is to make all of the objects
-in \vcc{\extent(o)} \vcc{\mutable}, marking \vcc{o} as blobifiable. If
+in \vcc{\extent(o)} \vcc{\mutable}, marking \vcc{o} as blobifiable and
+all other objects in \vcc{\extent{o}} as not blobifiable. If
 the type of \vcc{o} involves unions, the backing member is chosen as
 the ``active'' member of the union; if the union has no backing
 member, the first union member is chosen.
@@ -1994,7 +2008,7 @@ boundary, unlike non-ghost atomic actions. This is because the
 scheduling of ghost actions can be viewed as angelic, rather than
 demonic.
 
-\subsubsection{Atomic Actions}
+\subsubsection{Atomic Blocks}
 
 An \vcc{_(atomic)} block is a code block preceded by the
 annotation \vcc{_(atomic obs)}. Atomic blocks cannot be nested, and
@@ -2073,6 +2087,22 @@ which it is applied.
 
 \section{Utility Functions}
 
+
+
+\begin{VCC}
+_(bump_volatile_version o)} (statement)
+{
+  \natural \n;
+  _(assume n > o->\volatile_version)    
+  _(assert \wrapped(o) ==> \writable(o))
+  _(assert o->\owner == \me)
+  o->\volatile_version = n;
+}
+\end{VCC}
+This is the only operation that is allowed to update \vcc{o->\volatile_version}
+while  \vcc{o->\closed} \footnote{Caveat: \vcc{\volatile_version}
+should be exposed directly.}. 
+\\\\
 \vcc{\bool \fresh(\object o)}\\
 This predicate can appear only in a thread context or in a function or block
 \vcc{_(ensures)} annotation; it means that the object was not owned by this thread
