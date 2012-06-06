@@ -787,7 +787,7 @@ stuct <ObjectType> {
                                  ==> \unchanged(f))
 
   _(invariant \claim_count > 0 ==> \closed)
-  _(invariant \approves(\owner,\claim_count))\end{VCC}
+  _(invariant \approves(\owner,\claim_count))
 
   _(invariant <\this compound> ==>
         (<type not marked _(volatile_owns)> && \old(\closed) && \closed ==> \unchanged(\owns))
@@ -801,9 +801,9 @@ stuct <ObjectType> {
 
   _(invariant \old(\vald) && \valid ==> \unchanged(\blobifiable))
 \end{VCC}
-\\\\
+
 \vcc{\bool \wrapped(\object o)} (thread)\\
-True iff \vcc{o->\owner == \me && o->\closed}.
+\vcc{_(ensures \result <==> o->\owner == \me && o->\closed)}
 \\\\
 \vcc{_(dynamic_owns)} (compound)\\
 \vcc{_(volatile_owns)} (compound)\\
@@ -811,11 +811,12 @@ These cannot both appear on the same type definition. See the
 invariants above and the definition of \vcc{_(wrap)} for their meaning.
 \\\\
 \noindent\vcc{\bool \mine(\object o1)} (invariant)\\
-True iff \vcc{(o1 \in \this->\owns)}.
+\vcc{_(ensures \result <==> o1 \in \this->\owns)}
+\\\\
 If the object type is not marked \vcc{_(dynamic_owns)}
 or \vcc{_(volatile_owns)}, this function can only be used as the
 outermost function of a top-level conjunct of an invariant.
-
+\\\\
 \vcc{\bool \approves(\object o, f ))} (special)\\
 This function can appear only as a top-level conjunct of an object
 invariant of a type \vcc{T}, \vcc{f} must be a field of \vcc{T},
@@ -823,9 +824,7 @@ and \vcc{o} must be a field of \vcc{T} or the expression
 \vcc{\this->\owner}. If \vcc{o} is a field other than \vcc{\owner}, 
 \vcc{\approves(o,o)} must also be a top-level conjunt of an invariant
 of \vcc{T}. \vcc{\approves(o,f)} translates to
-\vcc{\unchanged(f) || !o || \inv2(f) || (<o is a thread> && !\unchanged(\volatile_version))}
-. 
-
+\vcc{\unchanged(f) || !o || \inv2(f) || (<o is a thread> && !\unchanged(\volatile_version))}. 
 
 \subsection{States}
 \vcc{\state} (large)\\
@@ -881,7 +880,7 @@ with \vcc{\this} replaced with \vcc{o}.
 _(pure) \bool \inv2(:pure \object o)
 { \return \inv2s(\old(\now()),\now(),o); }
 \end{VCC}
-\\\\
+
 \begin{VCC}
 _(pure) \bool \inv(\object o)
 { return \inv2s(\now(), \now(), o); }
@@ -903,13 +902,13 @@ written in the form \vcc{_(invariant \on_unwrap(\this,p))}.
 Only compound types can have explicit object invariants. Other object
 types have additional implicit object invariants.
 \\\\
-\vcc{:lemma} (special)
+\vcc{:lemma} (special)\\
 If the \vcc{invariant} tag is followed by \vcc{:lemma}, then it is
 asserted that the invariant given follows from the other (non-lemma)
 invariants of the type. When wrapping, upwrapping, or updating an
-object of this type, invariants so marked do not have to be checked
-\footnote{Caveat: currently, \vcc{:lemma} invariants of the form 
-\vcc{\on_unwrap(...)} are ignored.}.
+object of this type, invariants so marked do not have to be checked.
+Caveat: currently, \vcc{:lemma} invariants of the form
+\vcc{\on_unwrap(...)} are ignored.
 \\\\
 \vcc{const \object \this}\\
 This can be used only in object invariants, where it refers to the
@@ -1057,21 +1056,6 @@ If the base type of an array is volatile, the array object has
 an implicit invariant that all changes to the array are
 owner-approved.
 \\\\
-\begin{VCC}
-coid \join_arrays(\object a1, \object a2)} (statement)\\
-\vcc{a1} and \vcc{a2} must be \vcc{\mutable}, \vcc{\writable} array objects with the same
-base type, and \vcc{a1} must immediately precede \vcc{a2}. Execution 
-invalidates these objects and makes valid the array object of the same
-type, with starting address the same as that of \vcc{a1}, and length
-the sum of the two lengths. The new array is \vcc{\mutable}.
-\end{VCC}
-\\\\
-\vcc{void \split_array(\object a, \size_t s)} (statement)\\
-\vcc{a} must be a \vcc{\mutable}, \vcc{\writable} array object. This
-statement asserts that \vcc{a->\length < s}, invalidates the
-object \vcc{a}, and breaks \vcc{a} into two \vcc{\mutable} contiguous array
-objects of the same base type, the first of length \vcc{s}.
-\\\\
 \vcc{_(root_index \type T size_t s)}\\
 This macro should be applied only to a pointer \vcc{o} of type \vcc{T*}, and
 expands to \vcc{_(T *)_(T[s])}. This has the effect of giving
@@ -1134,7 +1118,7 @@ Applying this to object \vcc{o}
 \vcc{requires} that there is a \vcc{\wrapped} blob with the same
 address and size as \vcc{o}. The effect is to make all of the objects
 in \vcc{\extent(o)} \vcc{\mutable}, marking \vcc{o} as blobifiable and
-all other objects in \vcc{\extent{o}} as not blobifiable. If
+all other objects in \vcc{\extent(o)} as not blobifiable. If
 the type of \vcc{o} involves unions, the backing member is chosen as
 the ``active'' member of the union; if the union has no backing
 member, the first union member is chosen.
@@ -2100,7 +2084,7 @@ _(bump_volatile_version o)} (statement)
 }
 \end{VCC}
 This is the only operation that is allowed to update \vcc{o->\volatile_version}
-while  \vcc{o->\closed} \footnote{Caveat: \vcc{\volatile_version}
+while  \vcc{o->\closed} \footnote{Caveat: Volatile versions 
 should be exposed directly.}. 
 \\\\
 \vcc{\bool \fresh(\object o)}\\
