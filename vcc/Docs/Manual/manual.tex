@@ -753,13 +753,13 @@ eliminated.}.
 
 \begin{VCC}
 stuct <ObjectType> {
-  volatile \bool \closed;
-  volatile \objset \owns; 
-  volatile \bool \valid;  
-  volatile \natural \version;
-  volatile \natural \volatile_version; 
-  volatile \natural \claim_count;
-  volatile \bool \blobifiable;
+  _(ghost volatile \bool \closed)
+  _(ghost volatile \objset \owns)
+  _(ghost volatile \bool \valid)  
+  _(ghost volatile \natural \version)
+  _(ghost volatile \natural \volatile_version)
+  _(ghost volatile \natural \claim_count)
+  _(ghost volatile \bool \blobifiable)
 
   _(group \ownerOb)
   _(:\ownerOb) volatile \bool \owner;
@@ -786,8 +786,18 @@ stuct <ObjectType> {
   _(invariant \forall <field f>; <f nonvolatile> && \closed && \old(\closed) 
                                  ==> \unchanged(f))
 
-  _(invariant \claim_count > 0 ==> \closed)
+  _(ghost volatile \bool \used)
+  _(ghost volatile \objset \subjects)
+  _(invariant \closed ==> \used && \unchanged(\subjects))
+  _(invariant \this \is \claim && \closed ==> \forall \object o; o \in \subjects ==> 
+                \claimable(o) && o->\closed)
+  _(invariant \this \is \claim && \old(\used) ==> \used)
+  _(invariant !\old(\closed) && \closed ==> !\old(\used))  
+
+  _(invariant \claimable(\this) && \claim_count > 0 ==> \closed)
   _(invariant \approves(\owner,\claim_count))
+  _(invariant \claimable(\this) && (\closed || \old(\closed)) ==> \claim_count == 
+         <cardinality of>(\lambda \claim c; c->\closed && \this \in c->\subjects))
 
   _(invariant <\this compound> ==>
         (<type not marked _(volatile_owns)> && \old(\closed) && \closed ==> \unchanged(\owns))
@@ -1140,40 +1150,13 @@ in \vcc{_(unblobify)}.
 The type of claims. 
 \\\\
 A compound type (real or ghost) can be marked a \vcc{claimable} (just before
-the \vcc{struct} keyword in its type definition). Any type that is
-marked \vcc{claimable} has the following implicit fields and
-invariants:
-\begin{VCC}
-  volatile \natural \claim_count;
-  \objset \claimants;
-  _(invariant \claim_count == <cardinality of \claimants>)
-  _(invariant \claim_count ==> \this->\closed)
-  _(invariant \forall \object o; o \in \claimants ==> 
-       o->\closed && \this \in o->\subjects)
-  _(approves \this->\owner, \claim_count)
-\end{VCC}
-(The \vcc{\claimants} field cannot appear in assertions,
-but \vcc{\claim_count} can.)
-
-For certain state predicates \vcc{p}, and every finite \vcc{\objset s}, 
-there is an infinite set of ghost
-objects, called \Def{claims}, defined as follows:
-\begin{VCC}
-  typedef _(claimable) struct \claim {
-    volatile \bool \used;
-    _(invariant \this->\closed ==> p)
-    _(invariant \forall \object o; o \in s && \this->\closed ==>
-      o->\claimants->\claimable && \this \in o->\claimants)
-    _(invariant \old(\used) ==> \used)
-  } ^\claim;
-\end{VCC}
-(Note that these invariants are intended to hold for all states, not
-just states where the \vcc{\claim} is \vcc{\closed}.)
-We refer to \vcc{p} as the claimed property of such objects,
-and \vcc{s} as its claimed objects. 
-These claims exist for any object for which the above invariants
-are admissible.
-
+the \vcc{struct} keyword in its type definition).
+\\\\
+A \vcc{\claim} has no data beyond those in every object, but can have
+an additional invariant. For any predicate \vcc{p} that does not
+use \vcc{\old()}, there is a type of \vcc{\claim}s with
+invariant \vcc{p}, as long as the resulting type is admissible.
+\\\\
 Conceptually, when there is an atomic update, the invariants of
 updated objects are checked first, assuming only the 1-state invariants of
 all objects in the prestate. (This is the legality check.)
@@ -1183,14 +1166,14 @@ prestate, and the invariants of all updated objects. Finally, the
 invariants of all claims are checked; this proof gets to additionally
 assume that all objects (including unmodified ones) satisfy their invariants.
 \\\\
-\noindent\vcc{\bool \claims(\claim c, p)}\\
+\noindent\vcc{_(pure) \bool \claims(\claim c, :pure p)}\\
 This holds iff, in every \vcc{good} state in which \vcc{c} is
 closed, \vcc{p} holds. 
 \\\\
-\noindent\vcc{\bool \claims_object(\claim c, \object o)}\\
+\noindent\vcc{_(pure) \bool \claims_object(\claim c, \object o)}\\
 True iff \vcc{o} is one of the claimed objects of \vcc{c}.
 \\\\
-\noindent\vcc{\bool \active_claim(\claim c)}\\
+\noindent\vcc{_(pure) \bool \active_claim(\claim c)}\\
 True iff \vcc{c} is closed. However, it has the effect of also
 asserting the invariant of \vcc{c}. Asserting or assuming \vcc{\active_claim(c)}
 in a state (perhaps implicitly) is the only way to trigger
@@ -1202,16 +1185,14 @@ instantiation of the invariant of \vcc{c} in that state.
 \vcc{\bool \claimable(\object o)}\\
 Equivalent to \vcc{o->\claimable}.
 \\\\
-\vcc{\claim \make_claim(\objset s, \bool p)} (special)\\
+\vcc{\claim \make_claim(\objset s, :pure \bool p)} (special)\\
 The set \vcc{s} is evaluated in the current state, while \vcc{p} is
-not. This translates roughly to the following:
+not. \vcc{p} cannot use \vcc{\old()}. This translates roughly to the following:
 \begin{VCC}
 _(assert p)
-_(assert <the claim with invariant p and claimed objects s is
-admissible>)
+_(assert <the claim type with invariant (p && \subjects == s) is admissible>
 \claim c;
-_(assume <s is the set of claimed objects of c 
-  and \vcc{p} is the invariant of s>)
+_(assume <s is the set of claimed objects of c and \vcc{p} is the invariant of s>)
 _(assume !c->\used && !c->\closed)
 _(ghost_atomic c,s {
     _(wrap c)
@@ -1220,6 +1201,7 @@ _(ghost_atomic c,s {
       o->\claim_count ++;
       o->claimants += c;
 })
+\end{VCC}
 
 \noindent\vcc{\claim \upgrade_claim(\claim c1,..., bool p))} (statement) \\
 This creates a new claim that claims the invariants
@@ -1240,7 +1222,7 @@ It exists to trigger the following axioms:
 \end{VCC}
 and similarly for up to 4 distinct claims.
 \\\\
-\noindent\vcc{_(by_claim(\claim c)} (cast)(thread)\\
+\noindent\vcc{_(by_claim \claim c)} (cast)(thread)\\
 The target of the cast must be of the form \vcc{o->f}, where \vcc{f} must be
 a nonvolatile\footnote{
 Caveat: this should be generalized to volatile fields, where \vcc{c}
@@ -1270,7 +1252,7 @@ argument to \vcc{\make_claim}. It translates to \vcc{\at(s,e)}, where
 being executed, or the state in which the surrounding \vcc{\claims} is
 being evaluated. (If inside an \vcc{_(ensures)}, \vcc{s} is the state
 in which the function returned.)
-
+\\\\
 Within a program block, local variables (purely local or not) ocurring
 inside the second argument of \vcc{\claims} or \vcc{\make_claim} are
 implicitly wrapped in \vcc{\when_claimed}.
@@ -1278,14 +1260,14 @@ implicitly wrapped in \vcc{\when_claimed}.
 \section{Declarations}
 In general, declarations follow the C conventions regarding
 declarations and scoping, with the following exceptions. 
-
+\\\\
 Ghost declarations are enclosed in \vcc{_(ghost)}.  Top-level ghost
 declarations (global variables, typedefs, and function declarations)
 can be added anywhere a top-level C declaration can appear. Local
 ghost variable declarations can appear wherever a sequence of C
 statements can appear.  Ghost identifiers use the same namespace as
 ordinary C identifiers; is an error to shadow one with the other.
-
+\\\\
 The scope of a struct or union declaration, as well as the fields of
 such declarations, is extended to include all annotations within the
 entire compilation unit in which it appears. (However, a typedef name
@@ -1294,7 +1276,7 @@ forward.) This exception to the scoping rules of C is needed to allow
 type invariants to mention the fields of types that have not yet been
 declared (since C provides no mechanism for forward declaration of
 fields).
-
+\\\\
 If the identifier \vcc{T} is not in use as an annotation tag, the
 top-level form \vcc{_(T <decl>)} abbreviates \vcc{_(ghost T <decl>)}.
 
@@ -1311,16 +1293,15 @@ by VCC, because they can be modified by a program fragment only if it
 mentions the variable by name. (In particular, it cannot be modified
 by a function call.) Formal parameters of a function (because they are not even
 lvalues) are always purely local. 
-
+\\\\
 In a loop, purely local variables that are no updated are
 automatically asserted to not change during the loop, without
 requiring an explicit invariant.
-
+\\\\
 Purely local variables are always considered writable, and so do not
 have to be mentioned in writes clauses for blocks\footnote{This
 feature is depricated, and will likely be removed in future.}. 
-
-
+\\\\
 A purely local variable of \vcc{struct} type is treated
 as a collection of purely local variables, one per field, and so each
 field gets separately the treatment described above.
@@ -1334,7 +1315,7 @@ footnote{Without this invariant, there would be no way to admissibly
 maintain any information about the value of the variable, making it
 useless for verified programming.
 }.
-
+\\\\
 \vcc{\bool \program_entry_point()}\\
 True iff all global variables of nonprimitive types, and the dummy
 objects owning gloval variables of primitive types,
@@ -1354,7 +1335,7 @@ declaration (before the ending semicolon), in a function definition
 program block. All specifications on function declarations or
 definitions of the same function must have the identical
 specifications.
-
+\\\\
 A typedef of a type that includes a function application(s) can include
 specifications for the function(s) specified in the defined type;
 these specifications are given just before the semicolon terminating
@@ -1459,7 +1440,7 @@ point of the  call (after formal parameters have  been bound), \vcc{b}
 should evaluate to a nonzero  value (i.e., \vcc{b} is asserted at each
 call site). This also introduces  the assumption\vcc{b} to be added at
 the beginning of the function body. 
-
+\\\\
 \vcc{b} (or a top-level conjuncts of \vcc{b}) can be of the
 form \vcc{_(assume b)}. The effect is to assume \vcc{b} on every call
 to the function (i.e., to omit the \vcc{_(assert b)} that would
@@ -1591,7 +1572,7 @@ function, block, or loop).
 This annotation can appear only on the specification of a
 function \vcc{f}; we say that \vcc{f} ``publicly calls'' each of the
 functions \vcc{f1,f2,...}. 
-
+\\\\
 A function \vcc{f} ``calls'' function \vcc{g} if the body of \vcc{f}
 includes a call to \vcc{g}; if the body of \vcc{f} is visible to VCC,
 \vcc{f} ``visibly calls'' \vcc{g}. Let ``apparently calls'' by the
@@ -1600,14 +1581,14 @@ Let ``transitively calls'' be the
 transitive closure of the ``calls'' relation, and let Let ``visibly
 transitively calls'' be the transitive closure of the ``publicly
 calls'' relation. 
-
+\\\\
 For termination verification to be sound, VCC requires, but does not
 check, the following condition: if function \vcc{f} in the
 verification unit calls function \vcc{g} that is not in the
 verification unit, but does not publicly call \vcc{g}, \vcc{g}
 transitively calls \vcc{f}, and the call to \vcc{g} does not
 terminate, then \vcc{g} visibly transitively calls \vcc{f}.
-
+\\\\
 \vcc{_(decreases :pure \natural t1, t2, ...)} (contract)\\
 \\
 A \vcc{_(decreases)} annotation can appear only in the specification of a function or
@@ -1617,7 +1598,7 @@ body or block to finite tuples of \vcc{\natural}s, given by the value
 of the tuple \vcc{<f1,f2,...>}. If the annotation is on a function,
 this measure is extended to calls of the function by evaluating this
 tuple after the binding of formal parameters. 
-
+\\\\
 Any function declared \vcc{_:pure} that does not have
 a \vcc{_(decreases)} clause in its specification is given implicitly
 the annotation \vcc{_(decreases p1, p2, ...)} where the
@@ -1625,7 +1606,7 @@ sequence \vcc{p1,p2,...} is obtained from the sequence of function
 parameters by removing all parameters that are of neither 
 integral nor record type, removing all parameters of type \vcc{\bool},
 and applying \vcc{size()} to any arguments of record type.
-
+\\\\
 In the body of a function \vcc{f} with a \vcc{_(decreases)} clause, on
 any call to a function \vcc{g} that visibly transitively calls \vcc{f},
 it is asserted that the measure of the call to \vcc{g} is smaller
@@ -1636,7 +1617,7 @@ ordered as follows:
 <x1,...> = <0,x1,...>
 \end{VCC}
 the latter equation used to compare tuples of unequal length.
-
+\\\\
 If a \vcc{_(decreases)} clause is put on a loop, VCC asserts on any
 return to the head of the loop from within the loop that the measure
 on loop is smaller than the value of that measure on loop entry. If a
@@ -1681,9 +1662,7 @@ parameters, the corresponding arguments of a call must be filled with
 parameters of the form \vcc{_(ghost e)} or \vcc{_(out v)},
 where \vcc{e/v} is an expression/variable of suitable type. As in the
 declaration, these parameters must not be comma-separated.
-
-
-
+\\\\
 A call \vcc{v = f(args)}, where \vcc{v} and \vcc{args} are all pure
 local variables, is translated as follows:
 \begin{VCC}
@@ -1711,7 +1690,10 @@ the writes clauses of the called function.
 \subsection{Wrapping and Unwrapping}
 
 \vcc{_(wrap :pure \object o1, ...) (statement)}\\
-This translates roughly as follows:
+This translates roughly as follows\footnote{Caveat:
+currently, \vcc{_(wrap)} and \vcc{_(unwrap)} cannot be used in atomic
+actions (except before \vcc{_(begin_update)}. This restriction should
+be lifted.  }:
 \begin{VCC}
   foreach (\object o \in o1,...) {
     _(assert \mutable(o) && \writable(o))
@@ -1743,11 +1725,6 @@ This translates roughly to
   })
   <add o the writes set>
 \end{VCC}
-
-
-Caveat: currently, \vcc{_(wrap)} and \vcc{_(unwrap)} cannot be used in atomic
-actions (except before \vcc{_(begin_update)}. This restriction should
-be lifted.
 
 \subsubsection{Unwrapping Blocks}
 An unwrapping block has the form
