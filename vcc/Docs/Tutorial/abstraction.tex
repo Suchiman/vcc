@@ -40,7 +40,7 @@ A map \vcc{bool s[int]} can be thought of as a set of \vcc{int}s: the operation
 
 Let's then have a look at an example of a list abstracted as a set:
 
-\vccInput[linerange={types-init}]{c/07_list0.c}
+\vccInput[linerange={types-init}]{c/7.1.list0.c}
 
 \noindent
 The invariant states that:
@@ -56,7 +56,7 @@ We'll get back to this issue later.
 Now let's have a look at the specification of a function adding a
 node to the list:
 
-\vccInput[linerange={add-endspec}]{c/07_list0.c}
+\vccInput[linerange={add-endspec}]{c/7.1.list0.c}
 
 \noindent
 The writes-clause and contracts about the list being wrapped are similar to what
@@ -79,7 +79,7 @@ It doesn't talk about possible duplicates or memory allocation.
 Everything about implementation is completely abstracted away.
 Still, we need a concrete implementation, and here it goes:
 
-\vccInput[linerange={endspec-member}]{c/07_list0.c}
+\vccInput[linerange={endspec-member}]{c/7.1.list0.c}
 
 \noindent
 We allocate the node, unwrap the list, initialize the new node
@@ -146,7 +146,7 @@ It is not required to understand \secref{concurrency}.
 At minimum the list should support adding elements and checking
 for membership. For example, we would expect:
 
-\vccInput[linerange={member-endspec}]{c/07_list.c}
+\vccInput[linerange={member-endspec}]{c/7.2.list.c}
 
 \noindent
 Our current list invariant is strong enough only to show
@@ -173,21 +173,21 @@ put a ghost map from \vcc|struct Node*| to the sets.
 Alternatively, we could store these sets as a field inside of each node,
 but maps gives more flexibility in updating it using lambda expressions.
 
-\vccInput[linerange={type-init}]{c/07_list.c}
+\vccInput[linerange={type-init}]{c/7.2.list.c}
 
 \noindent
 All these changes in the invariant do not affect
 the contract of \vcc{add()} function, and the only change in the body
 is that we need to replace the update of \vcc{l->val} with the following:
 
-\vccInput[linerange={specupdate-updateend}]{c/07_list.c}
+\vccInput[linerange={specupdate-updateend}]{c/7.2.list.c}
 
 \noindent
 That is adding a node at the head only affect the followers set of the new head,
 and the followers sets of all the other nodes remain unchanged.
 Now let us have a look at the \vcc{member()} function:
 
-\vccInput[linerange={member-out}]{c/07_list.c}
+\vccInput[linerange={member-out}]{c/7.2.list.c}
 
 \noindent
 The invariants of the \vcc{for} loop state that we only iterate over
@@ -212,7 +212,7 @@ But we would also like to know that it's a permutation of the input array.
 To do that we will return a ghost map, which states the exact permutation
 that the sorting algorithm produced.
 
-\vccInput[linerange={begin-out}]{c/04_bozosort_perm.c}
+\vccInput[linerange={begin-out}]{c/7.3.bozosort_perm.c}
 
 This sample introduces two new features.
 The first is the output ghost parameter \vcc{_(out perm_t perm)}.

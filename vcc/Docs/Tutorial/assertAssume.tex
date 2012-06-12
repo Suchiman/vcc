@@ -9,7 +9,7 @@ more complex programs by reducing them to reasoning about simple programs.
 
 Let's begin with a simple example:
 
-\vccInputSC[linerange={begin-}]{c/01_minInline2.c}
+\vccInputSC[linerange={begin-}]{c/2.1.minInline.c}
 This program sets \vcc{z} to the minimum of \vcc{x} and
 \vcc{y}. In addition to the ordinary C code, this program includes an
 \Def{annotation}, starting with \vcc{_(}, terminating with a closing
@@ -68,10 +68,14 @@ C:\Somewhere\VCC Tutorial>`*/
 \end{VCC}
 
 
-If instead you wish to use VCC Visual Studio plugin, load the solution \lstinline|VCCTutorial.sln|
-\todo{make sure that VCC can verify code not in the project}
-locate the file with the example, and right-click on the program text.
-You should get options to verify the file or just this function (either will work).
+If instead you wish to use VCC Visual Studio plugin, load the solution
+\lstinline|tutorial.sln| in
+\lstinline|<vcc source dir>\vcc\vcc\Docs\Tutorial|, 
+locate the file with the example, and
+right-click on the program text.  You should get options to verify the
+file or just this function (either will work). The solution has the
+examples from this tutorial arrange by section, named so that they
+will appear within the project in textual order.
 
 If you right-click within a C source file,
 several VCC commands are made available, depending on what kind of
@@ -90,9 +94,11 @@ VCC verifies this function successfully, which means that its
 assertions are indeed guaranteed to hold and that the program cannot
 crash.%
 \footnote{
-  VCC currently doesn't check that your program doesn't run forever or
-  run out of stack space, but future versions will, at least for sequential
-  programs.  
+  VCC will not check that this program terminates, because the program
+  hasn't been specified as having to terminate; we will see later how
+  to provide such specifications. VCC also doesn't check that the
+  program doesn't run out of stack space, but this feature may be
+  provided in some future version.  
 }
 If VCC is unable
 to prove an assertion, it reports an error.  Try changing the
