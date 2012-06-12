@@ -38,7 +38,7 @@ For example, consider the following type definition of \vcc{'\0'}-terminated
 safe strings implemented with statically allocated arrays (we'll see
 dynamic allocation later).
 
-\vccInput[linerange={obj-init}]{c/05_safestring.c}
+\vccInput[linerange={obj-init}]{c/6.1.safestring.c}
 
 \noindent
 The invariant of \vcc{SafeString} states that consistent
@@ -58,7 +58,7 @@ part of representation of some higher-level objects).
 After allocating an object we would usually wrap it to make sure its invariant holds
 and prepare it for later use:
 
-\vccInput[linerange={init-append}]{c/05_safestring.c}
+\vccInput[linerange={init-append}]{c/6.1.safestring.c}
 
 \noindent
 For a pointer \vcc{p} of structured type, \vcc{\span(p)} returns the
@@ -88,13 +88,13 @@ members to the writes set of a function, so such a function has to
 report that it writes the object, but does not have to report writing
 the fields of the object.
 
-\vccInput[linerange={append-index}]{c/05_safestring.c}
+\vccInput[linerange={append-index}]{c/6.1.safestring.c}
 
 \noindent
 Finally, a function that only reads an object need not unwrap, and so
 will not list it in its writes clause. For example:
 
-\vccInput[linerange={index-out}]{c/05_safestring.c}
+\vccInput[linerange={index-out}]{c/6.1.safestring.c}
 
 The following subsection explains this wrap/unwrap protocol in more details.
 
@@ -185,7 +185,7 @@ It can be only used in specifications.
 
 The assert\slash assume desugaring of the \vcc{sstr_append_char()} function looks as follows:
 
-\vccInput[linerange={assert-out}]{c/05_safestring_assert.c}
+\vccInput[linerange={assert-out}]{c/6.2.safestring_assert.c}
 
 \subsection{Ownership trees}
 \label{sect:ownership}
@@ -200,7 +200,7 @@ In real programs such abstraction become hierarchical, \eg an address book might
 of which consists of a control object, an array of buckets,
 and the attached linked lists.
 
-\vccInput[linerange={obj-append}]{c/06_safestring_dynamic.c}
+\vccInput[linerange={obj-append}]{c/6.3.safestring_dynamic.c}
 
 \noindent
 In C the type \vcc{char[10]} denotes an array with exactly 10 elements.
@@ -248,7 +248,7 @@ assert that \vcc{o} is wrapped and writable and set \vcc{o->\owner} to \vcc{p}.
 \end{enumerate}
 Let's have a look at an example:
 
-\vccInput[linerange={append-alloc}]{c/06_safestring_dynamic.c}
+\vccInput[linerange={append-alloc}]{c/6.3.safestring_dynamic.c}
 
 \noindent
 First, let's explain the syntax:
@@ -271,7 +271,7 @@ Finally, we wrap the string.
 This transfers ownership of the content from the current thread to the string, so the content is no longer wrapped (but still closed).
 Second, let's have a look at the assert\slash assume translation:
 
-\vccInput[linerange={append-out}]{c/06_safestring_dynamic_assert.c}
+\vccInput[linerange={append-out}]{c/6.4.safestring_dynamic_assert.c}
 
 \noindent
 To make it easier to read, we made it store the \vcc{s->content} pointer
@@ -303,7 +303,7 @@ during wrapping need to performed explicitly, but \vcc{\mine(...)} can
 be freely used in its invariant, including using it under a universal
 quantifier.
 
-\vccInput[linerange={obj-set}]{c/07_table.c}
+\vccInput[linerange={obj-set}]{c/6.5.table.c}
 
 \noindent
 The invariant of \vcc{struct SafeContainer} states that it owns its underlying array,
@@ -339,7 +339,7 @@ Note that when no ownership transfers are needed, one can just unwrap
 and wrap the object, without worrying about ownership.
 Let's have a look at an example, which does perform an ownership transfer:
 
-\vccInput[linerange={set-use}]{c/07_table.c}
+\vccInput[linerange={set-use}]{c/6.5.table.c}
 
 \noindent
 The \vcc{sc_set()} function transfers ownership of \vcc{s} to \vcc{c},
@@ -361,7 +361,7 @@ Moreover, it promises that this object is \Def{fresh}, \ie the thread did not ow
 it directly before.
 This can be used at a call site:
 
-\vccInput[linerange={use-out}]{c/07_table.c}
+\vccInput[linerange={use-out}]{c/6.5.table.c}
 
 \noindent
 In the contract of \vcc{sc_add} the string \vcc{s} is mentioned

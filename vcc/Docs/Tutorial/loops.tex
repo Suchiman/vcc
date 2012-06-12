@@ -25,7 +25,7 @@ the loop body.
 %in the loop body.
 
 Let's look at an example:
-\vccInput[linerange={begin-}]{c/02_div.c}
+\vccInput[linerange={begin-}]{c/5.1.div.c}
 \noindent
 
 The \vcc{divide()} function computes the quotient and remainder of integer division
@@ -34,7 +34,7 @@ of \vcc{x} by \vcc{d} using the classic division algorithm.
 %% the specification language, but not into C.)
 The loop invariant says that we have a suitable answer, except with a
 remainder that is possibly too big. VCC translates this example roughly as follows:
-\vccInput[linerange={begin-end}]{c/02_div_assert.c}
+\vccInput[linerange={begin-end}]{c/5.2.div_assert.c}
 
 \noindent
 Note that this translation has removed all cycles from the control
@@ -88,7 +88,7 @@ occurs within an array:
 %% The second postcondition says that 
 %% To express that an element is not in an array we will use a universal quantifier:
 
-\vccInput[linerange={begin-}]{c/03_lsearch_full.c}
+\vccInput[linerange={begin-}]{c/5.3.lsearch_full.c}
 
 %% Moved the discussion of quantification to the section on
 %% assertions; this just isn't an appropriate place to talk about
@@ -118,14 +118,14 @@ can.
 Let's see an example of such implicit writes clause,
 a reinterpretation of \vcc{my_memcpy()} from \secref{TODO}.
 
-\vccInput[linerange={begin-end}]{c/04_copy_array.c}
+\vccInput[linerange={begin-end}]{c/5.4.copy_array.c}
 
 If the loop does not write everything the function can write
 you will often want to provide explicit write clauses.
 Here's a variation of \vcc{memcpy()}, which clears (maybe for security reasons)
 the source buffer after copying it.
 
-\vccInput[linerange={begin-end}]{c/04_copy_and_clear_array.c}
+\vccInput[linerange={begin-end}]{c/5.5.copy_and_clear_array.c}
 
 \noindent
 If the second loops did not provide a writes clause,
@@ -143,7 +143,7 @@ is sorted, and repeating otherwise.
 We do not recommend using it in production code:
 it's not stable, and moreover has a fairly bad time complexity.
 
-\vccInput[linerange={begin-out}]{c/04_bozosort.c}
+\vccInput[linerange={begin-out}]{c/5.6.bozosort.c}
 
 The specification that we use is that the output of the sorting routine is sorted.
 Unfortunately, we do not say that it's actually a permutation of the input.

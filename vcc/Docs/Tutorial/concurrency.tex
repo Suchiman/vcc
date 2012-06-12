@@ -20,7 +20,7 @@ We do that through ownership -- the spin-lock will protect some object,
 and will own it whenever it is not acquired.
 Thus, the following invariant should come as no surprise:
 
-\vccInput[linerange={lock-init}]{c/08_lockw.c}
+\vccInput[linerange={lock-init}]{c/8.1.lockw.c}
 
 \noindent
 We use a ghost field to hold a reference to the object meant to be protected
@@ -42,7 +42,7 @@ it while the object is closed; normally this is not possible).
 
 First, let's have a look at lock initialization:
 
-\vccInput[linerange={init-xchg}]{c/08_lockw.c}
+\vccInput[linerange={init-xchg}]{c/8.1.lockw.c}
 
 \noindent
 One new thing there is the use of \Def{ghost parameter}.
@@ -69,7 +69,7 @@ Now we can see how we operate on volatile fields.
 We shall start with the function releasing the lock, as it is simpler,
 than the one acquiring it.
 
-\vccInput[linerange={release-out}]{c/08_lockw.c}
+\vccInput[linerange={release-out}]{c/8.1.lockw.c}
 
 \noindent
 First, let's have a look at the contract.
@@ -127,13 +127,13 @@ we need to know it is closed.
 For example, should we forget to mention \vcc{l->protected_obj}
 in the writes clause VCC will complain about:
 
-\vccInput[linerange={out-999}]{c/08_lockw_wrong.c}
+\vccInput[linerange={out-999}]{c/8.2.lockw_wrong.c}
 
 \noindent
 As another example, should we forget to perform the ownership transfer inside of \vcc{Release()}, VCC will complain
 about the invariant of the lock:
 
-\vccInput[linerange={out-999}]{c/08_lockw_wrong2.c}
+\vccInput[linerange={out-999}]{c/8.3.lockw_wrong2.c}
 
 Let's then move to \vcc{Acquire()}. 
 The specification is not very surprising: it requires the lock to be wrapped,
@@ -142,7 +142,7 @@ and moreover, that the thread didn't directly own it before.
 This is much like the postcondition on \vcc{sc_add()} function
 from \secref{dynamic-ownership}.
 
-\vccInput[linerange={acquire-release}]{c/08_lockw.c}
+\vccInput[linerange={acquire-release}]{c/8.1.lockw.c}
 
 \noindent
 The \vcc{InterlockedCompareAndExchange()} function is a compiler built-in,
@@ -159,7 +159,7 @@ It is presented only to the VCC compiler (it is enclosed in
 \vcc{_(atomic_inline ...)}) so that the normal compiler doesn't get confused
 about it.
 
-\vccInput[linerange={xchg-acquire}]{c/08_lockw.c}
+\vccInput[linerange={xchg-acquire}]{c/8.1.lockw.c}
 
 \noindent
 This is one of the places where one needs to be very careful,
@@ -236,7 +236,7 @@ definition, and change the contract on the functions operating
 on the lock. As the changes are very similar we'll only
 show \vcc{Release()}.
 
-\vccInput[linerange={release-struct_data}]{c/08_lock_claimsobj.c}
+\vccInput[linerange={release-struct_data}]{c/8.4.lock_claimsobj.c}
 
 \noindent
 We pass a ghost parameter holding a claim.
@@ -264,7 +264,7 @@ VCC even provides a syntax to say something is wrapped and has no claims: \vcc{\
 When creating (or destroying) a claim one needs to list the claimed objects.
 Let's have a look at an example.
 
-\vccInput[linerange={create_claim-out}]{c/08_lock_claimsobj.c}
+\vccInput[linerange={create_claim-out}]{c/8.4.lock_claimsobj.c}
 
 This function tests that we can actually create a lock, create a claim on it,
 use the lock, and then destroy it.
@@ -327,7 +327,7 @@ but also what are the allowed \emph{changes} to objects.
 For example, let's take a counter keeping track of certain operations
 since the beginning of the program.
 
-\vccInput[linerange={counter-reading}]{c/09_counter.c}
+\vccInput[linerange={counter-reading}]{c/8.5.counter.c}
 
 \noindent
 Its first invariant is a plain single-state invariant -- for some reason
@@ -422,7 +422,7 @@ are impossible to make transitive.
 
 Consider the following structure definition:
 
-\vccInput[linerange={reading-endreading}]{c/09_counter.c}
+\vccInput[linerange={reading-endreading}]{c/8.5.counter.c}
 
 \noindent 
 It is meant to represent a reading from a counter.
@@ -513,7 +513,7 @@ When constructing a claim, you can specify additional invariants to put on
 the imaginary definition of the claim structure.
 Let's have a look at annotated version of our previous \vcc{foo()} function.
 
-\vccInput[linerange={readtwice-endreadtwice}]{c/09_counter.c}
+\vccInput[linerange={readtwice-endreadtwice}]{c/8.5.counter.c}
 
 \noindent
 Let's give a high-level description of what's going on.
@@ -617,7 +617,7 @@ This is pretty much how claims work in VCC, and indeed they were modeled after t
 real-world scenario. 
 Below we have an example of prototypical reference counter.
 
-\vccInput[linerange={refcnt-init}]{c/10_rundown.c}
+\vccInput[linerange={refcnt-init}]{c/8.6.rundown.c}
 
 \noindent
 Thus, a \vcc{struct RefCnt} owns a resource, and makes sure that the number of outstanding
@@ -627,7 +627,7 @@ with \vcc{_(claimable)}.
 The lowest bit is used to disable giving out of new references
 (this is expressed in the last invariant).
 
-\vccInput[linerange={init-incr}]{c/10_rundown.c}
+\vccInput[linerange={init-incr}]{c/8.6.rundown.c}
 
 \noindent
 Initialization shouldn't be very surprising:
@@ -635,7 +635,7 @@ Initialization shouldn't be very surprising:
 and thus on initialization we require a resource without any outstanding
 claims.
 
-\vccInput[linerange={incr-decr}]{c/10_rundown.c}
+\vccInput[linerange={incr-decr}]{c/8.6.rundown.c}
 
 \noindent
 First, let's have a look at the function contract.
@@ -664,7 +664,7 @@ Thus, inside an atomic update on \vcc{p->\owner} (which will check the invariant
 claims on \vcc{p}.
 The same rule applies to claim destruction:
 
-\vccInput[linerange={decr-use}]{c/10_rundown.c}
+\vccInput[linerange={decr-use}]{c/8.6.rundown.c}
 
 \noindent
 A little tricky thing here, is that we need to make use of the \vcc{handle} claim
@@ -676,7 +676,7 @@ about overflow in \vcc{v - 2} in the second atomic block.
 
 Finally, let's have a look at a possible use scenario of our reference counter.
 
-\vccInput[linerange={use-enduse}]{c/10_rundown.c}
+\vccInput[linerange={use-enduse}]{c/8.6.rundown.c}
 
 \noindent
 The \vcc{struct B} contains a \vcc{struct A} governed by a reference counter.

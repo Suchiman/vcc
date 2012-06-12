@@ -5,7 +5,7 @@ Next we turn to the specification of functions. We'll take the example
 from the previous section, and pull the computation of the minimum of
 two numbers out into a separate function:
 
-\vccInput[linerange={begin-}]{c/01_min2.c}
+\vccInput[linerange={begin-}]{c/3.1.min2.c}
 
 (The listing above presents both the source code and the output
 of VCC, typeset in a different fonts, and 
@@ -42,7 +42,7 @@ is provided by three types of annotations:
 
 For example, we can provide a suitable specification for \vcc{min()} as
 follows:
-\vccInput[linerange={min-endmin,out-}]{c/01_min3.c}
+\vccInput[linerange={min-endmin,out-}]{c/3.2.min3.c}
 \noindent
 (Note that the specification of the function comes after the header and
 before the function body; you can also put specifications on function
@@ -73,7 +73,7 @@ call with an assertion of the preconditions of the function, sets the
 return value to an arbitrary value, and finally assumes each
 postcondition of the function. 
 For example, VCC translates the program above roughly as follows:
-\vccInput[linerange={begin-end}]{c/01_min_assert.c}
+\vccInput[linerange={begin-end}]{c/3.3.min_assert.c}
 
 Note that the assumptions above are ``harmless'', that is in a fully
 verified program they will be never violated, as each follows
@@ -220,7 +220,7 @@ nor writable).
 %\secref{concurrency}.
 
 Let's have a look at an example:
-\vccInput[linerange={begin-}]{c/01_rw.c}
+\vccInput[linerange={begin-}]{c/3.4.rw.c}
 \noindent
 The function \vcc{write_wrong} fails because \vcc{p} is only
 mutable, and not writable.
@@ -282,7 +282,7 @@ pointers.
 
 Here is a simple example of a function that visibly reads and writes
 memory; it simply copies data from one location to another.
-\vccInput[linerange={begin-}]{c/01_copy1.c}
+\vccInput[linerange={begin-}]{c/3.5.copy1.c}
 In the postcondition the expression \vcc{\old(E)} returns the value
 the expression \vcc{E} had on function entry.
 Thus, our postcondition states that the new value of \vcc{*to}
@@ -338,7 +338,7 @@ _(writes &ar[0], &ar[1], ..., &ar[sz-1])
 
 For example, the function below is recursive implementation of the 
 C standard library \vcc{memcpy()} function:
-\vccInput[linerange={begin-end}]{c/01_copy_array.c}
+\vccInput[linerange={begin-end}]{c/3.6.copy_array.c}
 It requires that array \vcc{src} is thread-local,
 \vcc{dst} is writable, and they do not overlap.
 It ensures that, at all indices, \vcc{dst} has the
@@ -346,31 +346,85 @@ value \vcc{src}. The next section presents a more conventional implementation us
 
 \todo{Should we talk about termination here?}
 
-\subsection{Logic functions}
-\todo{These should probably be put into an appendix, or just left out altogeather in favor of pure functions. 
-It certainly could be delayed, right?}
-Just like with programs, as the specifications get more complex,
-it's good to structure them somewhat.
-One mechanism provided by VCC for that is \Def{logic functions}.
-They essentially work as macros for pieces of specification,
-but prevent name capture and give better error messages.
-For example:
-\vccInput[linerange={beginsp-endsp}]{c/01_issorted.c}
+\subsection{Pure functions}
+\label{sect:pureFunctions}
+A \Def{pure function} is one that has no side effects on the program
+state. In VCC, pure functions are not allowed to allocate memory, and can
+write only to local variables. Only pure functions can be called within VCC
+annotations. 
+
+The function \vcc{min()} above
+example of a function that can be declared to be pure; this is done by
+adding the modifier \vcc{_(pure)} to the beginning of the function specification,
+\eg
+\begin{VCC}
+_(pure) min(int x, int y) ...
+\end{VCC}
+
+Being pure is a stronger condition that simply having an empty writes
+clause. This is because a writes clause has only to mention those side
+effects that might cause the caller to lose information (\ie
+knowledge) about the state, and as we have seen, VCC takes advantage
+of the kind of information callers maintain to limit the kinds of side
+effects that have to be reported.
+
+A pure function that you don't want to be executed can be defined as a
+logic function, which is essentially a pure function that is defined
+only for specification purposes, and uses the following streamlined syntax:
+\vccInput[linerange={beginsp-endsp}]{c/3.7.issorted.c}
 \noindent
 A partial spec for a sorting routine could look like the following:%
 \footnote{We will take care about input being permutation of the output in \secref{ghosts}.}
-\vccInput[linerange={beginso-endso}]{c/01_issorted.c}
+\vccInput[linerange={beginso-endso}]{c/3.7.issorted.c}
 
 Logic functions are not executable, but they can be implemented:
-\vccInput[linerange={beginim-endim}]{c/01_issorted.c}
+\vccInput[linerange={beginim-endim}]{c/3.7.issorted.c}
 
-A logic function and its C implementation can be combined into one using
-\vcc{_(pure)} annotation.  This is covered in \secref{pureFunctions}.
-\todo{This isn't right, is it? Logic functions really act as macros, e.g. they cannot be
-used in triggers.}
- 
+
+\subsection{Contracts on Blocks} 
+
+Sometimes, a large function will contain an inner block that
+implements some simple functionality, but you don't want to refactor
+it into a separate function (\eg because you don't want to bother with
+having to pass in a bunch of parameters, or because you want to verify
+code without rewriting it). VCC lets you conduct your verification as
+if you had done so, by putting a function-like specification on the
+block.
+This is done by simply writing function specifications
+preceding the block, \eg
+\begin{VCC}
+...
+x = 5;
+_(requires x == 5)
+_(writes &x)
+_(ensures x == 6)
+{
+  x++;
+}
+...
+\end{VCC}
+VCC translates this by (internally) refactoring the block into a
+function, the parameters of which are the variables from the
+surrounding scope that are mentioned within the block (or the block
+specifications). The advantages of this separation is that within the block,
+VCC can ignore what it knows about the preceding context, and
+following the block, VCC can ``forget'' what it knew inside the block
+(other than what escapes through the \vcc{ensures} clauses); in each
+case, this results in less distracting irrelevant detail for the
+theorem prover.
+
+Block contracts are not allowed if the block contains a \vcc{return},
+or a \vcc{goto} to a label outside the block.
+
+Sometimes, you don't care about information flowing into the block,
+but only care about the information flowing out of the block. In this
+case, you can use the precondition \vcc{_(requires \full_context())},
+which tells VCC to verify the block using all of the information about
+what came before, but using the postconditions and writes clauses to
+hide information about what went on inside the block to the code that
+follows the block.
+
 \begin{enumerate}
-
 \item
 Write and verify a program that checks whether two sorted arrays
 contain a common element.
