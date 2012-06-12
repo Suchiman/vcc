@@ -456,17 +456,13 @@ inside the declaration of a compound type definition.
 
 \section{Types}
 \label{sec:types}
-Types are classified as real or ghost, depending on whether they are
-defined in a real context or a ghost context.  
-\\\\
-VCC types, like types in C, can be considered sets of values. In C,
-each type has a fixed finite size (i.e., the number of bytes needed to
-represent any value of that type), and therefore represents a finite
-set of possible values. VCC relaxes this restriction, and classifies
-each type by the number of possible values of that type, which is
+A type is said to be real if it is a type of the unannotated program,
+and is otherwise said to be ghost.
+Each type is classified by the number of possible values of that type, which is
 either finite, small (countable), or large (equinumerous with the
-reals); with each type below, we give the class of that type. C
-primitive types are all finite. The class of a struct or union type is
+reals). Concrete types are all finite; for each kind of ghost type 
+defined below, we give the class of that type. 
+The class of a struct or union type is
 the class of its largest member (including ghost fields), so while a C
 compound type without ghost fields is finite, one with ghost fields
 might be small or large. The class of an array type is the class of
@@ -524,6 +520,36 @@ or division by zero. However, on platforms where floating point
 exceptions do not affect control flow, verification remains sound for
 programs that uses \vcc{float}s or \vcc{double}s.
 }.
+
+\subsection{Record Types}
+\vcc{_(record)}\\
+A record is like a C struct or union, except that it is treated as a
+single abstract value.  Record types declared using the same syntax as
+the declaration of a \vcc{struct} type, but with the following
+differences:
+\begin{itemize}
+\item The keyword \vcc{struct} or \vcc{union} is immediately followed by
+ \vcc{_(record)}.
+\item The fields of a record type cannot be marked as volatile.
+\item Record types have no invariants.
+\item Fields of a record cannot be of struct types or array types (but
+can be of map type or record type). 
+\item If a field of a record is of union type, it must have
+a \vcc{_(backing_member)}.
+\end{itemize}
+
+If \vcc{e} is an expression of record type with
+fields \vcc{f1,f2,...}, and \vcc{e1,e2,...} are expressions that are
+assignment compatible with the types of fields \vcc{f1,f2,...}
+respectively, then
+\begin{VCC}
+  e / { .f1 = e1, .f2 = e2, ...}
+\end{VCC}
+is equal to the record \vcc{e} with the fields \vcc{f1,f2,...} set
+to the values \vcc{e1,e2,...} respectively.
+\\\\
+An assignment to a field of a record type are translated in the
+obvious way.
 
 \subsection{Map Types}
 \vcc{T1[T2]}\\
@@ -872,7 +898,7 @@ thread.
 Within a compound type, a field is ghost is it occurs inside the scope
 of a \vcc{_(ghost)}  annotation. Ghost fields may be of any concrete
 or ghost type. 
-
+\\\\
 In annotations of a compound type, the scope of a member name includes
 the entire type definition.
 
@@ -885,7 +911,7 @@ is the conjunction of all explicit
 type invariants in the definition of the type of \vcc{o},
 with \vcc{\old(e)} replaced by \vcc{\at(s1,e)} and
 with \vcc{\this} replaced with \vcc{o}.
-\\\\
+
 \begin{VCC}
 _(pure) \bool \inv2(:pure \object o)
 { \return \inv2s(\old(\now()),\now(),o); }
@@ -896,7 +922,7 @@ _(pure) \bool \inv(\object o)
 { return \inv2s(\now(), \now(), o); }
 \end{VCC}
 
-\vcc{_(invariant \bool :pure e)} (member)\\
+\noindent\vcc{_(invariant \bool :pure e)} (member)\\
 This defines an explicit invariant for the type in which it occurs.
 \vcc{e} can mention any part of the state, including
 static global variables. However, as there is no thread context, it
@@ -921,7 +947,7 @@ Caveat: currently, \vcc{:lemma} invariants of the form
 \vcc{\on_unwrap(...)} are ignored.
 \\\\
 \vcc{const \object \this}\\
-This can be used only in object invariants, where it refers to the
+\vcc{\this} can be used only in object invariants, where it refers to the
 object whose invariant is being defined.
 
 \subsubsection{Structs}
@@ -962,7 +988,7 @@ volatile.
 
 \subsubsubsection{Groups}
 A group object is an artificial object that lies inside a
-concrete \vcc{struct} object. The physical address and size of a group
+concrete \vcc{struct}. The physical address and size of a group
 are equal to those of the containing struct. The fields of a group
 need not be contiguous. (This means that the fields left to the
 containing struct need not be contiguous either.)
@@ -997,7 +1023,7 @@ not yet declared.
 \subsubsection{Unions}
 If a union includes a member of primitive type, exactly one of
 these members must be be marked \vcc{_(backing_member)}. The size of
-each backing member must be at least as large as the size of the other
+the backing member must be at least as large as the size of the other
 members of the union. It is a vcc error to apply \vcc{&} to a 
 primitive non-backing-member of a union. However, all concrete members of a
 union have the same address.
@@ -1010,37 +1036,6 @@ In any state, if a union is \vcc{\valid}, exactly one of its members
 is \vcc{\valid}. When a union is created (by an explicit or
 implicit \vcc{\unblobify}), this member is the backing member (if
 there is one), and is otherwise the first member of the \vcc{union}.
-
-\subsubsection{Record Types}
-\vcc{_(record)}\\
-\\\\
-A record is like a C struct or union, except that it is treated as a single
-abstract value. It is declared using the same syntax as the
-declaration of a \vcc{struct} type, but with the following
-differences:
-\begin{itemize}
-\item The keyword \vcc{struct} or \vcc{union} is immediately followed by
- \vcc{_(record)}.
-\item The fields of a record type cannot be marked as volatile.
-\item Record types have no invariants.
-\item Fields of a record cannot be of struct types or array types (but
-can be of map type or record type). 
-\item If a field of a record is of union type, it must have
-a \vcc{_(backing_member)}.
-\end{itemize}
-
-If \vcc{e} is an expression of record type with
-fields \vcc{f1,f2,...}, and \vcc{e1,e2,...} are expressions that are
-assignment compatible with the types of fields \vcc{f1,f2,...}
-respectively, then
-\begin{VCC}
-  e / { .f1 = e1, f2 = e2, ...}
-\end{VCC}
-is equal to the record \vcc{e} with the fields \vcc{f1,f2,...} set
-to the values \vcc{e1,e2,...} respectively.
-\\\\
-An assignment to a field of a record type are translated in the
-obvious way.
 
 \subsection{Array Object Types}
 An array object is an object that serves as a container for an array
@@ -1150,7 +1145,8 @@ in \vcc{_(unblobify)}.
 The type of claims. 
 \\\\
 A compound type (real or ghost) can be marked a \vcc{claimable} (just before
-the \vcc{struct} keyword in its type definition).
+the \vcc{struct} keyword in its type definition). Claimable objects
+cannot be unwrapped when their\vcc{\claim_count}s are nonzero.
 \\\\
 A \vcc{\claim} has no data beyond those in every object, but can have
 an additional invariant. For any predicate \vcc{p} that does not
@@ -1213,7 +1209,7 @@ object will fall below the \vcc{\claim_count} of the object, making it
 unable to open again, so this should normally not be the case for
 concrete objects.
 \\\\
-\vcc{\bool \account_claim(\claim c, \object o)}\\
+\vcc{_(pure) \bool \account_claim(:pure \claim c, :pure \object o)}\\
 This is semantically equivalent to \vcc{(\wrapped(c) && \claims_object(c,o))}.
 It exists to trigger the following axioms: 
 \begin{VCC}
@@ -1222,7 +1218,7 @@ It exists to trigger the following axioms:
 \end{VCC}
 and similarly for up to 4 distinct claims.
 \\\\
-\noindent\vcc{_(by_claim \claim c)} (cast)(thread)\\
+\noindent\vcc{\pure_(by_claim :pure \claim c)} (cast)(thread)\\
 The target of the cast must be of the form \vcc{o->f}, where \vcc{f} must be
 a nonvolatile\footnote{
 Caveat: this should be generalized to volatile fields, where \vcc{c}
@@ -1245,7 +1241,7 @@ that it claims every object in \vcc{s} (though it might claim
 others). It has the effect of opening \vcc{c} and decrementing
 the \vcc{\claim_cnt} of each object in \vcc{s}.
 \\\\
-\vcc{T \when_claimed(T e)} (special)\\
+\vcc{_(pure) T \when_claimed(T :pure e)} (special)\\
 This macro can appear only inside of \vcc{\claims} or in the second
 argument to \vcc{\make_claim}. It translates to \vcc{\at(s,e)}, where
 \vcc{s} is the state in which the surrounding \vcc{\make_claim} is
@@ -1261,11 +1257,11 @@ implicitly wrapped in \vcc{\when_claimed}.
 In general, declarations follow the C conventions regarding
 declarations and scoping, with the following exceptions. 
 \\\\
-Ghost declarations are enclosed in \vcc{_(ghost)}.  Top-level ghost
-declarations (global variables, typedefs, and function declarations)
-can be added anywhere a top-level C declaration can appear. Local
-ghost variable declarations can appear wherever a sequence of C
-statements can appear.  Ghost identifiers use the same namespace as
+Ghost declarations are enclosed in \vcc{_(ghost)}, or in ghost code
+blocks.  Top-level ghost declarations (global variables, typedefs, and
+function declarations) can be added anywhere a top-level C declaration
+can appear. Local ghost variable declarations can appear wherever a C
+statement can appear.  Ghost identifiers use the same namespace as
 ordinary C identifiers; is an error to shadow one with the other.
 \\\\
 The scope of a struct or union declaration, as well as the fields of
@@ -1284,19 +1280,25 @@ top-level form \vcc{_(T <decl>)} abbreviates \vcc{_(ghost T <decl>)}.
 A purely local variable is a local variable of a function (or a
 function parameter) such that neither the variable nor any nested
 member of the variable (if it is of a compound type) is subject to
-the \vcc{&} operator\footnote{
-At some future point, a variable can remain purely local if its
+the \vcc{&} operator\footnote{Caveat:
+a variable should remain purely local if its
 address is taken only inside of \vcc{_(writes)}, \vcc{_(wrap)}, and \vcc{_(unwrap)}.
+Finer-grained escape analysis might also be possible, to allow
+a function spec to declare that its use of a variable ends on function return.
 }. (That is, a variable is purely local if its
 address is never taken.) Such variables are given special treatment
 by VCC, because they can be modified by a program fragment only if it
 mentions the variable by name. (In particular, it cannot be modified
-by a function call.) Formal parameters of a function (because they are not even
+by a function call.) Formal parameters of a function (because they are not
 lvalues) are always purely local. 
 \\\\
-In a loop, purely local variables that are no updated are
+In a loop, purely local variables that are not updated are
 automatically asserted to not change during the loop, without
-requiring an explicit invariant.
+requiring an explicit invariant. Conversely, purely local variables
+that are updated are implicitly included in the writes clause for the
+loop, and so do not have to be explicitly listed \footnote{Currently,
+mentioning the variable explicitly would ruin its pure locality.
+}.
 \\\\
 Purely local variables are always considered writable, and so do not
 have to be mentioned in writes clauses for blocks\footnote{This
@@ -1307,9 +1309,9 @@ as a collection of purely local variables, one per field, and so each
 field gets separately the treatment described above.
 
 \subsection{Global Variable Declarations}
-Global variables of primitive types are each owned by a dummy
-object. If a global variable \vcc{v} of primitive type is declared as
-volatile, the dummy object has the implicit invariant
+For every global variable \vcc{v} of primitive type, there is a dummy object
+of struct type of which \vcc{v} is the only field (outside those of
+all objects). If \vcc{v} is declared as volatile, this dummy object has the implicit invariant
 \vcc{_(invariant \approves(\this->\owner,v))}
 footnote{Without this invariant, there would be no way to admissibly
 maintain any information about the value of the variable, making it
@@ -1318,7 +1320,7 @@ useless for verified programming.
 \\\\
 \vcc{\bool \program_entry_point()}\\
 True iff all global variables of nonprimitive types, and the dummy
-objects owning gloval variables of primitive types,
+objects owning global variables of primitive types,
 are \vcc{\mutable}. This function is allowed only in a thread
 context\footnote{
 Caveat: currently VCC does not check this. This should be fixed.
@@ -1342,43 +1344,42 @@ these specifications are given just before the semicolon terminating
 the typedef.
 
 \subsubsection{Activations}
-An activation of a function implicitly has several local variables: 
 
 \begin{VCC}
-typedef struct Thread {
+typedef _(volatile_owns) struct Thread {
   ...
-  volatile Activation \currentActivation;
+  volatile \object \currentActivation;
+  _(invariant \mine(\currentActivation))
   _(invariant \unchanged(\currentActivation) 
        || (\inv2(\currentActivation) && \inv2(\old(\currentActivation))))
-  _(invariant \forall \object o; \unchanged(\mine(o)) || \inv2(\currentActivation->\code))
-  
+  _(invariant \forall \object o; \unchanged(\mine(o)) || \inv2(\currentActivation))
 } Thread;
-typedef struct Activation {
+
+typedef struct f#Activation { // activation of function f
   \thread \me;  // the thread of the activation
+  \object \caller; // the activation (if any) that created me
   \objset \callerWritesSet;
   volatile \objset \currentWritesSet;
-  volatile Activation *\currentCall; // the currently active function activation (if any)
+  volatile \object \currentCall; // the currently active function activation (if any)
   volatile \bool \done; // true when the function returns
-  \object *\code;
+
   _(invariant !\old(\this->\closed) && \this->\closed ==>
      \currentCall == NULL
      && \currentWritesSet == \callerWritesSet
      && \this == \me->\currentActivation
   )
-  _(invariant \currentCall ==> \mine(currentCall))
-  _(invariant \on_unwrap(\this, \done))
+  _(invariant \currentCall ==> \currentCall
+  _(invariant \on_unwrap(\this, \done && \inv2(\caller)))
   _(invariant \unchanged(\currentWritesSet) || \inv2(code))
   _(invariant \currentCall ==> \unchanged(\currentCall)
      || (\old(\currentCall->done) && !\old(\currentCall)->closed && !\currentCall))
-  _(invariant \me->\closed)
+  _(invariant \me->\closed) 
   _(invariant \code && \mine(code))
   _(invariant \unchanged(done) || \inv2(\code))
 } Activation;
 
 // code object for a call to f
 typedef struct F#Activation {
-  \natural \paramCnt;
-  \natural \params[\natural];
   <function-specific local variables>
   <function-specific program counter>
   _(invariant <function-specific invariants>)
