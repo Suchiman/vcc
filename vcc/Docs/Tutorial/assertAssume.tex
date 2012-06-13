@@ -58,15 +58,14 @@ unimplementable mathematical operations, such as
 quantification over infinite domains.
 \end{note}
 
-To verify the function using VCC from the command line, save the source in a file called \lstinline|minimum.c|
-and run VCC as follows:
+To verify the function using VCC from the command line, save the
+source in a file called (say) \lstinline|minimum.c| and run VCC as follows:
 
 \begin{VCC}
 /*`C:\Somewhere\VCC Tutorial> vcc.exe minimum.c
 Verification of main succeeded.
 C:\Somewhere\VCC Tutorial>`*/
 \end{VCC}
-
 
 If instead you wish to use VCC Visual Studio plugin, load the solution
 \lstinline|tutorial.sln| in
@@ -125,24 +124,24 @@ assertion is known to hold when control reaches it.
 In general,
 VCC doesn't lose any information when reasoning about assignments and
 conditionals. However, we will see that VCC may lose
-loses some information when reasoning about loops,
-necessitating additional annotations.
+some information when reasoning about loops; you will then need to 
+provide annotations to make sure that it doesn't lose ``too much''.
 
 When we talk about what VCC knows, we mean what it knows in an ideal
 sense, where if it knows \vcc{E}, it also knows any logical
 consequence of \vcc{E}. In such a world, adding an assertion that
 succeeds would have no effect on whether later assertions succeed.
 VCC's ability to deduce consequences is indeed complete for many types
-of formulas (e.g. formulas that use only equalities,
-inequalities, addition, subtraction, multiplication by constants, and
-boolean connectives), but not for all formulas, so VCC will
-sometimes fail to prove an assertion, even though it ``knows'' enough
-to prove it.  Conversely, an assertion that succeeds can sometimes cause later assertions that
-would otherwise fail to succeed, by drawing VCC's attention to a
-crucial fact it needs to prove the later assertion.  This is
-relatively rare, and typically involves ``nonlinear arithmetic''
-(e.g. where variables are multiplied together), bitvector reasoning
-(\secref{bv}) or quantifiers.
+of formulas (e.g. formulas that use only equalities, inequalities,
+addition, subtraction, multiplication by constants, and boolean
+connectives), but not for all formulas, so VCC will sometimes fail to
+prove an assertion, even though it ``knows'' enough to prove it.
+Conversely, an assertion that succeeds can sometimes cause later
+assertions that would otherwise fail to succeed, by drawing VCC's
+attention to a crucial fact it needs to prove the later assertion.
+This is relatively rare, and typically involves ``nonlinear
+arithmetic'' (e.g. where variables are multiplied together), bitvector
+reasoning (\secref{bv}) or quantifiers.
 
 When VCC surprises you by failing to verify something that you think
 it should be able to verify, it is usually because it doesn't know
@@ -160,6 +159,85 @@ check whether VCC knows what you think it knows.
 \item Modify the example program so that it sets \vcc{x} and \vcc{y} to values
 that differ by at most \vcc{1} and sum to \vcc{z}. Prove that your program 
 does this correctly.
+\end{enumerate}
+
+\subsection*{Solutions}
+\begin{enumerate}
+\item The strongest postcondition is 
+\vcc{_(assert z<=x && z<=y && (z == x || z == y))}. 
+\item 
+\vcc{_(assert 2 * x == y + z)}. (Note that \vcc{_(x == (y + z)/2)}
+doesn't quite do the job; you might get a false positive because
+division rounds down.)
+\item 
+\begin{VCC}
+int main() {
+  int x,y,z;
+  x = z/2;
+  y = z-x;
+  _(assert y-x <= 1 && x-y <= 1 && x+y == z)
+  return 0;
+}
+\end{VCC}
+\end{enumerate}
+
+\subsection{Logical Operators and Quantifiers}
+
+VCC provides a number of C extensions that can be used within VCC
+annotations (such as assertions):
+\begin{itemize}
+\item
+The Boolean operator \vcc{==>} denotes logical implication; formally,
+\vcc{P ==> Q} means \vcc{((!P) || (Q))}, and is usually 
+read as ``\vcc{P} implies \vcc{Q}''. Because \vcc{==>} has lower
+precedence than the C operators, it is typically not necessary to
+parenthesize \vcc{P} or \vcc{Q}.
+\item
+The expression \vcc{\forall T v; E} evaluates to \vcc{1} if the
+expression \vcc{E} evaluates to a nonzero value for every value 
+\vcc{v} of type \vcc{T}. For example, the assertion
+\begin{VCC}
+_(assert x > 1 &&
+  \forall int i; 1 < i && i < x ==> x % i != 0)
+\end{VCC}
+\noindent checks that (\vcc{int}) \vcc{x} is a prime number. If \vcc{b}
+is an \vcc{int} array of size \vcc{N}, then
+\begin{VCC}
+_(assert \forall int i; \forall int j;
+  0 <= i && i <= j && j < N ==> b[i] <= b[j])
+\end{VCC}
+checks that \vcc{b} is sorted.
+
+\item
+Similarly, the expression \vcc{\exists T v; E} evaluates to \vcc{1} if there
+is some value of \vcc{v} of type \vcc{T} for which \vcc{E} evaluates
+to a nonzero value. For example, if \vcc{b} is an \vcc{int} array of
+size \vcc{N}, the assertion
+\begin{VCC}
+_(assert \exists int i; 0 <= i && i < N && b[i] == 0)
+\end{VCC}
+asserts that  \vcc{b} contains a zero element.
+\vcc{\forall} and \vcc{\exists} are jointly referred to as
+\Def{quantifiers}. 
+\item
+The type \vcc{\integer} represents the type of mathematical integers;
+the type \vcc{\natural} denotes the type of natural numbers.
+
+\item
+VCC provides map types; they are declared and used like arrays, but with a type
+instead of a size. For example, \vcc{\integer x[int]} declares \vcc{x}
+to be a map from C \vcc{int}s to \vcc{\integer}s, and \vcc{x[-5]} is
+the \vcc{\integer} to which \vcc{x} maps \vcc{-5}.
+
+\item
+Expressions within VCC annotations are restricted in their use of 
+functions: you can only use functions that are proved to be 
+\Def{pure}, \ie free from side effects (\secref{pureFunctions}).
+\end{itemize}
+
+
+\subsection*{Exercises}
+\begin{enumerate}
 \item Write an assertion that says that the \vcc{int} \vcc{x} is a
   perfect square (\ie a number being a square of an integer).
 \item Write an assertion that says that the \vcc{int} \vcc{x} occurs
@@ -172,6 +250,22 @@ does this correctly.
 \item Write an assertion that says that an array \vcc{b} of length
   \vcc{N} contains only perfect squares.
 \end{enumerate}
+
+\subsection*{Solutions}
+\begin{enumerate}
+\item \vcc{_(assert \exists unsigned y; x == y*y)}
+\item \vcc{_(assert \exists unsigned i; i < 10 && b[i] == x)}
+\item 
+\vcc{_(assert \forall unsigned i,j; i < j && j < N ==> b[i] != b[j])}
+\item 
+\begin{VCC}
+_(assert \forall unsigned i,j; 0 <= i && i+1 < N 
+        ==> -1 <= b[i] - b[i+1] && b[i] - b[i+1] <= 1)
+\end{VCC}
+\item 
+\vcc{_(assert \forall unsigned i; i < N ==> \exists unsigned j;  b[i] == j * j)} 
+\end{enumerate}
+
 
 \subsection{Assumptions}
 
@@ -235,7 +329,7 @@ sometimes useful:
 An assertion can also change what VCC knows after the assertion, if
 the assertion fails to verify: although VCC will report the failure as an error,
 it will assume the asserted fact holds afterward. For example, in the following
-VCC will only report an error for the first assumption and not the second:
+VCC will report an error for the first assumption, but not for the second:
 \begin{VCC}
 int x;
 _(assert x == 1)
@@ -277,4 +371,23 @@ _(assert (!p) || (q))
 \end{VCC}
 ? 
 
+\end{enumerate}
+
+\subsection*{Solutions}
+\begin{enumerate}
+\item
+\begin{VCC}
+int x,y; 
+_(assert x > 5) // fails
+_(assert x > 3) // succeeds
+_(assert x < 2) // fails
+_(assert y < 3) // fails
+\end{VCC}
+\item
+No difference for assumptions. For assertions, the order does matter,
+because the first assertion might allow the second to succeed.
+\item
+If one of the assertions succeeds, the other will also. However,
+assuming and then asserting leaves the assumption in effect for the
+code that follows, whereas asserting the conditional does not.
 \end{enumerate}

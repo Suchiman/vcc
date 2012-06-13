@@ -1,60 +1,3 @@
-\todo{if this section remains after the functions section, move the exercises from there to here,
-since they require quantification.}
-\section{Arithmetic and Quantifiers}
-\todo{move arithmetic stuff appendix in, as well as mathint and a mention of maps}
-\todo{add appendix section gathering together all annotations and extensions to C}
-
-VCC provides a number of C extensions that can be used within VCC
-annotations (such as assertions):
-\begin{itemize}
-\item
-The Boolean operator \vcc{==>} denotes logical implication; formally,
-\vcc{P ==> Q} means \vcc{((!P) || (Q))}, and is usually 
-read as ``\vcc{P} implies \vcc{Q}''. Because \vcc{==>} has lower
-precedence than the C operators, it is typically not necessary to
-parenthesize \vcc{P} or \vcc{Q}.
-
-\item
-The expression \vcc{\forall T v; E} evaluates to \vcc{1} if the
-expression \vcc{E} evaluates to a nonzero value for every value 
-\vcc{v} of type \vcc{T}. For example, the assertion
-\begin{VCC}
-_(assert x > 1 &&
-  \forall int i; 1 < i && i < x ==> x % i != 0)
-\end{VCC}
-\noindent checks that (\vcc{int}) \vcc{x} is a prime number. If \vcc{b}
-is an \vcc{int} array of size \vcc{N}, then
-\begin{VCC}
-_(assert \forall int i; \forall int j;
-  0 <= i && i <= j && j < N ==> b[i] <= b[j])
-\end{VCC}
-checks that \vcc{b} is sorted.
-
-\item
-Similarly, the expression \vcc{\exists T v; E} evaluates to \vcc{1} if there
-is some value of \vcc{v} of type \vcc{T} for which \vcc{E} evaluates
-to a nonzero value. For example, if \vcc{b} is an \vcc{int} array of
-size \vcc{N}, the assertion
-\begin{VCC}
-_(assert \exists int i; 0 <= i && i < N && b[i] == 0)
-\end{VCC}
-asserts that  \vcc{b} contains a zero element.
-\vcc{\forall} and \vcc{\exists} are jointly referred to as
-\Def{quantifiers}. 
-
-\item
-VCC also provides some mathematical types that cannot be used in
-ordinary C code (because they are too big to fit in memory);
-these include mathematical (unbounded) integers and (possibly infinite) maps. They are described in
-\secref{mathTypes}.
-
-\item
-Expressions within VCC annotations are restricted in their use of 
-functions: you can only use functions that are proved to be 
-\Def{pure}, \ie free from side effects (\secref{pureFunctions}).
-\end{itemize}
-
-
 \subsection{Overflows and unchecked arithmetic}
 \label{sect:overflows}
 
@@ -114,10 +57,22 @@ _(assert a < b)
 \end{VCC}
 Think of \vcc{_(unchecked)E} as computing the expression using mathematical 
 integers, which never overflow, and then casting the result to the desired range.
-VCC knows that \vcc{_(unchecked)E == E} if \vcc{E} fits in the proper range,
-and some other basic facts about \vcc{(unsigned)-1}.
-If you need anything else, you will need to resort to bit-vector
-reasoning (\secref{bv}).
+VCC knows that
+\begin{itemize}
+\item if the value of \vcc{E} lies within the range of its type, then 
+\vcc{E == _(unchecked) E};
+\item if \vcc{x} and \vcc{y} are \vcc{unsigned}, then 
+\vcc{_(unchecked)(x+y) == (x+y <= UINT_MAX ? x+y : x + y - UINT_MAX)},
+and similarly for other types;
+\item if \vcc{x} and \vcc{y} are \vcc{unsigned}, then
+\vcc{_(unchecked)(x-y) == (x >= y ? x - y : UINT_MAX - y + x + 1)}, and
+similarly for other types.
+\end{itemize}
+
+If you need to prove anything more, you will need to resort to bit-vector
+reasoning (below), or use ghost code to prove what you need \footnote{
+In particular, you can use iteration or recursion to prove things by
+induction.}.
 
 \subsubsection{Bitvector Reasoning}
 \label{sect:bv}
@@ -132,4 +87,3 @@ putting \lstinline|{:bv}| after the \vcc{assert} tag. For example:
 
 Assertions proved in this way cannot mention program variables, and
 can use only variables of primitive C types.
-
