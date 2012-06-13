@@ -31,9 +31,6 @@
     <Filter Include="Source Files\8 concurrency">
       <UniqueIdentifier>{f399a74f-79d4-4446-8202-887e705bfa47}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\4 arithmetic">
-      <UniqueIdentifier>{3347f04d-2509-407a-8e82-42aa93aa7aa0}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\c\3.5.copy1.c">
@@ -105,17 +102,8 @@
     <ClCompile Include="..\c\8.6.rundown.c">
       <Filter>Source Files\8 concurrency</Filter>
     </ClCompile>
-    <ClCompile Include="..\c\4.1.hash_fail.c">
-      <Filter>Source Files\4 arithmetic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\c\4.2.hash.c">
-      <Filter>Source Files\4 arithmetic</Filter>
-    </ClCompile>
     <ClCompile Include="..\c\2.1.minInline.c">
       <Filter>Source Files\2 assert and assume</Filter>
-    </ClCompile>
-    <ClCompile Include="..\c\4.3.min5.c">
-      <Filter>Source Files\4 arithmetic</Filter>
     </ClCompile>
     <ClCompile Include="..\c\3.1.min2.c">
       <Filter>Source Files\3 function contracts</Filter>
@@ -128,6 +116,18 @@
     </ClCompile>
     <ClCompile Include="..\c\3.4.rw.c">
       <Filter>Source Files\3 function contracts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\c\4.1.hash_fail.c">
+      <Filter>Source Files\2 assert and assume</Filter>
+    </ClCompile>
+    <ClCompile Include="..\c\4.3.min5.c">
+      <Filter>Source Files\2 assert and assume</Filter>
+    </ClCompile>
+    <ClCompile Include="..\c\4.2.hash.c">
+      <Filter>Source Files\2 assert and assume</Filter>
+    </ClCompile>
+    <ClCompile Include="..\5.7.solutions.c">
+      <Filter>Source Files\5 loop invariants</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

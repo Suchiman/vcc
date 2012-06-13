@@ -60,6 +60,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\5.7.solutions.c" />
     <ClCompile Include="..\c\2.1.minInline.c" />
     <ClCompile Include="..\c\3.5.copy1.c" />
     <ClCompile Include="..\c\3.6.copy_array.c" />

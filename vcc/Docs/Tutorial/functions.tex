@@ -22,9 +22,9 @@ does, we need to specify \vcc{min()} in order to verify \vcc{main()}.
 
 The specification of a function is sometimes called its \Def{contract},
 because it gives obligations on both the function and its callers. It
-is provided by three types of annotations:
+is provided by four types of annotations:
 \begin{itemize}
-\item A requirement on the caller (sometimes called the
+\item A requirement on the caller (sometimes called a
   \Def{precondition} of the function) takes the form \vcc{_(requires E)}, 
   where \vcc{E} is an expression. It says that callers of the
   function promise that \vcc{E} will hold on function entry. 
@@ -38,6 +38,10 @@ is provided by three types of annotations:
 \item The third type of contract annotation, a \Def{writes clause}, is described
   in the next section. In this example, the lack of writes clauses says that \vcc{min()}
   has no side effects that are visible to its caller.
+
+\item The last type of contract annotation, a \Def{termination clause},
+  is described in section \secref{termination}. For now, we won't bother 
+  proving that our functions terminate.
 \end{itemize}
 
 For example, we can provide a suitable specification for \vcc{min()} as
@@ -103,11 +107,6 @@ maintaining \vcc{min()} might not even know about them (e.g., if
 \subsection*{Exercises}
 \begin{enumerate}
 \item
-Try replacing the \vcc{<} in the return statement of \vcc{min()} with
-\vcc{>}. Before running VCC, can you guess which parts of the
-verification will fail?
-
-\item
 What is the effect of giving a function the specification
 \vcc{_(requires \false)}? How does it effect verification of
 the function itself? What about its callers? Can you think of a good 
@@ -130,12 +129,40 @@ Can you think of useful functions in a real program that might
 legitimately guarantee only the trivial postcondition \vcc{_(ensures \true)}?
 \end{enumerate}
 
-\subsection{Side Effects}
-\todo{move writes clauses in here, use copy example}
+\subsection*{Solutions}
+\begin{enumerate}
+
+\item
+Any function with a spec that includes \vcc{_(requires \false)} should
+verify. However, a call to such a function will only verify if the
+call itself is dead code (and VCC can prove it is dead code). Putting
+\vcc{_(requires  \false)} on a function is one way to document that nothing has
+been proven about it, and that it should not be called.
+
+\item
+The spec guarantees that \vcc{min} returns a result that is small
+enough, but nothing prevents it from always returning
+\vcc{INT_MIN}. This might be strong enough for some applications, but
+for most, you probably want the additional postcondition
+\vcc{_(ensures \result == a || \result == b)}.
+
+\item
+\begin{VCC}
+int sqrt(int x)
+_(requires x >= 0)
+_(ensures \result * \result <= x && (result + 1) * (\result + 1) > x)
+;
+\end{VCC}
+
+\item
+Many important system functions have no nontrivial guaranteed
+postcondition, save those that come from the omission of writes clauses.
+For example, a system call that tries to collect garbage might
+very well have an empty specification. 
+\end{enumerate}
 
 \subsection{Reading and Writing Memory}
 \label{sect:writes}
-\todo{add a note about stack variables}
 
 When programming in C, it is important to distinguish two kinds of
 memory access. \Def{Sequential} access, which is the default, is appropriate when
@@ -150,53 +177,59 @@ indicated in C by accessing memory through a volatile type (or through atomic
 compiler intrinsics). We consider only sequential 
 access for now; we consider atomic access in section \secref{concurrency}.
 
-To access a memory object, the object must reside at a valid memory address%
-\footnote{VCC actually uses a somewhat stronger validity condition because of 
-its typed view of memory \secref{typed-memory}.
+To access a memory object pointed to by a pointer \vcc{p}, \vcc{p}
+must point to a valid chunk of memory%
+\footnote{VCC actually enforces a stronger condition, that the memory
+  is ``typed'' according to \vcc{p}.
 }%
 . (For example, on typical hardware, its virtual address must be suitably aligned,
 must be mapped to existing physical memory, and so on.) 
 In addition, to safely access memory sequentially, the memory must not be concurrently
-written by other threads (including hardware and devices); in VCC, this condition is written
-\vcc{\thread_local(p)}, where \vcc{p} is a pointer to the memory object. VCC asserts this 
-before any sequential memory access to the object. 
+written by other threads (including hardware and devices). Most of the
+time\footnote{
+  It is also possible to read memory sequentially if it is a
+  nonvolatile field of an object that is known to be closed, even if
+  it is not owned by the thread; this allows multiple threads to
+  sequentially access shared read-only memory. 
+}, this is because the memory object is ``part of'' something that
+is ``owned'' by the thread (concepts that will be discussed later);
+we express this with the predicate 
+\vcc{\thread_local(p)}\footnote{Note that thread locality only makes sense in
+the context of a particular thread, and so cannot appear, for example,
+in type invariants.} VCC asserts this 
+before any sequential memory access to (the memory pointed to by) \vcc{p}.
 
-The three simple ways of specifying this are as follows:
-\todo{There are some problems here. First, we have unnecessarily 
-tangled up the classification of memory with the specification of functions
-by saying that they have to be in preconditions; they should instead be 
-presented as assertions. Second, as far as i can find, we never define thread locality
-anywhere, and define mutability only in passing; we should give at least 
-intuitive meanings here. Third, saying that a pointer is considered thread-local
-when you specify that it is thread-local just sounds vacuously stupid.-E
-}
+To write sequentially through \vcc{p}, you need to know \vcc{\thread_local(p)},
+and that no other thread is trying to read (sequentially or
+concurrently) through \vcc{p} at the same time\footnote{
+  You also need to know that no object invariants depend on \vcc{*p}; 
+  this is why object invariants are in effect only for closed objects, and only
+  (parts of) open objects are mutable.
+}. We write this as \vcc{\mutable(p)}. Like thread-locality,
+mutability makes sense only in the context of a particular thread.
+%%Writing via pointers other than \vcc{p} cannot make \vcc{p} non-mutable.
 
-\begin{itemize}
-\item A pointer \vcc{p} is considered \Def{thread-local}
-when you specify:
-\begin{VCC}
-_(requires \thread_local(p))
-\end{VCC}
-When reading \vcc{*p} (without additional annotations) you will need to prove \vcc{\thread_local(p)}.
+There is one further restriction on sequential writes, motivated by
+the desire to limit the possible side effects of a function call to a
+specific set of mutable objects. We could do this by adding a
+postcondition that all other parts of the state are unmodified, but
+VCC provides some sugar to make specification (and reasoning) about
+such properties more convenient and efficient. The idea is that when
+you call a function, you give it permission to write certain objects,
+but not others; \vcc{\writable(p)} expresses the condition that
+\vcc{p} is mutable and that the function has the right to write to
+\vcc{p}. Thus, when writing through \vcc{p}, VCC asserts
+\vcc{\mutable(p) && \writable(p)}.
 
-\item A pointer \vcc{p} is considered \Def{mutable} when you specify:
-\begin{VCC}
-_(requires \mutable(p))
-\end{VCC}
-All mutable pointers are also thread local.
-Writing via pointers different than \vcc{p} cannot make \vcc{p} non-mutable.
+To specify that a function needs writability of \vcc{p} at
+function entry, you add to the specification of the function the
+annotation \vcc{_(writes p)}, called a ``writes clause''. When 
+you call a function, VCC asserts that all of the objects listed in the
+writes clauses are writable on function entry.
+Moreover, if an object becomes mutable (for a thread) after entry to a
+function call, it is considered writable within that call (as long as
+it remains mutable).
 
-\item A pointer \vcc{p} is considered \Def{writable} when you specify:
-\todo{We should introduce writability as a predicate.}
-\begin{VCC}
-_(writes p)
-\end{VCC}
-Additionally, freshly allocated pointers are are also writable.
-All writable pointers are also mutable.
-To write through \vcc{p} you will need to prove that the pointer is writable.
-Deallocating \vcc{p} requires that it is writable, and afterwards
-the memory is not even thread-local anymore.
-\end{itemize}
 
 \begin{note}
 If VCC doesn't know why an object is thread local, then it has
@@ -317,6 +350,45 @@ _(assume y == _old_x)
 %\vcc{_(writes \array_range(ar,len))}
 %allows writing to all elements of the array.
 
+\subsubsection{Local Variables}
+C is different from most block-structured languages, in that it allows
+you to take the addresses of local variables (with the \vcc{&}
+operator). If you take the address of a local, nothing prevents you
+from storing that address in a data structure, and trying to
+dereference the address after the lifetime of the variable has
+ended. (The result would not be pretty.) Even if you are careful about
+its lifetime, once you take the address of a variable, you have to
+worry that its address might alias with other pointers, which is a pain.
+
+Because of this, VCC distinguishes between local variables whose
+addresses are never taken and those whose addresses are taken; the
+former are called \Def{purely local} variables. A purely local
+variable is much, much easier to reason about; you know that its value
+can be changed only by a an update that treats its name as an
+lvalue. (In particular, it cannot be modified by function calls, or by
+assignments to other variables or assignments through pointers.)
+Purely local variables are always considered thread-local (so there is
+no thread-locality check when reading them) and writable (so you never
+have to mention them in writes clauses of loops or blocks). Also, if
+you have a loop that doesn't modify a purely local variable in scope,
+VCC will automatically infer that the value of that variable is not
+changed in the loop. So you should definitely keep variables purely
+local whenever possible.
+
+A local variable that is not purely local is treated as if it was
+allocated on the heap when its lifetime starts (but without the
+possibility of allocation failure), and is freed when the lifetime
+ends. 
+
+The treatment of pure locality sometimes results in the strange
+phenomenon that changing some code near the end of a function body can
+cause verification of someting earlier in the function body to
+fail. This is because if you take the address of a local near the
+bottom, it is treated as impure for the whole function body. The
+simplest workaround in such cases is just to introduce a new local for
+the bottom part of the function\footnote{This won't effect the final
+binary produced by a decent optimizing compiler.}.
+
 \subsection{Arrays}
 
 \todo{should the inline expressions below be displayed like the writes clauses?}
@@ -344,14 +416,25 @@ It requires that array \vcc{src} is thread-local,
 It ensures that, at all indices, \vcc{dst} has the
 value \vcc{src}. The next section presents a more conventional implementation using a loop.
 
-\todo{Should we talk about termination here?}
+\subsection{Termination}
+\label{sect:termination}
+A function terminates if it is guaranteed to return to its
+caller. You can specify termination for simple functions (like the
+ones we've seen so far) by simply adding to the specification
+\vcc{_(decreases 0)}; this will do the job as long as your functions
+are not recursive. For functions that are recursive (or which look
+potentially recursive to VCC, because of potential callbacks from
+functions whose bodies are hidden from VCC), the termination clause of
+a function gives a measure that decreases for each call that might be
+part of a sequence of calls back the function. Details can be found in
+the VCC manual.
 
 \subsection{Pure functions}
 \label{sect:pureFunctions}
 A \Def{pure function} is one that has no side effects on the program
 state. In VCC, pure functions are not allowed to allocate memory, and can
 write only to local variables. Only pure functions can be called within VCC
-annotations. 
+annotations.
 
 The function \vcc{min()} above
 example of a function that can be declared to be pure; this is done by
@@ -423,71 +506,6 @@ which tells VCC to verify the block using all of the information about
 what came before, but using the postconditions and writes clauses to
 hide information about what went on inside the block to the code that
 follows the block.
-
-\begin{enumerate}
-\item
-Write and verify a program that checks whether two sorted arrays
-contain a common element.
-\item
-Write and verify a program for binary search (a program
-that checks whether a sorted array contains a given value).
-
-%\item
-%Write and verify an iterative program that sorts an array of ints using
-%bubblesort. The specification should be the same as for bozo-sort above.
-% TODO no bozo sort yet
-\item 
-Write and verify a program that takes a 2-dimensional array of ints in
-which every row and column is sorted, and checks whether a given int
-occurs in the array.
-\end{enumerate}
-
-\subsection*{Exercises}
-\label{sect:recursiveExercises}
-In the following exercises,all implementations should be recursive. You should return to these
-and write/verify iterative implementations after reading section \secref{loops}.
-\begin{enumerate}
-\item
-Could the postcondition of \vcc{copy} have been written equivalently
-as the simpler \vcc{*to == *from}? If not, why not?
-\item
-Specify and verify a program that takes two arrays and checks whether
-the arrays are equal (\ie whether they contain the same sequence of
-elements). 
-\item
-Specify and verify a program that takes an array and checks whether it
-contains any duplicate elements. Verify a recursive implementation.
-\item
-Specify and verify a program that checks whether a given array
-is a palindrome. 
-\item
-Specify and verify a program that checks whether two arrays contain a
-common element.
-\item
-Specify and verify a function that swaps the values pointed to
-by two \vcc{int} pointers. Hint: use \vcc{\old(...)} in the
-postcondition.
-\item 
-Specify and verify a function that takes a text (stored in an array) and a string
-(stored in an array) and checks whether the string occurs within the
-text.
-%\end{enumerate}
-%\begin{enumerate}
-\item
-Extend the specification of sorting to guarantee that the sort
-is stable (i.e., specify that it shouldn't change the array if it is already
-sorted).  
-\item
-Extend the specification of sorting to guarantee that the sorting
-doesn't change the set of numbers occurring in the array (though it
-might change their multiplicities). 
-\item
-Write, without using the \vcc{%} operator, logic functions that
-specify (1)~that one number (\vcc{unsigned int}) divides another
-evenly, (2)~that a number is prime, (3)~that two numbers are
-relatively prime, and (4)~the greatest common divisor of two numbers.
-\end{enumerate}
-
 
 %% \vccInput[linerange={swap-partition}]{c/04_partition.c}
 %% \vccInput[linerange={foo-}]{c/01_swap1.c}
