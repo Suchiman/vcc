@@ -60,6 +60,37 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\c\2.1.minInline.c" />
+    <ClCompile Include="..\c\3.5.copy1.c" />
+    <ClCompile Include="..\c\3.6.copy_array.c" />
+    <ClCompile Include="..\c\3.7.issorted.c" />
+    <ClCompile Include="..\c\3.1.min2.c" />
+    <ClCompile Include="..\c\3.2.min3.c" />
+    <ClCompile Include="..\c\4.3.min5.c" />
+    <ClCompile Include="..\c\3.3.min_assert.c" />
+    <ClCompile Include="..\c\3.4.rw.c" />
+    <ClCompile Include="..\c\5.1.div.c" />
+    <ClCompile Include="..\c\5.2.div_assert.c" />
+    <ClCompile Include="..\c\4.2.hash.c" />
+    <ClCompile Include="..\c\4.1.hash_fail.c" />
+    <ClCompile Include="..\c\5.3.lsearch_full.c" />
+    <ClCompile Include="..\c\5.6.bozosort.c" />
+    <ClCompile Include="..\c\7.3.bozosort_perm.c" />
+    <ClCompile Include="..\c\5.5.copy_and_clear_array.c" />
+    <ClCompile Include="..\c\5.4.copy_array.c" />
+    <ClCompile Include="..\c\6.1.safestring.c" />
+    <ClCompile Include="..\c\6.2.safestring_assert.c" />
+    <ClCompile Include="..\c\6.3.safestring_dynamic.c" />
+    <ClCompile Include="..\c\6.4.safestring_dynamic_assert.c" />
+    <ClCompile Include="..\c\7.2.list.c" />
+    <ClCompile Include="..\c\7.1.list0.c" />
+    <ClCompile Include="..\c\6.5.table.c" />
+    <ClCompile Include="..\c\8.1.lockw.c" />
+    <ClCompile Include="..\c\8.2.lockw_wrong.c" />
+    <ClCompile Include="..\c\8.3.lockw_wrong2.c" />
+    <ClCompile Include="..\c\8.4.lock_claimsobj.c" />
+    <ClCompile Include="..\c\8.5.counter.c" />
+    <ClCompile Include="..\c\8.6.rundown.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
