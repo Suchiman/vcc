@@ -144,7 +144,7 @@ Verification of B#adm succeeded.
 Verification of ticket_blob succeeded.
 Verification of f2_fail0 failed.
 testcase(45,5) : error VC9502: Call 'split_blob _(blob total)b, -20' did not verify.
-testcase(0,0) : error VC9599: (related information) Precondition: 'split position is non-negative'.
+testcase(0,0) : error VC9599: (related information) Precondition: 'split position is positive'.
 Verification of f2_fail1 failed.
 testcase(55,5) : error VC9502: Call 'split_blob _(blob total)b, 300' did not verify.
 testcase(0,0) : error VC9599: (related information) Precondition: 'pointer passed is big enough for split'.
