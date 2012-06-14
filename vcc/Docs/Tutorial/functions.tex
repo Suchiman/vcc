@@ -242,8 +242,9 @@ While mutability is a thread-level concept, writability is a property
 of a particular instance of an executing function. (That is, just
 because something is writable for you doesn't mean it will be writable
 for a function you call.) Therefore, you can't express that a function
-needs ``permission'' to write \vcc{p} by \vcc{_(requires
-  \writable(p))}, because preconditions are evaluated in the context
+needs ``permission'' to write \vcc{p} by 
+\vcc{_(requires \writable(p))},
+because preconditions are evaluated in the context
 of the caller. Instead, you specify that a function needs writability
 of \vcc{p} at function entry with the annotation \vcc{_(writes p)},
 called a ``writes clause''. When you call a function, VCC assumes that
@@ -396,7 +397,7 @@ the bottom part of the function\footnote{This won't effect the final
 binary produced by a decent optimizing compiler.}.
 
 \subsection{Arrays}
-\lavel{sect:arrays}
+\label{sect:arrays}
 
 Array accesses are a kind of pointer accesses.
 Thus, before allowing you to read an element of an array VCC checks if it's thread-local.
