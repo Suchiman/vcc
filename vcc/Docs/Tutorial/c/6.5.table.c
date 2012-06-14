@@ -32,6 +32,7 @@ void sc_set(struct SafeContainer *c,
   _(ensures \fresh(\old(c->strings[idx])))
   _(ensures c->len == \old(c->len))
   _(writes c, s)
+  _(decreases 0)
 {
   _(assert !(s \in c->\owns))
   _(unwrapping c) {

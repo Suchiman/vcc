@@ -16,6 +16,7 @@ void sstr_append_char(struct SafeString *s, char c)
   _(requires s->len < s->capacity - 1)
   _(ensures \wrapped(s))
   _(writes s)
+  _(decreases 0)
 {
   _(unwrapping s) {
     _(unwrapping (char[s->capacity])(s->content)) {
@@ -30,6 +31,7 @@ void sstr_append_char(struct SafeString *s, char c)
 struct SafeString *sstr_alloc(unsigned capacity)
   _(requires capacity > 0)
   _(ensures \result != NULL ==> \wrapped(\result))
+  _(decreases 0)
 {
   struct SafeString *s;
 

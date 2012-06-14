@@ -6,6 +6,7 @@ void memcpyandclr(unsigned char *dst, unsigned char *src, unsigned len)
   _(requires \arrays_disjoint(src, len, dst, len))
   _(ensures \forall unsigned i; i < len ==> dst[i] == \old(src[i]))
   _(ensures \forall unsigned i; i < len ==> src[i] == 0)
+  _(decreases 0)
 {
   unsigned k;
   for (k = 0; k < len; ++k)

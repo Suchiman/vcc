@@ -11,6 +11,7 @@ _(logic BOOL sorted(int *p, unsigned len)
 BOOL arrays_eq(int *p, int *q, unsigned len)
 	_(requires \thread_local_array(p, len) && \thread_local_array(q,len))
 	_(ensures \result <==> (\forall unsigned i; i < len ==> p[i] == q[i]))
+	_(decreases 0)
 {
 	for (unsigned i = 0; i < len; i++)
 		_(invariant \forall unsigned j; j < i ==> p[j] == q[j])
@@ -23,6 +24,7 @@ BOOL disjoint(int *p, unsigned lp, int *q, unsigned lq)
   _(requires \thread_local_array(p,lp) && \thread_local_array(q,lq))
   _(requires sorted(p,lp) && sorted(q,lq))
   _(ensures \result <==> \forall unsigned i,j; i < lp && j < lq ==> p[i] != q[j])
+  _(decreases 0)
 {
   unsigned i,j;
   i = 0;
@@ -32,10 +34,11 @@ BOOL disjoint(int *p, unsigned lp, int *q, unsigned lq)
     _(invariant \forall unsigned x,y; x < i && y >= j && y < lq ==> p[x] < q[y])
     _(invariant \forall unsigned x,y; y < j && x >= i && x < lp ==> q[y] < p[x])
     _(invariant \forall unsigned x,y; x < i && y < j ==> p[x] != q[y])
+	_(decreases lp - i + lq - j)
   {
-    if (p[i] < q[j]) i++; continue;
-    if (p[i] > q[j]) j++; continue;
-    return FALSE;
+    if (p[i] < q[j]) i++;
+    else if (p[i] > q[j]) j++; 
+    else return FALSE;
   }
 return TRUE;
 }
@@ -47,18 +50,20 @@ unsigned binary_search(int *p, unsigned len, int val)
 	_(ensures \result <= len)
 	_(ensures \result == len ==> \forall unsigned i; i < len ==> p[i] != val)
 	_(ensures \result < len ==> p[\result] == val)
+	_(decreases 0)
 {
 	unsigned i = 0;
 	unsigned j = len;
 	while (i < j) 
-		_(invariant j <= len)
+		_(invariant i <= j && j <= len)
 		_(invariant \forall unsigned u; u < i ==> p[u] < val)
 		_(invariant \forall unsigned u; j <= u && u < len ==> p[u] > val)
+		_(decreases j - i)
 	{
 		unsigned k = i + (j-i)/2;
-		if (p[k] > val) j = k; continue;
-		if (p[k] < val) i = k+1; continue;
-		return k;
+		if (p[k] > val) j = k;
+		else if (p[k] < val) i = k+1; 
+		else return k;
 	}
 	return len;
 }
@@ -67,12 +72,14 @@ unsigned binary_search(int *p, unsigned len, int val)
 BOOL no_dups(int *p, unsigned len)
 	_(requires \thread_local_array(p,len))
 	_(ensures \result <==> \forall unsigned i,j; i < len && j < len && p[i] == p[j] ==> i==j)
+	_(decreases 0)
 {
 	unsigned i=0, j=0;
 	while (i < len) 
 		_(invariant j <= i && i <= len)
 		_(invariant \forall unsigned u,v; (u < i && v < i) || (u == i && v < j)
 			==> (p[u] == p[v] ==> u == v))
+		_(decreases len-i, len-j)
 	{
 		if (j==i) {
 			j = 0;
@@ -90,8 +97,10 @@ void reverse(int *p, unsigned len)
 	_(requires \mutable_array(p,len))
 	_(writes \array_range(p,len))
 	_(ensures \forall unsigned i; i < len ==> p[i] == \old(p[len-i-1]))
+	_(decreases 0)
 {
 	for (unsigned i = 0; i < len/2; i++)
+		_(decreases len/2 - i)
 		_(invariant \forall unsigned j; j < i ==> p[j] == \old(p[len-j-1]) && p[len-j-1] == \old(p[j]))
 		_(invariant \forall unsigned j; j >= i && j < len-i ==> p[j] == \old(p[j]))
 	{
