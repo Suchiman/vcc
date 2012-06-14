@@ -3232,6 +3232,16 @@ axiom (forall S:$state, sz:int, p, a:$ptr ::
   {$in(p, $composite_extent(S, a, $blob_type(sz)))}
   $in(p, $composite_extent(S, a, $blob_type(sz))) <==> p == a);
 
+//function $blob_differentiator(S:$state, rf:int) : $ptr;
+     // $blob_differentiator(S, rf) == $address_root(rf, $blob_type(sz)));
+
+axiom (forall S:$state, r1, s1, r2, s2:int ::
+  {$owner(S, $address_root(r1, $blob_type(s1))), $owner(S, $address_root(r2, $blob_type(s2)))}
+  (r1 != r2 || s1 != s2) ==>
+  $typed(S, $address_root(r1, $blob_type(s1))) && $typed(S, $address_root(r2, $blob_type(s2))) ==>
+    s1 > 0 && s2 > 0 &&
+    (r1 + s1 <= r2 || r2 + s2 <= r1));
+
 
 function {:inline} $blob(p:$ptr, sz:int) : $ptr
   { $address_root($addr(p), $blob_type(sz)) }
@@ -3260,6 +3270,8 @@ procedure $blobify(p:$ptr);
   requires $is_object_root($s, p) || $allow_reinterpretation(p);
   // TOKEN: the reinterpreted object sits in physical memory
   requires $in_range_phys_ptr(p);
+  // TOKEN: the reinterpreted object has non-zero size
+  requires $sizeof($typ(p)) > 0;
   ensures $mutable_root($s, $blob(p, $sizeof($typ(p))));
   ensures $modifies(old($s), $s, $extent(old($s), p));
   ensures $owns($s, $blob(p, $sizeof($typ(p)))) == $set_empty();
@@ -3292,10 +3304,11 @@ procedure $split_blob(p:$ptr, off:int);
   modifies $s;
   // TOKEN: pointer passed is a blob
   requires p == $blob_of(p);
-  // TOKEN: split position is non-negative
-  requires 0 <= off;
+  // we never want 0-sized blobs
+  // TOKEN: split position is positive
+  requires 0 < off;
   // TOKEN: pointer passed is big enough for split
-  requires off <= $sizeof_object(p);
+  requires off < $sizeof_object(p);
 
   ensures $mutable_root($s, $blob(p, off));
   ensures $owns($s, $blob(p, off)) == $set_empty();
