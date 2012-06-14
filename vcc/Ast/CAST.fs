@@ -14,9 +14,6 @@ module Microsoft.Research.Vcc.CAST
   
   type Id = string
   type Unique = uint64
-  
-  [<Literal>]
-  let AttrClaimable = "claimable"
 
   [<Literal>]
   let AttrAtomicInline = "atomic_inline"
@@ -105,7 +102,6 @@ module Microsoft.Research.Vcc.CAST
     | OutParameter
     | Local
     | SpecLocal
-    | Static
     | Global
     | ConstGlobal
     | SpecGlobal
@@ -116,17 +112,6 @@ module Microsoft.Research.Vcc.CAST
     | Exists
     | Lambda
     // sum and stuff here
-
-  [<System.FlagsAttribute>]
-  type Flags =
-    | None =                  0x00
-    | Static =                0x01
-    | Const =                 0x02
-    | Volatile =              0x04
-    | Spec =                  0x08
-    | Virtual =               0x10
-    | AcceptsExtraArguments = 0x20
-    | Ctor =                  0x40
 
   let PointerSizeInBytes = ref 8
 
@@ -176,11 +161,6 @@ module Microsoft.Research.Vcc.CAST
     | Float32
     | Float64
 
-    override this.ToString () =
-        match this with
-        | PrimKind.Float32 -> "float32_t"
-        | PrimKind.Float64 -> "float64_t"
-
   type StructEqualityKind =
     | NoEq
     | ShallowEq
@@ -206,11 +186,6 @@ module Microsoft.Research.Vcc.CAST
 
     static member AsString (lst:list<CustomAttr>) = lst |> List.map (fun a -> a.ToString() + " ") |> String.concat ""
 
-    static member hasCustomAttr n = List.exists (function VccAttr (n', _) -> n = n' | _ -> false)
-
-    static member hasPureAttr = List.exists (function VccAttr((AttrFrameaxiom|AttrIsPure|AttrSpecMacro|AttrDefinition|AttrAbstract|AttrIsDatatypeOption), "") -> true | _ -> false)
-
-
   and [<StructuralEquality; NoComparison>] TypeKind =
     | Struct
     | Union
@@ -223,11 +198,12 @@ module Microsoft.Research.Vcc.CAST
     {
       Token:Token;
       mutable Name:string;
-      mutable Flags : Flags;
       Type:Type;
       Parent:TypeDecl;
+      IsSpec:bool;    
+      mutable IsVolatile:bool;
       Offset:FieldOffset;
-      mutable CustomAttr:list<CustomAttr>;
+      CustomAttr:list<CustomAttr>;
       UniqueId:Unique;
     }
     
@@ -244,17 +220,6 @@ module Microsoft.Research.Vcc.CAST
       CustomAttr.AsString this.CustomAttr +
       this.Type.ToString() + " " + this.Name + postfix
     
-    member this.IsSpec = this.Flags.HasFlag(Flags.Spec)
-
-    member this.IsVolatile = this.Flags.HasFlag(Flags.Volatile)
-
-    member this.IsStatic = this.Flags.HasFlag(Flags.Static)
-
-    member this.IsBitField = 
-      match this.Offset with
-        | FieldOffset.BitField _ -> true
-        | _ -> false
-
     member this.ByteOffset =
       match this.Offset with
         | FieldOffset.Normal n -> n
@@ -275,7 +240,7 @@ module Microsoft.Research.Vcc.CAST
       mutable IsNestedAnon: bool;
       mutable GenerateEquality: StructEqualityKind;
       mutable IsSpec: bool;
-      mutable Parent : TypeDecl option;
+      Parent : TypeDecl option;
       IsVolatile : bool
       UniqueId:Unique;
     }
@@ -303,11 +268,11 @@ module Microsoft.Research.Vcc.CAST
     member this.IsGroup = List.exists (function VccAttr ("__vcc_group", "") -> true | _ -> false) this.CustomAttr
     member this.IsUnion = this.Kind = Union
     
-    member this.ToStringWT showTypes =
+    member this.Declaration () =
       let prInv = function
-        | Macro(_, "labeled_invariant", [Macro(_, "", _); i]) -> "invariant " + i.ToStringWT(showTypes)
-        | Macro(_, "labeled_invariant", [Macro(_, lbl, _); i]) -> "invariant " + lbl + ": " + i.ToStringWT(showTypes)
-        | e -> "invariant " + e.ToStringWT(showTypes)
+        | Macro(_, "labeled_invariant", [Macro(_, "", _); i]) -> "invariant " + i.ToString()
+        | Macro(_, "labeled_invariant", [Macro(_, lbl, _); i]) -> "invariant " + lbl + ": " + i.ToString()
+        | e -> "invariant " + e.ToString()
       CustomAttr.AsString this.CustomAttr +
       this.ToString () + " {\r\n  " + String.concat ";\r\n  " [for f in this.Fields -> f.ToString ()] + ";\r\n" +
         String.concat "" [for f in this.DataTypeOptions -> f.ToString() ] +
@@ -377,11 +342,6 @@ module Microsoft.Research.Vcc.CAST
         | PhysPtr _ -> true
         | _ -> false
         
-    member this._IsSpecPtr = 
-      match this with
-        | SpecPtr _ -> true
-        | _ -> false
-
     member this.IsPtrTo td =
       match this with 
         | SpecPtr td'
@@ -427,11 +387,6 @@ module Microsoft.Research.Vcc.CAST
     
     member this.IsNumber =
       this._IsInteger || this._IsMathInteger
-
-    member this.IsFloat = 
-      match this with 
-      | Primitive _ -> true
-      | _ -> false
 
     member this.Deref =
       match this with
@@ -488,12 +443,10 @@ module Microsoft.Research.Vcc.CAST
  
     static member Math name = Type.Ref (Type.MathTd name)    
     static member Bogus = Type.Math "$$bogus$$"
-    static member Ellipsis = Type.Math "$$ellipsis$$"
     static member PtrSet = Type.Math "\\objset"
     static member MathStruct = Type.Math "struct"
     static member MathState = Type.Math "\\state"
     static member FieldT = Type.Math "field_t"
-    static member ThreadIdT = Type.Math "\\thread_id"
     static member Byte = Type.Integer IntKind.UInt8
     static member MathStructFor td = 
       Type.Ref(
@@ -596,12 +549,10 @@ module Microsoft.Research.Vcc.CAST
                     (sub zero x, sub x one)
                   else
                     (zero, sub (bigint.Pow(two, sz)) one))
-
-    /// When f returns Some(x), this is replaced by x, otherwise Map is applied
-    /// recursively to children, including application of f to child expressions.
-    member this.Subst(f : Type -> Type option) =
+                    
+    member this.Subst(typeMap : Type -> Type option) =
       let rec subst _type =
-        match f _type with
+        match typeMap _type with
           | Some t' -> Some t'
           | None ->
             match _type with
@@ -630,14 +581,8 @@ module Microsoft.Research.Vcc.CAST
               | t -> None
       subst this
 
-    member this.SelfSubst (f : (Type -> Type) -> Type -> Type option) =
-      let rec aux (t:Type) = 
-        match t.Subst f' with | Some(t') -> t' | _ -> t
-      and f' t = f aux t
-      this.Subst f'
-
     member this.ApplySubst(typeMap) = 
-      match this.SelfSubst(typeMap) with
+      match this.Subst(typeMap) with
         | Some t' -> t'
         | None -> this
         
@@ -726,11 +671,10 @@ module Microsoft.Research.Vcc.CAST
     Function = 
     {
       Token:Token;
-      mutable Flags : Flags;
+      IsSpec:bool;
+      AcceptsExtraArguments:bool;
       mutable RetType:Type;
       mutable Name:Id;
-      mutable FriendlyName:Id;
-      mutable Parent:option<TypeDecl>;
       mutable Parameters:list<Variable>;
       mutable TypeParameters:list<TypeVariable>
       mutable Requires:list<Expr>;
@@ -748,13 +692,11 @@ module Microsoft.Research.Vcc.CAST
 
     static member Empty() =
       { Token = bogusToken
-        Flags = Flags.None
+        IsSpec = false
         RetType = Type.Void
         Parameters = []
         TypeParameters = []
         Name = "<none>"
-        FriendlyName = "<none>"
-        Parent = None
         Requires = []
         Ensures = []
         Writes = []
@@ -764,26 +706,13 @@ module Microsoft.Research.Vcc.CAST
         DecreasesLevel = 0
         Body = None
         IsProcessed = false
+        AcceptsExtraArguments = false
         DefExpansionLevel = 0
         UniqueId = unique() } : Function
     
     override this.GetHashCode () = int this.UniqueId
     override this.Equals (that:obj) = LanguagePrimitives.PhysicalEquality that (this :> obj)
     
-    member this.IsSpec = this.Flags.HasFlag(Flags.Spec)
-
-    member this.AcceptsExtraArguments = this.Flags.HasFlag(Flags.AcceptsExtraArguments)
-
-    member this.IsStatic = this.Flags.HasFlag(Flags.Static)
-
-    member this.IsConst = this.Flags.HasFlag(Flags.Const)
-
-    member this.IsVolatile = this.Flags.HasFlag(Flags.Volatile)
-
-    member this.IsVirtual = this.Flags.HasFlag(Flags.Virtual)
-
-    member this.IsCtor = this.Flags.HasFlag(Flags.Ctor)
-
     member this.InParameters = [ for p in this.Parameters do if p.Kind <> VarKind.OutParameter then yield p ]
     
     member this.OutParameters = [ for p in this.Parameters do if p.Kind = VarKind.OutParameter then yield p ]
@@ -798,7 +727,7 @@ module Microsoft.Research.Vcc.CAST
       //else if this.Name.StartsWith "fnptr#" && this.Writes = [] then
       //  true // HACK
       else
-        CustomAttr.hasPureAttr this.CustomAttr 
+        List.exists (function VccAttr((AttrFrameaxiom|AttrIsPure|AttrSpecMacro|AttrDefinition|AttrAbstract|AttrIsDatatypeOption), "") -> true | _ -> false) this.CustomAttr 
       
     member this.IsDatatypeOption =
       List.exists (function VccAttr(AttrIsDatatypeOption, "") -> true | _ -> false) this.CustomAttr 
@@ -806,21 +735,31 @@ module Microsoft.Research.Vcc.CAST
     member this.IsStateless =
       this.IsPure && this.Reads = []
 
-    member this.SubstType(typeSubst, fieldSubst, includeBody, createCopy) =
-      let varSubst = new Dict<_,_>()
-      let sv (v : Variable) = 
-        match v.Type.SelfSubst(typeSubst) with
-          | None -> v
-          | Some t' ->
-            let v' = { v with Type = t' } : Variable
-            varSubst.Add(v,v')
-            v'
-      let pars = List.map sv this.Parameters // do this first to populate varSubst
-      let se (e : Expr) = e.SubstType(typeSubst, varSubst, fieldSubst)
-      let ses = List.map se
+    member this.Specialize(targs : list<Type>, includeBody : bool) =
+      if targs.Length = 0 then this else       
+        let typeVarSubst = new Dict<_,_>()
+        let varSubst = new Dict<_,_>()
 
-      if createCopy then
-        { this with RetType = this.RetType.ApplySubst(typeSubst);
+        let toTypeMap (tvs : Dict<TypeVariable, Type>) = function
+          | TypeVar tv -> 
+            match tvs.TryGetValue tv with
+              | true, t -> Some t
+              | false, _ -> None
+          | _ -> None
+
+        List.iter2 (fun tv t -> typeVarSubst.Add(tv, t)) this.TypeParameters targs 
+        let typeMap = toTypeMap typeVarSubst
+        let sv (v : Variable) = 
+          match v.Type.Subst(typeMap) with
+            | None -> v
+            | Some t' ->
+              let v' = { v with Type = t' } : Variable
+              varSubst.Add(v,v')
+              v'
+        let pars = List.map sv this.Parameters // do this first to populate varSubst
+        let se (e : Expr) = e.SubstType(typeMap, varSubst)
+        let ses = List.map se
+        { this with RetType = this.RetType.ApplySubst(typeMap);
                     Parameters = pars;
                     Requires = ses this.Requires;
                     Ensures = ses this.Ensures;
@@ -829,33 +768,6 @@ module Microsoft.Research.Vcc.CAST
                     Reads = ses this.Reads;
                     TypeParameters = [];
                     Body = if includeBody then Option.map se this.Body else None }
-      else
-        this.RetType <- this.RetType.ApplySubst(typeSubst)
-        this.Parameters <- pars;
-        this.Requires <- ses this.Requires;
-        this.Ensures <- ses this.Ensures;
-        this.Writes <- ses this.Writes;
-        this.Variants <- ses this.Variants;
-        this.Reads <- ses this.Reads;
-        this.TypeParameters <- this.TypeParameters;
-        this.Body <- if includeBody then Option.map se this.Body else None
-        this
-        
-    member this.Specialize(targs : list<Type>, includeBody : bool) =
-      if targs.Length = 0 then this else       
-        let typeVarSubst = new Dict<_,_>()
-
-        let toTypeSubst (tvs : Dict<TypeVariable, Type>) _ = function
-          | TypeVar tv -> 
-            match tvs.TryGetValue tv with
-              | true, t -> Some t
-              | false, _ -> None
-          | _ -> None
-
-        List.iter2 (fun tv t -> typeVarSubst.Add(tv, t)) this.TypeParameters targs 
-        let typeSubst = toTypeSubst typeVarSubst
-
-        this.SubstType(typeSubst, new Dict<_,_>(), includeBody, true)
 
     member this.CallSubst args =
       let subst = new Dict<_,_>()
@@ -871,14 +783,10 @@ module Microsoft.Research.Vcc.CAST
     member this.ToStringWT (showTypes) = 
       let b = StringBuilder()
       let wr (s:string) = b.Append s |> ignore
-      if this.IsSpec then wr "spec "
-      if this.IsStatic then wr "static "
-      if this.IsVirtual then wr "virtual "
+      if this.IsSpec then wr "spec " else ()
       wr (CustomAttr.AsString this.CustomAttr)
       this.RetType.WriteTo b; wr " "
-      doArgsAndTArgsb b (fun (p:Variable) -> p.WriteTo b) (fun (tp:TypeVariable) -> tp.WriteTo b) (this.FriendlyName) this.Parameters this.TypeParameters 
-      if this.IsConst then wr " const"
-      if this.IsVolatile then wr " volatile"
+      doArgsAndTArgsb b (fun (p:Variable) -> p.WriteTo b) (fun (tp:TypeVariable) -> tp.WriteTo b) (this.Name) this.Parameters this.TypeParameters 
       wr "\r\n"
       
       let doList pref lst =
@@ -965,18 +873,8 @@ module Microsoft.Research.Vcc.CAST
       Reads : list<Expr>;
       Writes : list<Expr>;
       Decreases : list<Expr>;
-      CustomAttr : list<CustomAttr>;
+      IsPureBlock : bool
     }
-
-    static member Empty = { Requires = []; Ensures = []; Reads = []; Writes = []; Decreases = []; CustomAttr = [] }
-
-    member this.IsEmpty = 
-      this.Requires.IsEmpty 
-      && this.Ensures.IsEmpty 
-      && this.Reads.IsEmpty 
-      && this.Writes.IsEmpty 
-      && this.Decreases.IsEmpty 
-      && this.CustomAttr.IsEmpty
 
   and TestClassifier = Expr
   
@@ -1154,8 +1052,6 @@ module Microsoft.Research.Vcc.CAST
         | UserData(_, a) -> UserData(ec, a)
         | SizeOf(_, a) -> SizeOf (ec, a)
 
-    member this.WithType t = this.WithCommon({this.Common with Type = t})
-
     member this.Visit (ispure : bool, f: ExprCtx -> Expr -> bool) : unit =
       let rec visit ctx e =
         if f ctx e then
@@ -1228,7 +1124,7 @@ module Microsoft.Research.Vcc.CAST
        
 
     /// When f returns Some(x), this is replaced by x, otherwise Map is applied
-    /// recursively to children, including application of f to child expressions.
+    /// recursively to children, including application of g to children expressions.
     member this.Map (ispure : bool, f : ExprCtx -> Expr -> option<Expr>) : Expr =        
       let rec map ctx e =
         let apply f args =        
@@ -1339,7 +1235,7 @@ module Microsoft.Research.Vcc.CAST
                 let rReads, reads' = apply paux cs.Reads
                 let rWrites, writes' = apply paux cs.Writes
                 let rDecreases, decreases' = apply paux cs.Decreases
-                let cs' = {Requires=pres'; Ensures=posts'; Reads=reads'; Writes=writes'; Decreases=decreases'; CustomAttr = cs.CustomAttr }
+                let cs' = {Requires=pres'; Ensures=posts'; Reads=reads'; Writes=writes'; Decreases=decreases'; IsPureBlock = cs.IsPureBlock }
                 let rSS, block'' =
                     match  constructList (fun args -> Block (c, args, Some cs')) (map ctx) ss with
                       | None -> false, Block (c,ss,Some cs')
@@ -1354,17 +1250,14 @@ module Microsoft.Research.Vcc.CAST
         | Some this' -> this'
     
     // TODO: implement with DeepMap?
-    member this.SubstType(typeSubst, varSubst : Dict<Variable, Variable>, fieldSubst : Dict<Field, Field>) =
-      let sc c = 
-        match c.Type.SelfSubst typeSubst with
-          | None -> c
-          | Some(t') -> { c with Type = t' }
+    member this.SubstType(typeMap, varSubst : Dict<Variable, Variable>) =
+      let sc c = { c with Type = c.Type.ApplySubst(typeMap) } : ExprCommon
       let varSubst = new Dict<_,_>(varSubst) // we add to it, so make a copy first
       let sv v = 
         match varSubst.TryGetValue(v) with
           | true, v' -> v'
           | false, _ ->
-            match v.Type.SelfSubst(typeSubst) with
+            match v.Type.Subst(typeMap) with
               | Some t' ->
                 let v' = { v with Type = t' }
                 varSubst.Add(v,v')
@@ -1395,24 +1288,17 @@ module Microsoft.Research.Vcc.CAST
           | Result c -> Some(Result(sc c))
           | This c -> Some(This(sc c))
           | Prim (c, op, es) ->  Some(Prim(sc c, op, selfs es))
-          | Call (c, fn, tas, es) -> 
-            Some(Call(sc c, fn, List.map (fun (t : Type) -> t.ApplySubst(typeSubst)) tas, selfs es))
+          | Call (c, fn, tas, es) -> Some(Call(sc c, fn, List.map (fun (t : Type) -> t.ApplySubst(typeMap)) tas, selfs es))
           | Macro (c, op, es) -> Some(Macro(sc c, op, selfs es))
           | Deref (c, e) -> Some(Deref(sc c, self e))
-          | Dot (c, e, f) -> 
-            match fieldSubst.TryGetValue(f) with
-              | true, f' -> Some(Dot(sc c, self e, f'))
-              | false, _ -> Some(Dot(sc c, self e, f))
+          | Dot (c, e, f) -> Some(Dot(sc c, self e, f))
           | Index (c, e1, e2) -> Some(Index(sc c, self e1, self e2))
           | Cast (c, ch, e) -> Some(Cast(sc c, ch, self e))
           | Old (c, e1, e2) -> Some(Old(sc c, self e1, self e2))
           | Quant (c, q) -> Some(Quant(sc c, {q with Triggers = List.map selfs q.Triggers; Condition = Option.map self (q.Condition); Body = self (q.Body)}))
           | VarWrite (c, vs, e) -> Some(VarWrite(sc c, List.map sv vs, self e))
           | Return (c, Some e) -> Some(Return(sc c, Some(self e)))
-          | SizeOf(c, t) -> 
-            match t.SelfSubst typeSubst with
-              | None -> None
-              | Some(t') -> Some(SizeOf(c, t'))
+          | SizeOf(c, t) -> Some(SizeOf(c, t.ApplySubst(typeMap)))
       this.SelfMap(repl)
 
     member this.SelfCtxMap (ispure : bool, f : ExprCtx -> (Expr -> Expr) -> Expr -> option<Expr>) : Expr =        
@@ -1519,7 +1405,7 @@ module Microsoft.Research.Vcc.CAST
           | Skip _ -> wr "skip;\r\n"
           | Ref (_, v) -> wr (v.Name)
           | Prim (_, op, args) -> doArgs (op.ToString()) args
-          | Expr.Call (_, fn, tArgs, args) -> doArgsAndTArgsb b  fe (fun (t:Type) -> t.WriteTo b) fn.FriendlyName args tArgs
+          | Expr.Call (_, fn, tArgs, args) -> doArgsAndTArgsb b  fe (fun (t:Type) -> t.WriteTo b) fn.Name args tArgs
           | BoolLiteral (_, v) -> wr (if v then "true" else "false")
           | IntLiteral (_, l) -> wr (l.ToString())
           | Deref (_, e) -> wr "*("; fe e; wr ")"
@@ -1746,8 +1632,8 @@ module Microsoft.Research.Vcc.CAST
       let wr = wrb b
       match this with
         | Global (v, None) -> wr (v.ToString() + ";\r\n")
-        | Global (v, Some e) -> wr (v.ToString()); wr " = "; e.WriteTo System.Int32.MinValue showTypes b; wr ";\r\n"
-        | TypeDecl d -> wr (d.ToStringWT(showTypes))
+        | Global (v, Some e) -> wr (v.ToString()); wr " = "; e.WriteTo System.Int32.MinValue false b; wr ";\r\n"
+        | TypeDecl d -> wr (d.Declaration())
         | FunctionDecl d -> 
           wr (d.ToStringWT(showTypes))
           match d.Body with
@@ -1797,7 +1683,6 @@ module Microsoft.Research.Vcc.CAST
         | Top.Global(v, Some e) -> pf e
         | Top.Global(_, None) -> ()
 
-
   let mapExpressions f decls =
     List.map (fun (d:Top) -> d.MapExpressions f) decls
   
@@ -1830,37 +1715,6 @@ module Microsoft.Research.Vcc.CAST
     match [decl] |> deepMapExpressions f with
       | [decl'] -> decl'
       | _ -> die()
-
-  let deepRetype subst decls =
-
-    let fieldSubst = new Dict<_,_>()
-    let emptyVarSubst = new Dict<_,_>()
-
-    let retypeField (f:Field) =
-      match f.Type.SelfSubst(subst) with
-        | Some t' -> 
-          let f' = { f with Type = t' }
-          fieldSubst.Add(f, f')
-          f'
-        | None -> f
-  
-    let retypeFields = function
-      | Top.TypeDecl(td) when not (td.Name.StartsWith("VCC::")) -> td.Fields <- List.map retypeField td.Fields
-      | _ -> ()
-
-    let substExpr (e:Expr) = e.SubstType(subst, emptyVarSubst, fieldSubst)
-
-    let retypeDecl = function
-      | Top.FunctionDecl(fn) -> Top.FunctionDecl(fn.SubstType(subst, fieldSubst, true, false))
-      | Top.Axiom(e) -> Top.Axiom(substExpr e)
-      | Top.GeneratedAxiom(e, top) -> Top.GeneratedAxiom(substExpr e, top)
-      | Top.TypeDecl(td) -> 
-        td.Invariants <- List.map substExpr td.Invariants
-        Top.TypeDecl(td)
-      | Top.Global(v, init) -> Top.Global(v, Option.map substExpr init)
-
-    List.iter retypeFields decls
-    decls |> List.map retypeDecl
 
   // -----------------------------------------------------------------------------
   // Message/token formatting
@@ -1912,7 +1766,7 @@ module Microsoft.Research.Vcc.CAST
   
   let splitConjunction = splitConjunctionEx false
   
-  let hasCustomAttr = CustomAttr.hasCustomAttr
+  let hasCustomAttr n = List.exists (function VccAttr (n', _) -> n = n' | _ -> false)
 
   let mkBoolOp str (args:list<Expr>) =
     Prim ((List.head (List.rev args)).Common, Op(str, Processed), args)

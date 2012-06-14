@@ -237,7 +237,7 @@ namespace Microsoft.Research.Vcc
           | C.Type.SecLabel _ -> er "^^label"
           | C.Type.TypeVar({Name = id}) -> er ("^^TV#" + id)
           | C.Type.Volatile(C.Type.Ref(_)) -> 
-            if t.IsPtr then helper.Panic("volatile type modifier survived")
+            helper.Panic("volatile type modifier survived")
             er "$$bogus_volatile$$"
           | C.Type.Volatile(t) -> 
             toTypeId' false t
@@ -294,7 +294,7 @@ namespace Microsoft.Research.Vcc
               | "\\state" -> tpState
               | "club_t" -> B.Type.Ref "$ptrclub"
               | _ -> B.Type.Ref ("$#" + n)
-          | C.Type.Volatile (CAST.Ptr _)
+          | C.Type.Volatile _
           | C.Type.Claim
           | C.Type.SecLabel _
           | C.Type.Array _ 
@@ -302,7 +302,6 @@ namespace Microsoft.Research.Vcc
           | C.Type.TypeVar _
           | C.Type.Ref _ ->
             helper.Panic ("wrong type survived: " + t.ToString())
-          | C.Type.Volatile(t) -> trType(t)
 
 
       member this.Helper = helper
@@ -389,7 +388,6 @@ namespace Microsoft.Research.Vcc
             | C.VarKind.Parameter -> "P#" + v.Name
             | C.VarKind.SpecLocal -> "SL#" + v.Name
             | C.VarKind.Local -> "L#" + v.Name
-            | C.VarKind.Static
             | C.VarKind.SpecGlobal
             | C.VarKind.Global -> die()
       

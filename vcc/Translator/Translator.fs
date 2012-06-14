@@ -394,7 +394,6 @@ namespace Microsoft.Research.Vcc
                 match e'.Type with
                   | C.Type.Bool ->
                     bCall "$bool_to_int" [self e']
-                  | C.Type.Volatile(C.Type.Integer _)
                   | C.Type.Integer _
                   | C.Type.MathInteger _ -> self e'
                   | C.Type.ObjectT
@@ -448,9 +447,6 @@ namespace Microsoft.Research.Vcc
                   | "~" -> bCall "$_not" targs
                   | "^" -> bCall "$_xor" targs 
                   | "*" when ch <> C.Unchecked -> bCall "$op_mul" args
-                  | "&&" when c.Type <> C.Type.Bool -> bCall "$op_and" args
-                  | "||" when c.Type <> C.Type.Bool -> bCall "$op_or" args
-                  | "!" when c.Type <> C.Type.Bool -> bCall "$op_not" args
                   | _ -> 
                     if ch = C.Unchecked then
                       match opName with
@@ -1173,11 +1169,8 @@ namespace Microsoft.Research.Vcc
             helper.Oops (tok, "wrong format of a claim")
             []
 
-      let writeTimes = new HashSet<_>()
-
       let setWritesTime tok env wr =
         let name = "#wrTime" + ctx.TokSuffix tok
-        let name = if writeTimes.Add(name) then name else name + "#" + CAST.unique().ToString() // TODO: remove once token info is more accurate
         let p = er "#p"
         let inWritesAt = bCall "$in_writes_at" [er name; p]
         let env = { env with Writes = wr; WritesTime = er name }
@@ -2208,8 +2201,8 @@ namespace Microsoft.Research.Vcc
         let is_claimable = ref false
         let owns_set_is_volatile = ref false
           
-        List.iter (function C.VccAttr (C.AttrClaimable, _) -> is_claimable := true
-                          | C.VccAttr (C.AttrVolatileOwns, _) -> owns_set_is_volatile := true
+        List.iter (function C.VccAttr ("claimable", _) -> is_claimable := true
+                          | C.VccAttr ("volatile_owns", _) -> owns_set_is_volatile := true
                           | _ -> ()) td.CustomAttr
             
         let isNoLemmaInvariant = function

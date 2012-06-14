@@ -63,7 +63,7 @@ namespace Microsoft.Research.Vcc
         match e.Type with
           | Ptr _ | ObjectT | Claim -> Some (self e)
           | _ -> None
-      | Expr.Cast ({ Type = Ptr(t1) } as ec, cs, Expr.Cast ({ Type = (ObjectT | Ptr(Type.Ref(_) | Void)) }, _, e')) when t1 <> Void -> Some (self (Cast(ec, cs, e')))
+      | Expr.Cast ({Type = Ptr(t1) } as ec, cs, Expr.Cast ({ Type = (ObjectT | Ptr(Type.Ref(_) | Void)) }, _, e')) when t1 <> Void -> Some (self (Cast(ec, cs, e')))
       | Expr.Cast ({ Type = t1 }, (Processed|Unchecked), Expr.Cast ({ Type = t2 }, (Processed|Unchecked), e')) when t1.IsPtr && t2.IsPtr && e'.Type = t1 -> Some (self e')
       | Expr.Cast ({ Type = Bool }, _, Expr.Cast (_, _, e')) when e'.Type = Bool -> Some (self e')
       | Expr.Cast ({ Type = PtrSoP(_, isSpec) } as c, _, Expr.IntLiteral (_, ZeroBigInt)) -> 
@@ -81,8 +81,7 @@ namespace Microsoft.Research.Vcc
           None 
       | Expr.Cast ({ Type = MathInteger Signed}, _, expr) when expr.Type._IsInteger -> Some(self(expr))
       | Expr.Cast ({ Type = MathInteger Unsigned}, _, Expr.IntLiteral (c, n)) when n >= bigint.Zero -> Some(Expr.IntLiteral(c,n))
-      | Expr.Cast ({ Type = Volatile(t) }, _, expr) when not t._IsPtr -> Some(self expr) // 'volatile' applying to anything but pointers are removed
-      | Expr.Cast (ec, _, This(tc)) when inGroupInvariant && ec.Type = tc.Type -> 
+      | Expr.Cast(ec, _, This(tc)) when inGroupInvariant && ec.Type = tc.Type -> 
         None // Do not remove this cast because the type of 'this' will change later on
       | Expr.Cast (_, _, e') as e ->
         match e'.Type, e.Type with
@@ -112,7 +111,7 @@ namespace Microsoft.Research.Vcc
         else if ctx.IsPure then
           match p1.Type, p2.Type with
             | Ptr(t1), Ptr(t2) ->
-              if (t1 <> t2) && (t1 <> ObjectT) && (t2 <> ObjectT) then
+              if t1 <> t2 then
                 helper.Warning (c.Token, 9124, "pointers of different types (" + t1.ToString() + " and " + t2.ToString() + ") are never equal in pure context")
               Some (Expr.Macro (c, name + "_pure", [self p1; self p2]))
             | ObjectT, Ptr(_)
@@ -173,7 +172,7 @@ namespace Microsoft.Research.Vcc
     let makeQuantifiedVarsUnique (expr:Expr) =
       let aux self = function
         | Quant(ec, qd) ->
-          let vs', replace = Variable.UniqueCopies id qd.Variables
+          let vs', replace = Variable.UniqueCopies (fun x -> x) qd.Variables
           let qd' = { qd with Variables = vs';
                               Triggers = List.map (List.map(replace)) qd.Triggers;
                               Condition = Option.map replace qd.Condition;
@@ -301,7 +300,7 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
     
     let handleClaims self = function
-      | CallMacro (c, ("_vcc_claim"|"_vcc_upgrade_claim" as name), [], args) ->
+      | Call (c, ({ Name = ("_vcc_claim"|"_vcc_upgrade_claim" as name) } as fn), _, args) ->
         match List.rev args with
           | [_] ->
             helper.Error(c.Token, 9710, "claim(...) requires at least one object and a claimed property")
@@ -309,22 +308,22 @@ namespace Microsoft.Research.Vcc
           | x :: xs ->
             if (x.Type._IsPtr) then
               helper.Error(x.Token, 9711, "claimed property must not be of pointer type")
-            Some (self (Macro (c, name.Replace("_vcc_", ""), Expr.Pure (x.Common, convertToBool id x) :: (List.rev xs))))
+            Some (self (Macro (c, name.Replace("_vcc_", ""), Expr.Pure (x.Common, convertToBool (fun x -> x) x) :: (List.rev xs))))
           | _ -> 
             helper.Oops (c.Token, "no arguments to claim")
             None
             
-      | CallMacro (c, "_vcc_unclaim", _, args) ->
+      | Call (c, { Name = "_vcc_unclaim" }, _, args) ->
         Some (Stmt (c, Macro (c, "unclaim", List.map self args)))
 
-      | CallMacro (c, "_vcc_begin_update", _, args) ->
+      | Call (c, { Name = "_vcc_begin_update" }, _, args) ->
         Some (Stmt (c, Macro (c, "begin_update", List.map self args)))
         
       | Atomic (c, objs, body) -> 
         let errorIfNotPtrToStruct (expr : Expr) =
           match expr.Type with
             | Ptr(Volatile(Type.Ref(_))) 
-            | Ptr(Type.Ref(_)|Type.Claim)
+            | Ptr(Type.Ref(_)| Claim) 
             | Type.ObjectT -> ()
             | t -> helper.Error(expr.Token, 9668, "'" + expr.Token.Value + "' has non-admissible type '" + t.ToString() + "' for atomic")
         List.iter errorIfNotPtrToStruct objs
@@ -898,7 +897,7 @@ namespace Microsoft.Research.Vcc
           | Call (ec, m, targs, args) as call
           | Macro(_, "ite", [Cast(_, _, (Call(ec, m, targs, args) as call)); BoolLiteral(_, true); BoolLiteral(_, false)]) ->
             let m' = m.Specialize(targs, false)
-            let subst = inlineCall "_(" id (Call({ec with Type=m'.RetType}, m', [], args))
+            let subst = inlineCall "_(" (fun x -> x) (Call({ec with Type=m'.RetType}, m', [], args))
             let substs = List.map subst
             { c with Requires = c.Requires @ substs m'.Requires; 
                      Ensures = c.Ensures @ substs m'.Ensures;
@@ -949,12 +948,10 @@ namespace Microsoft.Research.Vcc
       let extractBvLemmas (fn : Function) = 
         let idCount = ref -1
         let checkFunctionFor (lemma:Expr) = 
-          let name = fn.Name + "#bv_lemma#" + (incr idCount; (!idCount).ToString())
           { Function.Empty() with
               Token = lemma.Token
-              Flags = Flags.Spec
-              Name = name
-              FriendlyName = name
+              IsSpec = true
+              Name = fn.Name + "#bv_lemma#" + (incr idCount; (!idCount).ToString())
               CustomAttr = VccAttr (AttrIsPure, "") :: VccAttr(AttrBvLemmaCheck, "true") :: inheritedAttrs fn.CustomAttr
               Body = Some (Expr.Block(lemma.Common, [lemma], None))
               IsProcessed = true }
@@ -1020,7 +1017,8 @@ namespace Microsoft.Research.Vcc
                             Name = var.Name
                             Type = Type.Array(t, size)
                             Parent = td
-                            Flags = if isSpec then Flags.Spec else Flags.None
+                            IsSpec = isSpec
+                            IsVolatile = false
                             Offset = FieldOffset.Normal(offset)
                             CustomAttr = [VccAttr("as_array", "true")]
                             UniqueId = CAST.unique() } : Field
@@ -1235,21 +1233,40 @@ namespace Microsoft.Research.Vcc
     // ============================================================================================================
 
     let renameOverloads decls =
-
-      // try to use FriendlyNames as Names where they do not collide
       
       let findOverloads (seen, clashes) = function
         | Top.FunctionDecl({Name = ("_vcc_when_claimed"|"_vcc_by_claim")}) -> (seen, clashes) // we introduce our own name clash during NewSyntax
-        | Top.FunctionDecl({FriendlyName = name}) ->
+        | Top.FunctionDecl({Name = name}) ->
           if Set.contains name seen then (seen, Set.add name clashes) else (Set.add name seen, clashes)
         | _ -> (seen, clashes)
 
       let (_, overloadedNames) = List.fold findOverloads (Set.empty, Set.empty) decls
 
+      let overloads = new Dict<_,_>()
+
       for d in decls do
         match d with 
-          | Top.FunctionDecl({FriendlyName = name} as fn) when not (Set.contains name overloadedNames) -> 
-            fn.Name <- name
+          | Top.FunctionDecl({Name = name} as fn) when Set.contains name overloadedNames -> 
+
+            let sanitizedTypeName (t : Type) = t.ToString().Replace(' ', '_').Replace('*', '.')
+
+            let parKindStr =  function
+              | VarKind.Parameter -> ""
+              | VarKind.SpecParameter -> "spec_"
+              | VarKind.OutParameter -> "out_"
+              | _ -> die()
+
+            let parTypes = [| for p in fn.Parameters -> parKindStr p.Kind + sanitizedTypeName p.Type |]
+            let parTypeString = if parTypes.Length = 0 then "" else "#" + System.String.Join("#", parTypes)
+            let overloadName = fn.Name + "#overload#" + (sanitizedTypeName fn.RetType) + parTypeString
+
+            match overloads.TryGetValue(overloadName) with
+              | true, clashingDecl ->
+                helper.Error(fn.Token, 9717, "function '" + fn.Name + "' already has a body", Some clashingDecl.Token)
+              | _ -> overloads.Add(overloadName, fn)
+
+            fn.Name <- overloadName
+
           | _ -> ()
 
       decls
@@ -1262,52 +1279,25 @@ namespace Microsoft.Research.Vcc
       let stackAlloc = 
         Top.FunctionDecl ( 
           { Function.Empty() with 
-              Flags = Flags.Spec
+              IsSpec = true
               Name = "_vcc_stack_alloc"
-              FriendlyName = "_vcc_stack_alloc"
               RetType = Type.ObjectT
               Parameters = [ Variable.CreateUnique "stack_frame" (Type.MathInteger(MathIntKind.Signed)) VarKind.Parameter
                              Variable.CreateUnique "is_spec" Type.Bool VarKind.Parameter ]
               TypeParameters = [ { Name = "T" } ]
-          })
+        })
 
       // void \stack_free(\integer, \object);
       let stackFree = 
         Top.FunctionDecl ( 
           { Function.Empty() with 
-              Flags = Flags.Spec
+              IsSpec = true
               Name = "_vcc_stack_free"
-              FriendlyName = "_vcc_stack_free"
               Parameters = [ Variable.CreateUnique "stack_frame" (Type.MathInteger(MathIntKind.Signed)) VarKind.Parameter
                              Variable.CreateUnique "obj" Type.ObjectT VarKind.Parameter ]
-          })
+        })
 
-      // \object \heap_alloc(\type);
-      let alloc = 
-        Top.FunctionDecl ( 
-          { Function.Empty() with 
-              Flags = Flags.Spec
-              Name = "_vcc_alloc"
-              FriendlyName = "_vcc_alloc"
-              Parameters = [ Variable.CreateUnique "type" Type.TypeIdT VarKind.Parameter ]
-              RetType = Type.ObjectT                             
-          })
-
-      // void \free(\object p) _(writes p, \extent(p))
-      let free =
-        let p = Variable.CreateUnique "p"  Type.ObjectT VarKind.Parameter
-        let pRef = mkRef p
-        Top.FunctionDecl (
-          { Function.Empty() with
-              Flags = Flags.Spec
-              Name = "_vcc_free"
-              FriendlyName = "_vcc_free"
-              Parameters = [ p ]
-              RetType = Type.Void
-              Writes = [ pRef; Macro({ bogusEC with Type = Type.PtrSet }, "_vcc_extent", [pRef]) ]              
-          })
-
-      [stackAlloc; stackFree; alloc; free] @ decls
+      [stackAlloc; stackFree] @ decls
 
     // ============================================================================================================
 

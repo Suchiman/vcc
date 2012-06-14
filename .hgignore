@@ -5,10 +5,8 @@ syntax: regexp
 ^vcc/Docs/Tutorial/vcc-tutorial-col.*\.(aux|log|out|bbl|pdf|blg)$
 ^vcc/Docs/Tutorial/c/.*\.i$
 ^vcc/Docs/Tutorial/(view\.pdf|Makefile\.local|fix)$
-^vcc/Docs/Manual/vcc-manual-col.*\.(aux|log|out|bbl|pdf|blg)$
-^vcc/Docs/Manual/view\.pdf$
 ^vcc/Test/testsuite/.*\.i$
-^.*/*.vspscc$
+
 syntax: glob
 output.log
 actual.txt

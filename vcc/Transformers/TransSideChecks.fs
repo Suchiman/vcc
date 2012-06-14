@@ -103,9 +103,8 @@ namespace Microsoft.Research.Vcc
           let check = 
             { Function.Empty() with
                 Token = td.Token
-                Flags = Flags.Spec  
+                IsSpec = true  
                 Name = td.Name + "#adm"
-                FriendlyName = td.Name + "#adm"
                 Parameters = [parm]
                 Ensures = post
                 Variants = [ mkInt 0 ]
@@ -363,9 +362,8 @@ namespace Microsoft.Research.Vcc
         let rc =
           { Function.Empty() with
               Token = f.Token
-              Flags = Flags.Spec
+              IsSpec = true  
               Name = f.Name + "#reads"
-              FriendlyName = f.Name + "#reads"
               CustomAttr = ReadsCheck f :: inheritedAttrs f.CustomAttr
               Body = Some body
               IsProcessed = true }
