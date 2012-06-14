@@ -378,6 +378,8 @@ module Termination =
           | e when (!res).IsSome -> e
           | If (_, _, Prim (ec, Op (("<"|">"|"<="|">="|"!="), _), [a; b]), th, el) as e 
             when (hasBreak th || hasBreak el) && a.Type.IsNumber && b.Type.IsNumber ->
+            let a = turnIntoPureExpression helper a.Type a
+            let b = turnIntoPureExpression helper b.Type b
             res := Some (Macro ({ ec with Type = Type.MathInteger MathIntKind.Signed }, "prelude_int_distance", [a; b]))
             e
           | e ->
