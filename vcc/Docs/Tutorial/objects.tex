@@ -1,0 +1,506 @@
+\section{Object invariants}
+\label{sect:invariants}
+
+%% Verification in VCC, especially when it comes to concurrent programs,
+%% it not so much about loop invariants or functions contracts,
+%% as about object invariants. 
+
+Pre- and postconditions allow for associating consistency conditions
+with the code.
+However, fairly often it is also possible to associate such consistency
+conditions with the data and require all the code operating on such data
+to obey the conditions.
+As we will learn in \secref{concurrency} this is particularly important for
+data accessed concurrently by multiple threads,
+but even for sequential programs enforcing consistency conditions
+on data reduces annotation clutter and allows for introduction of abstraction
+boundaries.
+
+% This is not a section about concurrency, thus we need a sequential
+% rationale. --M
+%When verifying a function, we are usually reasoning about only a very
+%small part of the program state. This is particularly true for a
+%concurrent program, where concurrency depends on minimizing the amount
+%of state that a thread ``owns''. Since a thread only knows about data
+%that it owns (and perhaps read-only data that it shares), another
+%mechanism is needed to regulate data that is shared between
+%threads. But these same mechanisms provide a way to minimize the
+%amount of knowledge a thread needs at any program point.
+
+In VCC, the mechanism for enforcing data consistency is \Def{object invariants}, which are conditions associated
+with compound C types (\vcc{struct}s and \vcc{union}s).
+The invariants of a type describe how ``proper'' objects of that type
+behave. 
+In this and the following section, we consider only the static aspects of this
+behavior, namely what the ``consistent'' states of an object are. 
+Dynamic aspects, \ie how objects can change, are covered in \secref{concurrency}.
+For example, consider the following type definition of \vcc{'\0'}-terminated
+safe strings implemented with statically allocated arrays (we'll see
+dynamic allocation later).
+
+\vccInput[linerange={obj-init}]{c/6.1.safestring.c}
+
+\noindent
+The invariant of \vcc{SafeString} states that consistent
+\vcc{SafeString}s have length not more than \vcc{SSTR_MAXLEN} and are
+\vcc{'\0'}-terminated.  Within a type invariant, \vcc{\this} refers to
+(the address of) the current instance of the type (as in the first
+invariant), but fields can also be referred to directly (as in the
+second invariant). 
+
+Because memory in C is allocated without initialization, no nontrivial
+object invariant could be enforced to hold at all times
+(they would not hold right after allocation).
+\Def{Wrapped} objects are ones for which the invariant holds
+and which the current thread directly owns (that is they are not
+part of representation of some higher-level objects).
+After allocating an object we would usually wrap it to make sure its invariant holds
+and prepare it for later use:
+
+\vccInput[linerange={init-append}]{c/6.1.safestring.c}
+
+\noindent
+For a pointer \vcc{p} of structured type, \vcc{\span(p)} returns the
+set of pointers to members of \vcc{p}. Arrays of base types produce
+one pointer for each base type component, so in this example,
+\vcc{\span(s)} abbreviates the set
+\begin{VCC}
+  { s, &s->len, &s->content[0], &s->content[1], ..., &s->content[SSTR_MAXLEN] }
+\end{VCC}
+%pointers to all fields of \vcc{s}.%
+%\footnote{
+%  This is a bite more complicated when embedded structs are involved,
+%  see \secref{TODO}.
+%}
+Thus, the writes clause says that the function 
+%not only can wrap \vcc{s} but can also 
+can write the fields of \vcc{s}. 
+The postcondition says that the function returns with \vcc{s} wrapped,
+which implies also that the invariant of \vcc{s} holds; this invariant
+is checked when the object is wrapped. (You can see this check fail by
+commenting any of the assignment statements.)
+
+A function that modifies a wrapped object will first unwrap it, make
+the necessary updates, and wrap the object again (which causes another
+check of the object invariant). Unwrapping an object adds all of its
+members to the writes set of a function, so such a function has to
+report that it writes the object, but does not have to report writing
+the fields of the object.
+
+\vccInput[linerange={append-index}]{c/6.1.safestring.c}
+
+\noindent
+Finally, a function that only reads an object need not unwrap, and so
+will not list it in its writes clause. For example:
+
+\vccInput[linerange={index-out}]{c/6.1.safestring.c}
+
+The following subsection explains this wrap/unwrap protocol in more details.
+
+\subsection{Wrap/unwrap protocol}
+\label{sect:wrap-unwrap}
+
+Because invariants do not always hold,
+in VCC one needs to explicitly state which objects are consistent,
+using a field \vcc{\closed} which is defined on every object.
+A \Def{closed object} is one for which the \vcc{\closed} field
+is true, and an \Def{open object} is one where it is false.
+The invariants have to (VCC enforces them) to hold only when for closed objects, but
+can also hold for open objects.
+Newly allocated objects are open, and you need to make them open before disposing them.
+
+In addition to the \vcc{\closed} field each object has an \Def{owner field}.
+The owner of \vcc{p} is \vcc{p->\owner}.
+%While the consistency flag is always written to by the wrap
+%and unwrap operations, the owner field can be under some
+%conditions (\secref{dynamic-claims}) written to directly.
+%Therefore instead of a function it is referred to with
+%a field: the owner of \vcc{p} is \vcc{p->\owner}.
+This field is of pointer (object) type, but
+VCC provides objects, of \vcc{\thread}
+type, to represent threads of execution, so that threads can also own objects.
+The idea is that the owner of \vcc{p} should have some special rights to \vcc{p} that others do not.
+In particular, the owner of \vcc{p} can transfer ownership of \vcc{p} to
+another object (\eg a thread can transfer ownership of \vcc{p} from itself to the memory allocator, 
+in order to dispose of \vcc{p}).
+
+When verifying a body of a function VCC assumes that it is being executed by some
+particular thread.
+The \vcc{\thread} object representing it is referred to as \vcc{\me}.
+
+(Some of) the rules of ownership and consistency are
+\begin{enumerate}
+\item on every atomic step of the program the invariants of all the closed objects have to hold,
+\item only the owning thread can modify fields of an open object,
+\item each thread owns itself, and
+\item only threads can own open objects.
+\end{enumerate}
+Thus, by the first two rules, VCC allows updates of objects in the following two situations:
+\begin{enumerate}
+\item the updated object is closed, the update is atomic, and the update preserves the invariant of the object,
+\item or the updated object is open and the update is performed by the owning thread.
+\end{enumerate}
+In the first case to ensure that an update is atomic, VCC requires that the
+updated field has a \vcc{volatile} modifier.
+There is a lot to be said about atomic updates in VCC, and we shall do
+that in \secref{concurrency}, but for now we're only considering sequentially
+accessed objects, with no \vcc{volatile} modifiers on fields.
+For such objects we can assume that they \emph{do not change}
+when they are closed, so the only way to change their fields is to
+first make them open, \ie via method~2 above.
+
+A thread needs to make the object open to update it.
+Because making it open counts as an update, the thread needs
+to own it first.
+This is performed by the unwrap operation, which translates to the following steps:
+\begin{enumerate}
+\item assert that the object is in the writes set,
+\item assert that the object is wrapped (closed and owned by the current thread), 
+\item assume the invariant (as a consequence of rule~1, the invariant holds for every closed object),
+\item set the \vcc{\closed} field to false, and
+\item add the span of the object (\ie all its fields) to the writes set
+\end{enumerate}
+The wrap operation does just the reverse:
+\begin{enumerate}
+\item
+assert that the object is mutable (open and owned by the current thread),
+\item assert the invariant, and
+\item set the \vcc{\closed} field to true (this implicitly prevents further writes to the fields of the object).
+\end{enumerate}
+Let's then have a look at the definitions of \vcc{\wrapped(...)} and \vcc{\mutable(...)}.
+
+\begin{VCC}
+logic bool \wrapped(\object o) =
+  o->\closed && o->\owner == \me;
+logic bool \mutable(\object o) =
+  !o->\closed && o->\owner == \me;
+\end{VCC}
+
+The definitions of \vcc{\wrapped(...)} and \vcc{\mutable(...)}
+use the \vcc{\object} type.
+It is much like \vcc{void*}, in the sense that it is a wildcard for any pointer type.
+However, unlike \vcc{void*}, it also carries the dynamic information about the type of the pointer.
+It can be only used in specifications.
+
+The assert\slash assume desugaring of the \vcc{sstr_append_char()} function looks as follows:
+
+\vccInput[linerange={assert-out}]{c/6.2.safestring_assert.c}
+
+\subsection{Ownership trees}
+\label{sect:ownership}
+
+Objects often stand for abstractions that are implemented with
+more than just one physical object.
+As a simple example, consider our \vcc{SafeString}, changed to have a dynamically
+allocated buffer.
+The logical string object consists of the control object holding the length
+and the array of bytes holding the content.
+In real programs such abstraction become hierarchical, \eg an address book might consists of a few hash tables, each
+of which consists of a control object, an array of buckets,
+and the attached linked lists.
+
+\vccInput[linerange={obj-append}]{c/6.3.safestring_dynamic.c}
+
+\noindent
+In C the type \vcc{char[10]} denotes an array with exactly 10 elements.
+VCC extends that location to allow
+the type \vcc{char[capacity]} denoting an array with \vcc{capacity} elements
+(where \vcc{capacity} is a variable).
+Such types can be only used in casts. For example, \vcc{(char[capacity])content}
+means to take the pointer \vcc{content} and interpret it as an array
+of \vcc{capacity} elements of type \vcc{char}.
+This notation is used so we can think of arrays as objects (of a special type).
+The other way to think about it is that \vcc{content} represents just
+one object of type \vcc{char}, whereas \vcc{(char[capacity])content}
+is an object representing the array.
+
+The invariant of \vcc{SafeString} specifies that it \Def{owns} the
+array object.
+The syntax \vcc{\mine(o1, ..., oN)} is roughly equivalent
+(we'll get into details later) to:
+\begin{VCC}
+o1->\owner == \this && ... && oN->\owner == \this
+\end{VCC}
+Conceptually there isn't much difference between having the \vcc{char}
+array embedded and owning a pointer to it.
+In particular, the functions operating
+on some \vcc{s} of type \vcc{SafeString}
+should still list only \vcc{s} in their writes clauses,
+and not also \vcc{(char[s->capacity])s->content},
+or any other objects the string might comprise of.
+To achieve that VCC performs \Def{ownership transfers},
+\ie assignments to the \vcc{\owner} field.
+Specifically, there is another step when unwrapping an object \vcc{p}:
+\begin{enumerate}
+\setcounter{enumi}{5}
+\item
+for each object \vcc{o} owned by \vcc{p},
+set \vcc{o->\owner} to \vcc{\me} and add \vcc{o} to the writes set
+\end{enumerate}
+Similarly, when wrapping \vcc{p}, VCC additionally does:
+\begin{enumerate}
+\setcounter{enumi}{3}
+\item
+for each object \vcc{o} that needs to be owned by \vcc{p}
+(which is determined by \vcc{p}'s invariant, as you'll see in the next section),
+assert that \vcc{o} is wrapped and writable and set \vcc{o->\owner} to \vcc{p}.
+\end{enumerate}
+Let's have a look at an example:
+
+\vccInput[linerange={append-alloc}]{c/6.3.safestring_dynamic.c}
+
+\noindent
+First, let's explain the syntax:
+\begin{VCC}
+_(unwrapping o) { ... }
+\end{VCC}
+is equivalent to:
+\begin{VCC}
+_(unwrap o) { ... } _(wrap o)
+\end{VCC}
+Let \vcc{cont = (char[s->capacity]) s->content}. 
+At the beginning of the function, \vcc{s} is owned by the
+current thread (\vcc{\me}) and closed (\ie \vcc{\wrapped}), whereas
+(by the string invariant) \vcc{cont} is owned by \vcc{s} (and
+therefore closed).  Unwrapping \vcc{s} transfers ownership of 
+\vcc{cont} to \vcc{\me}, but \vcc{cont} remains closed.
+Thus, unwrapping \vcc{s} makes the string mutable, and \vcc{cont}
+wrapped.  Then we unwrap \vcc{cont} (which doesn't own anything, so
+the thread gets no new wrapped objects), perform the changes, and wrap
+\vcc{cont}.  Finally, we wrap \vcc{s}.  This transfers ownership
+of \vcc{cont} from the current thread to \vcc{s}, so \vcc{cont}
+is no longer wrapped (but still closed).  Here is
+the assert\slash assume translation:
+
+\vccInput[linerange={append-out}]{c/6.4.safestring_dynamic_assert.c}
+
+\noindent
+Here, \vcc{\inv(p)} means the (user-defined) invariant of object \vcc{p}.
+There are two ownership transfers
+of \vcc{cont} to and from \vcc{\me} because \vcc{s} owns \vcc{cont} beforehand,
+as specified in its invariant.
+However, suppose we had an invariant like the following:
+\begin{VCC}
+struct S {
+  struct T *a, *b;
+  _(invariant \mine(a) || \mine(b))
+};
+\end{VCC}
+When wrapping an instance of \vcc{struct S}, VCC wouldn't know which object
+to transfer ownership of to the instance. Therefore, 
+VCC rejects such invariants, and only allow \vcc{\mine(...)}
+as a top-level conjunct in an invariant, unless further annotation is given;
+see \secref{dynamic-ownership}.
+
+\subsection{Dynamic ownership}
+\label{sect:dynamic-ownership}
+
+When a struct is annotated with \vcc{_(dynamic_owns)} the ownership transfers
+during wrapping need to performed explicitly, but \vcc{\mine(...)} can
+be freely used in its invariant, including using it under a universal
+quantifier.
+
+\vccInput[linerange={obj-set}]{c/6.5.table.c}
+
+\noindent
+The invariant of \vcc{struct SafeContainer} states that it owns its underlying array,
+as well as all elements pointed to from it.
+It also states that there are no duplicates in that array.
+Let's now say we want to change a pointer in that array,
+from \vcc{x} to \vcc{y}.
+After such an operation, the container should own whatever it used
+to own minus \vcc{x} plus \vcc{y}.
+To facilitate such transfers VCC introduces the \Def{owns set}.
+It is essentially the inverse of the owner field.
+It is defined on every object \vcc{p} and referred to as \vcc{p->\owns}.
+VCC maintains that:
+\begin{VCC}
+\forall \object p, q; p->\closed ==> 
+  (q \in p->\owns <==> q->\owner == p)
+\end{VCC}
+The operator \vcc{<==>} reads ``if and only if'', and is simply boolean
+equality (or implication both ways), with a binding priority lower than implication.
+That is, for closed \vcc{p}, the set \vcc{p->\owns} contains exactly
+the objects that have \vcc{p} as their owner.
+Additionally, the unwrap operation does not touch the owns set,
+that is after unwrapping \vcc{p}, the \vcc{p->\owns} still contains
+all that objects that \vcc{p} used to own.
+Finally, the wrap operation will attempt to transfer ownership
+of everything in the owns set to the object being wrapped.
+This requires that the current thread has write access to these objects
+and that they are wrapped.
+
+Thus, the usual pattern is to unwrap the object, potentially modify the owns
+set, and wrap the object.
+Note that when no ownership transfers are needed, one can just unwrap
+and wrap the object, without worrying about ownership.
+Let's have a look at an example, which does perform an ownership transfer:
+
+\vccInput[linerange={set-use}]{c/6.5.table.c}
+
+\noindent
+The \vcc{sc_set()} function transfers ownership of \vcc{s} to \vcc{c},
+and additionally leaves object initially pointed to by \vcc{s->strings[idx]}
+wrapped, \ie owned by the current thread.
+\begin{note}
+\todo{We should have entire section about BVD. --MM}
+VCC needs a help in form of an assertion statement at the beginning:
+\vcc{sc_set} gets a wrapped \vcc{c} and \vcc{s}, so it cannot be the
+case that \vcc{c} owns \vcc{s}. This is what the assertion says.
+Without spelling it out explicitly, VCC thinks that \vcc{s} might be 
+somewhere in the \vcc{strings} array beforehand, and
+thus after inserting it at \vcc{idx} the distinctness invariant could be violated.
+If you look at the error model in that case, you can
+see that VCC knows nothing about the truth value of \vcc{s \in c->\owns},
+and thus adding an explicit assertion about it helps.
+\end{note}
+Moreover, it promises that this object is \Def{fresh}, \ie the thread did not own
+it directly before.
+This can be used at a call site:
+
+\vccInput[linerange={use-out}]{c/6.5.table.c}
+
+\noindent
+In the contract of \vcc{sc_add} the string \vcc{s} is mentioned
+in the writes clause, but in the postcondition we do not say it's wrapped.
+Thus, asserting \vcc{\wrapped(s)} after the call fails.
+On the other hand, asserting \vcc{\wrapped(o)} fails before the call,
+but succeeds afterwards.
+Additionally, \vcc{\wrapped(c)} holds before and after as expected.
+
+\begin{note}
+\textbf{How is the write set updated?} \\
+Before allowing a write to \vcc{*p} VCC will assert \vcc{\mutable(p)}.
+Additionally, it will assert that either \vcc{p} is in the writes
+clause, or the consistency or ownership of \vcc{p} was updated after the current
+function started executing.
+Thus, after you unwrap an object, you modify consistency of all its fields,
+which provides the write access to them.
+Also, you modify ownership of all the objects that it used to own, providing
+write access to unwrap these objects.
+In case a write clause is specified on a loop, think of an implicit function
+definition around the loop.
+\end{note}
+
+%This effectively tells the call site that it no longer has ownership of \vcc{s}.
+%Additionally, when we look at the invariant of \vcc{c}, we can even figure out
+%that \vcc{s} is indeed no longer wrapped.
+%
+%VCC does know that the invariant of \vcc{s} holds (because the object is closed),
+%but we need to explicitly assert it to bring it into theorem prover scope.
+%Normally, this is done by \vcc{unwrap}, or \vcc{requires \wrapped(...)}.
+%
+%Note the distinction between not being able to prove \vcc{P} and 
+%being able to prove \vcc{!P}.
+%
+
+\subsection{Ownership domains}
+
+The \Def{sequential ownership domain} of an object \vcc{o} (written
+\vcc{\domain(o)}) consists of \vcc{o} along with\footnote{ The domains
+  of the objects owned by \vcc{o} are included only if \vcc{o} is not
+  declared as \vcc{_(volatile_owns)}; see \secref{concurrency}.} the
+union of the ownership domains of all objects owned by \vcc{o}.  In
+other words, it's the set of objects that are transitively owned by
+\vcc{o}. For most purposes, it is useful to think of \vcc{o} as
+``containing'' all of \vcc{\domain(o)}; indeed, if \vcc{o1 != o2} and
+neither \vcc{o1} nor \vcc{o2} are in the other's \vcc{\domain}, their
+\vcc{\domain}s are necessarily disjoint. In particular, if \vcc{o1}
+and \vcc{o2} are owned by threads then (because threads own
+themselves) \vcc{o1} and \vcc{o2} are necessarily disjoint.
+
+Writability of \vcc{o} gives a thread potential access to all of
+\vcc{\domain(o)}: writability allows the thread to unwrap \vcc{o},
+which makes writable both the fields of \vcc{o} and any objects that were
+owned by \vcc{o}. Conversely, a call to a function that does not list
+a wrapped object \vcc{o} in its writes clause is guaranteed to leave 
+all of \vcc{\domain(o)} unchanged\footnote{
+  This applies to nonvolatile fields of objects in
+  the domain; volatile fields might change silently (see section \secref{concurrency}).
+}. However, VCC will only reason about the unchangedness of
+\vcc{\domain(o)} if it is explicitly brought to its attention, as in
+the following example:
+
+\begin{VCC}
+void f(T *p) 
+  _(writes p) { ... }
+...
+T *p, *q, *r;
+_(assert \wrapped(q) && q != p)
+_(assert q \in \domain(q))
+_(assert r \in \domain(q))
+f(p);
+\end{VCC}
+\noindent
+The second and third assertions bring to VCC's attention that as long
+as \vcc{q} is not explicitly unwrapped or included in the writes
+clause of a function call, \vcc{r} and its fields will not change.
+
+\subsection{Simple sequential admissibility}
+\label{sect:admissibility0}
+
+Until now we've ignored the issue of constraints on the form of object invariants.
+The basic rule is that a state change that preserves the invariants of
+all updated objects should also preserve the invariants of any closed,
+unupdated object \vcc{o}. If an invariant of \vcc{o} satisfies this
+criterion, we say that the invariant is \Def{admissible}. VCC requires
+all object invariants to be admissible; this admissibility check is
+performed when verifying the declaration of \vcc{o}'s type.
+The admissibility check allows VCC to check an update to the state by
+just checking the invariants of objects that are actually updated;
+admissibility of the remaining objects guarantees that all of their
+invariants are preserved also.
+
+Fortunately, the most common case is trivial: if an invariant of
+\vcc{o} mentions only (nonvolatile) fields of objects in
+\vcc{\domain(o)}, the invariant is necessarily admissible.
+More sophisticated kinds of invariants are discussed in \secref{inv2}.
+
+\subsection{Type safety}
+\label{sect:type-safety}
+
+In modern languages like Java, C\#, and ML, where memory consists of a
+collection of typed objects. Programs in these languages allocate
+objects (as opposed to memory), and the type of an object remains
+fixed until the object is destroyed. Moreover, a non-null reference to
+an object is guaranteed to point to a ``valid'' object. But in C, a
+type simply provides a way to interpret a sequence of bytes; nothing
+prevents a program from having multiple pointers of different types
+pointing into the same physical memory, or having a non-null
+pointer point into an invalid region of memory.
+
+That said, most C programs really do access memory using a strict type
+discipline and tacitly assume that their callers do
+so also. For example, if the parameters of a function are a pointer to
+an \vcc{int} and a pointer to a \vcc{char}, we shouldn't have to worry
+about crazy possibilities like the \vcc{char} aliasing with the second
+half of the \vcc{int}. (Without such assumptions, we would have to
+provide explicit preconditions to this effect.)  On the other hand, if
+the second parameter is a pointer to an \vcc{int}, we do consider the
+possibility of aliasing (as we would in a strongly typed language).
+Moreover, since in C objects of structured types literally contain
+fields of other types, if the second argument were a struct that had
+a member of type \vcc{int}, we would have to consider the possibility
+of the first parameter aliasing that member. 
+
+To support this kind of antialiasing by default, VCC essentially
+maintains a typed view of memory; in any state, \vcc{p->\valid} means
+that \vcc{p} points to memory that is currently ``has'' type
+\vcc{p}. The rules governing validity guarantee that in any state, the
+valid pointers constitute a typesafe view of memory.  In particular,
+valid objects never alias, and valid fields are always fields of valid
+objects. Only valid fields (and purely local variables) can be
+accessed by a program.
+
+There are rare situations where a program needs to change the type of
+memory, i.e., make one object invalid while making valid an object
+that aliases with it. The most common example is in the memory
+allocator, which needs to create and destroy objects of arbitrary
+types from arrays of bytes in its memory pool. Therefore, VCC includes
+annotations (explained in \secref{reint}) that explicitly change
+object validity (and are in fact the only means to do so).  Thus,
+while your program can access memory using pretty much arbitrary types
+and typecasting, doing so is likely to require additional
+annotations. But for most programs, checking type safety is completely
+transparent, so you don't have to worry about it.
+
