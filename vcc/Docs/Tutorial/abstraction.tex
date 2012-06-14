@@ -1,40 +1,40 @@
 \section{Ghosts}
 \label{sect:ghosts}
-Usually there are many ways of implementing a given data structure.
-For example, a set might be implemented as a linked list, an array, or a hash table.
 
-When reasoning about a program which uses a data structure we don't want to be
-concerned with implementation details of the data structure.
-We should reason at a somewhat higher, abstract level.
-For example, when we use a linked list as a representation of a set, we should not be concerned
-with how the list nodes are laid out in memory.
-You would then need to include \Def{ghost data} to store this set and write small bits of \Def{ghost code} to
-update it.  
-Ghost code is seen by VCC but not by the C compiler, and
-so introduces no runtime overhead. Part of the VCC philosophy is that
-programmers would rather do extra programming than drive interactive
-theorem provers, so ghost code is the preferred way to help VCC
-understand why your program works.  
-%Thus, you interact with VCC entirely at the level of code and program states;
-%usually, you can safely ignore the mathematical reasoning going on ``under the
-%hood''.
+VCC methodology makes heavy use of \Def{ghost} data and code - data
+and code that are not seen by the C compiler (and therefore are not
+part of the executable), but are included to aid reasoning about the
+program. Part of the VCC philosophy is that programmers would rather
+writing extra code than have to drive interactive theorem provers, so
+ghosts are the preferred way to explain to VCC why your program works.
 
-In fact we have already used ghost data, which VCC introduced: \vcc{\closed},
-\vcc{\owner}, and friends are all ghost fields, not seen by the C compiler.
-The \vcc{_(wrap ...)} and \vcc{_(unwrap ...)} operations are ghost code.
-In this section we're just going to introduce some ghost data and code ourselves.
+We have already seen some ghost fields of ordinary data structures
+(e.g. \vcc{\closed}, \vcc{\owner}, \vcc{\owns}m \vcc{\valid}, etc.) as
+well as built-in pieces of ghost code (e.g. \vcc{_(wrap ...)} and
+\vcc{_(unwrap ...)}). This section is about how to write your own
+ghost code. 
 
-It is only rarely the case that a simple C type, say \vcc{unsigned int}, would be suitable
-to store such a data-structure abstraction (how would one store an unbounded set in a primitive C type?).
-To that end, VCC provides \Def{map types}.
-The syntax is similar to syntax of array types, \vcc{int m[T*]} defines a map \vcc{m} from \vcc{T*}
-to \vcc{int}.
-That is the type of expression \vcc{m[p]} is \vcc{int}, provided that \vcc{p} is a pointer
-of type \vcc{T*}.
-A map \vcc{T* a[unsigned]} is similar to an array of pointers of length $2^{32}$.%
-\footnote{
-  Because a map can be used only in ghost code, 
-  the issue of runtime memory consumption does not apply to it.}
+Our first tyical use of ghost data is to express data abstaction. If
+you implement an abstract set as a list, it is good practice to expose
+to the client only the set abstraction, while keeping the list
+implementation private to the implementation of the data type. One way
+to do this is to store the abstract value in a ghost field and update
+it explicitly in ghost code when operating on the data
+structure\footnote{ An alternative approach is to write a pure ghost
+  function that takes a concrete data structure and returns its
+  abstract value.  The disadvantage of this approach is that for
+  recursive structures like lists, the abstraction function is
+  likewise recursive, and so reasoning with it requires substantial
+  guidance from the user.}. Functions operating on the data structure
+are specified in terms of their effect on the abstract value only; the
+connection between the abstract and concrete values is written as an
+invariant of the data structure.
+
+VCC's mathematical types are usually better suited to representing these
+abstract values than C's built-in types. Here, we will use VCC maps.
+Recal that a declaration \vcc{int m[T*]} defines a map \vcc{m} from
+\vcc{T*} to \vcc{int}; for any pointer \vcc{p} of type \vcc{T*}
+\vcc{m[p]} gives the \vcc{int} to which \vcc{m} maps \vcc{p}.
 A map \vcc{bool s[int]} can be thought of as a set of \vcc{int}s: the operation
 \vcc{s[k]} will return true if and only if the element \vcc{k} is in the set \vcc{s}.
 
