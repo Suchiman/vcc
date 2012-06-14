@@ -6,25 +6,17 @@
 #ifndef _VCC_H
 #define _VCC_H
 
+#include <crtdefs.h>
+
 #ifndef VERIFY
 
-#define _(...) /* VCC annotations hidden from compiler */
+// hide annotations from C compiler
+
+#define _(...) /* nothing */
 
 #else
 
-#ifndef __cplusplus
-
-#include <crtdefs.h>
-
 #include <vccp.h>
-
-#endif
-
-#endif
-
-#ifdef __cplusplus
-
-#include <vccpp.h>
 
 #endif
 

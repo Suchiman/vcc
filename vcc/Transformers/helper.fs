@@ -7,7 +7,6 @@
 #light
 
 namespace Microsoft.Research.Vcc
-  open System
   open Microsoft.Research.Vcc
   open Microsoft.Research.Vcc.Util
 
@@ -31,7 +30,7 @@ namespace Microsoft.Research.Vcc
      member this.Elapsed = handicap + stopwatch.ElapsedMilliseconds
      member this.Name = name
      member this.Display() =
-       String.Format("{0,30} {1:0.000}", name, float this.Elapsed / 1000.0)
+       System.String.Format("{0,30} {1:0.000}", name, float this.Elapsed / 1000.0)
      member this.ShouldReplace (that:Stopwatch) =
        if this = that then true
        else
@@ -242,7 +241,7 @@ namespace Microsoft.Research.Vcc
       
 
     [<AbstractClass>]
-    type public TransEnv (opts : Helper.IOptions) as this =
+    type public TransEnv (opts : Helper.Options) as this =
       inherit Helper.Env(opts)
       let stopwatches = ref []
       let sw name = 
@@ -284,18 +283,11 @@ namespace Microsoft.Research.Vcc
         transformers.Add td
       
       member this.ApplyTransformers (decls : list<CAST.Top>) =
-
-        let checkCalls self = function
-          | CAST.Call(_, fn, targs, args) ->
-            if fn.TypeParameters.Length <> targs.Length then this.Die()
-            None
-          | _ -> None
-
         let apply = function
           | Expr f -> CAST.deepMapExpressions f
           | ExprCtx f -> CAST.deepMapExpressionsCtx f
           | Decl f -> f
-          | DoNothing -> id
+          | DoNothing -> (fun x -> x)
         let rec aux i decls =
           if i >= transformers.Count then 
             decls
@@ -371,5 +363,6 @@ namespace Microsoft.Research.Vcc
               | ExprCtx _ -> "Expr"
               | Decl _ -> "decl"
               | DoNothing -> "mark"
-          Utils.Log(String.Format("{3:000.000}s {0} {1} {2}", kind, (if t.Enabled then "          " else "(disabled)"), t.Name,
-                                    double (lookupWithDefault times 0L t.Name) / 10000000.0))
+          System.Console.WriteLine ("{3:000.000}s {0} {1} {2}", kind, (if t.Enabled then "          " else "(disabled)"), t.Name, 
+                                    double (lookupWithDefault times 0L t.Name) / 10000000.0)
+                                    

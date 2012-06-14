@@ -1,7 +1,5 @@
 ﻿namespace Microsoft.Research.Vcc.SyntaxConverter
-open System
 open Microsoft.FSharp.Text
-open Microsoft.Research.Vcc
 open Microsoft.Research.Vcc.SyntaxConverter.Ast
 
 module Rules =
@@ -184,7 +182,7 @@ module Rules =
                         else
                           let guardOp =
                             if guardOp = "###" then
-                              Utils.Log (String.Format("{0}: Making lambda total with: {1} ==> ...", p, Tok.Sequence guard))
+                              System.Console.WriteLine ("{0}: Making lambda total with: {1} ==> ...", p, Tok.Sequence guard)
                               "==>"
                             else guardOp
                           guard @ [Tok.Whitespace (p, " "); Tok.Op (p, guardOp)] @ [space; Tok.Group(fakePos, "(", eatWs body)], List.rev defs

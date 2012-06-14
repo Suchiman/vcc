@@ -196,7 +196,8 @@ namespace Microsoft.Research.Vcc
                                Token = parent.Token
                                Type = Type.Ref td
                                Parent = parent
-                               Flags = Flags.None
+                               IsSpec = false
+                               IsVolatile = false 
                                Offset = Normal 0
                                CustomAttr = []
                                UniqueId = CAST.unique() }
@@ -312,7 +313,7 @@ namespace Microsoft.Research.Vcc
         match d with
           | Top.TypeDecl td ->
             for f in td.Fields do
-              if f.Name = "" || f.Name.StartsWith "#" || f.Name.Contains "<unnamed-tag>" then
+              if f.Name = "" || f.Name.StartsWith "#" then
                 match f.Type with
                   | Type.Ref td' ->
                     td'.IsNestedAnon <- true
@@ -413,7 +414,7 @@ namespace Microsoft.Research.Vcc
             List.iter (fun (fld : Field) -> processType (fld.Type)) td.Fields
             match tryFindBackingMember td with
               | Some fld -> 
-                let bf = { backingField fld with Flags = if List.exists hasVolatileInExtent td.Fields then Flags.Volatile else Flags.None }        
+                let bf = { backingField fld with IsVolatile = List.exists hasVolatileInExtent td.Fields }        
                 let tdIsRecord = td.IsRecord
                 let addOtherFlds (f : Field) =
                   if f = bf || (f.IsSpec && not tdIsRecord) then () else fieldsToReplace.Add(f, bf)
@@ -960,7 +961,7 @@ namespace Microsoft.Research.Vcc
               { f with Type = Array(Type.Ref(mkVolTd tdRef), size); Parent = td }
             | Type.Ref({Kind = Struct|Union} as tdRef) when not tdRef.IsRecord ->
               { f with Type = Type.Ref(mkVolTd tdRef);  Parent = td }
-            | _ -> { f with Flags = f.Flags ||| Flags.Volatile; Parent = td}
+            | _ -> { f with IsVolatile = true; Parent = td}
         fldToVolatileFld.Add(f,f')
         f'
 
@@ -1006,7 +1007,7 @@ namespace Microsoft.Research.Vcc
           match f.Type with
             | Type.Ref({Kind = Struct|Union} as td) when f.IsVolatile && not td.IsRecord ->
               let td' = mkVolTd td
-              let f' = {f with Flags = f.Flags &&& ~~~ Flags.Volatile; Type = Type.Ref(td')}
+              let f' = {f with IsVolatile = false; Type = Type.Ref(td')}
               if initial then initialFldToVolatileFld.Add(f, f')
               f'
             | PtrSoP(Type.Volatile((Type.Ref({Kind = Struct|Union} as td))), isSpec) ->
@@ -1021,11 +1022,11 @@ namespace Microsoft.Research.Vcc
               f'
             | Type.Array(Type.Ref({Kind = Struct|Union} as td), size) when f.IsVolatile ->
               let td' = mkVolTd td
-              let f' = {f with Type = Type.Array(Type.Ref(td'), size); Flags = f.Flags &&& ~~~ Flags.Volatile}
+              let f' = {f with Type = Type.Array(Type.Ref(td'), size); IsVolatile=false}
               initialFldToVolatileFld.Add(f, f')
               f'
             | Type.Array(Type.Volatile(t), size) ->
-              let f' = {f with Type = Type.Array(t, size); Flags = f.Flags ||| Flags.Volatile}
+              let f' = {f with Type = Type.Array(t, size); IsVolatile=true}
               initialFldToVolatileFld.Add(f, f')
               f'
             | PtrSoP(Type.Volatile(t), isSpec) ->
@@ -1108,12 +1109,12 @@ namespace Microsoft.Research.Vcc
        
       do deepVisitExpressions findVolatileTypes decls
 
-      let typeMap _ t = 
+      let typeMap t = 
         match typeSubst.TryGetValue t with
           | true, t' -> Some t'
           | false, _ -> None
         
-      let decls = deepMapExpressions (fun _ (expr : Expr) -> Some(expr.SubstType(typeMap, new Dict<_,_>(), new Dict<_,_>()))) decls
+      let decls = deepMapExpressions (fun _ (expr : Expr) -> Some(expr.SubstType(typeMap, new Dict<Variable, Variable>()))) decls
 
       for d in decls do
         match d with
@@ -1365,7 +1366,7 @@ namespace Microsoft.Research.Vcc
             ()
           | _ -> ()
 
-      let typeMap _ = function
+      let typeMap = function
         | Type.Ref(td) ->
           match primMap.TryGetValue td with 
             | true, t' -> Some t'
@@ -1381,19 +1382,19 @@ namespace Microsoft.Research.Vcc
         match d with
           | Top.FunctionDecl(fn) -> 
             let retypeParameter (p : Variable) =
-              match p.Type.SelfSubst(typeMap) with
+              match p.Type.Subst(typeMap) with
                 | None -> p
                 | Some t' -> 
                   let p' = { p.UniqueCopy() with Type = t'}
                   paramSubst.Add(p, p')
                   p'
             fn.Parameters <- List.map retypeParameter fn.Parameters
-            fn.RetType <- match fn.RetType.SelfSubst(typeMap) with
+            fn.RetType <- match fn.RetType.Subst(typeMap) with
                            | None -> fn.RetType
                            | Some t' -> t'
           | Top.TypeDecl(td) ->
             let retypeField (fld:Field) =
-              match fld.Type.SelfSubst(typeMap) with
+              match fld.Type.Subst(typeMap) with
                 | None -> fld
                 | Some t' ->
                   let fld' = { fld with Type = t' }
@@ -1413,7 +1414,7 @@ namespace Microsoft.Research.Vcc
             | false, _ -> None
         | _ -> None
 
-      let substTypes _ (expr :Expr) = Some(expr.SubstType(typeMap, paramSubst, new Dict<_,_>()))
+      let substTypes _ (expr :Expr) = Some(expr.SubstType(typeMap, paramSubst))
 
       decls |> deepMapExpressions removeAndReplaceFields |> deepMapExpressions substTypes
 

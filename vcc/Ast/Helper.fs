@@ -12,7 +12,8 @@ namespace Microsoft.Research.Vcc
 
   module Helper =
 
-    type public IOptions =
+    [<AbstractClass>]
+    type public Options() =
       abstract TerminationForPure : bool with get
       abstract TerminationForGhost : bool with get
       abstract TerminationForAll : bool with get
@@ -29,7 +30,7 @@ namespace Microsoft.Research.Vcc
       abstract WeightOptions : string seq with get
 
     [<AbstractClass>]
-    type public Env(options:IOptions) =
+    type public Env(options:Options) =
 
       let currentId = ref 0
       let pureCalls = new Dict<string,string>()
@@ -46,11 +47,10 @@ namespace Microsoft.Research.Vcc
 
       abstract member Error : Token * int * string * Token option -> unit
 
-      // 9100 <= code <= 9199; First available: 9128
+      // 9100 <= code <= 9199; First available: 9127
       abstract member Warning : Token * int * string * Token option -> unit
 
       // 9601 <= code <= 9799; First available: 9751
-      // For C++-related messages: 9801 <= code <= 9899; First available: 9804
       member this.Error(token, code, msg) = this.Error(token, code, msg, None)
 
       // 9300 <= code <= 9399; First available: 9326

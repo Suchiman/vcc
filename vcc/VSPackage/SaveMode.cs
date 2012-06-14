@@ -1,4 +1,5 @@
-﻿namespace Microsoft.Research.Vcc.VSPackage
+﻿
+namespace Microsoft.Research.Vcc.VSPackage
 {
   public enum SaveMode
   {

@@ -3016,12 +3016,6 @@ axiom (forall t:$ctype, x: int :: { $_not(t, $_not(t, x)) }  $in_range_t(t, x) =
 axiom (forall t:$ctype, x: int, y: int :: { $_or(t, x, y) } $_or(t, x, y) == $_or(t, y, x));
 axiom (forall t:$ctype, x: int, y: int :: { $_xor(t, x, y) } $_xor(t, x, y) == $_xor(t, y, x));
 axiom (forall t:$ctype, x: int, y: int :: { $_and(t, x, y) } $_and(t, x, y) == $_and(t, y, x));
-
-// 'Boolean' operators on integers
-
-function $op_and(x:int, y:int) : int { if x == 0 || y == 0 then 0 else 1 }
-function $op_or (x:int, y:int) : int { if x == 0 && y == 0 then 0 else 1 }
-function $op_not(x:int)        : int { if x == 0 then 1 else 0 }
   
 
 // extra function symbol for multiplication to prevent z3 from applying commutativity half-heartedly
@@ -3037,8 +3031,6 @@ function $op_lt(t:$ctype, x:int, y:int) : bool { x < y }
 function $op_le(t:$ctype, x:int, y:int) : bool { x <= y }
 function $op_gt(t:$ctype, x:int, y:int) : bool { x > y }
 function $op_ge(t:$ctype, x:int, y:int) : bool { x >= y }
-
-
 
 // --------------------------------------------------------------------------------
 // Conversion functions

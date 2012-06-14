@@ -100,8 +100,8 @@ namespace Microsoft.Research.Vcc
         match top with
           | Top.FunctionDecl { Name = ( "malloc" | "free" ) } -> ()
           | t -> if used.Add t then walkTop cb t
-      | (false, _) -> ()
-        
+      | (false, _) ->
+        helper.Panic (System.String.Format ("pruning: cannot find {0} : {1}", o, o.GetType()))
 
     let fnByName = new Dict<_,_>()
     for d in decls do
@@ -158,7 +158,6 @@ namespace Microsoft.Research.Vcc
     helper.AddTransformer ("begin", TransHelper.DoNothing)
     helper.AddTransformer ("prune", TransHelper.Decl (pruneDecls helper))
 
-    MsCpp.init helper
     NewSyntax.init helper
     Normalizer.init helper
     DataTypes.init helper
