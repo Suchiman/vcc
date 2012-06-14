@@ -209,28 +209,6 @@ concurrently) through \vcc{p} at the same time\footnote{
 mutability makes sense only in the context of a particular thread.
 %%Writing via pointers other than \vcc{p} cannot make \vcc{p} non-mutable.
 
-There is one further restriction on sequential writes, motivated by
-the desire to limit the possible side effects of a function call to a
-specific set of mutable objects. We could do this by adding a
-postcondition that all other parts of the state are unmodified, but
-VCC provides some sugar to make specification (and reasoning) about
-such properties more convenient and efficient. The idea is that when
-you call a function, you give it permission to write certain objects,
-but not others; \vcc{\writable(p)} expresses the condition that
-\vcc{p} is mutable and that the function has the right to write to
-\vcc{p}. Thus, when writing through \vcc{p}, VCC asserts
-\vcc{\mutable(p) && \writable(p)}.
-
-To specify that a function needs writability of \vcc{p} at
-function entry, you add to the specification of the function the
-annotation \vcc{_(writes p)}, called a ``writes clause''. When 
-you call a function, VCC asserts that all of the objects listed in the
-writes clauses are writable on function entry.
-Moreover, if an object becomes mutable (for a thread) after entry to a
-function call, it is considered writable within that call (as long as
-it remains mutable).
-
-
 \begin{note}
 If VCC doesn't know why an object is thread local, then it has
 hard time proving that the object stays thread local after an operation
@@ -247,6 +225,33 @@ The \vcc{NULL} pointer, pointers outside bounds of arrays,
 the memory protected by the operating system, or outside
 the address space are never thread local (and thus also never mutable
 nor writable).
+
+There is one further restriction on sequential writes, motivated by
+the desire to limit the possible side effects of a function call to a
+specific set of mutable objects. We could do this by adding a
+postcondition that all other parts of the state are unmodified, but
+VCC provides some sugar to make specification (and reasoning) about
+such properties more convenient and efficient. The idea is that when
+you call a function, you give it permission to write certain objects,
+but not others; \vcc{\writable(p)} expresses the condition that
+the function has the right to write to
+\vcc{p}. Thus, when writing through \vcc{p}, VCC asserts
+\vcc{\mutable(p) && \writable(p)}.
+
+While mutability is a thread-level concept, writability is a property
+of a particular instance of an executing function. (That is, just
+because something is writable for you doesn't mean it will be writable
+for a function you call.) Therefore, you can't express that a function
+needs ``permission'' to write \vcc{p} by \vcc{_(requires
+  \writable(p))}, because preconditions are evaluated in the context
+of the caller. Instead, you specify that a function needs writability
+of \vcc{p} at function entry with the annotation \vcc{_(writes p)},
+called a ``writes clause''. When you call a function, VCC assumes that
+all of the objects listed in the writes clauses are writable on
+function entry.  Moreover, if an object becomes mutable (for a thread)
+after entry to a function call, it is considered writable within that
+call (as long as it remains mutable).
+
 %Moved this up -E
 %Access to thread local memory will never crash the program.
 %The memory that is not thread-local is covered in 
@@ -294,7 +299,7 @@ and the object pointed to by \vcc{q}.
 In other words, it is roughly equivalent to a postcondition that ensures
 that all other objects thread-local to the caller prior
 to the call remain unchanged.
-VCC allows you to write multiple writes clauses, and implicitly
+A function can have multiple writes clauses, and implicitly
 combines them into a single set. If a function spec contains no writes clauses, 
 it is equivalent to specifying a writes clause with empty set of
 pointers.
@@ -351,22 +356,23 @@ _(assume y == _old_x)
 %allows writing to all elements of the array.
 
 \subsubsection{Local Variables}
-C is different from most block-structured languages, in that it allows
-you to take the addresses of local variables (with the \vcc{&}
-operator). If you take the address of a local, nothing prevents you
-from storing that address in a data structure, and trying to
-dereference the address after the lifetime of the variable has
-ended. (The result would not be pretty.) Even if you are careful about
-its lifetime, once you take the address of a variable, you have to
-worry that its address might alias with other pointers, which is a pain.
+Unlike most block-structured languages, C allows you to take the
+addresses of local variables (with the \vcc{&} operator). If you take
+the address of a local, nothing prevents you from storing that address
+in a data structure, and trying to dereference the address after the
+lifetime of the variable has ended. (The result is not pretty.) Even
+if you are careful about its lifetime, once you take the address of a
+variable, you have to worry that writing through some seemingly
+unrelated pointer might change the value of the variable, which is a
+pain.
 
 Because of this, VCC distinguishes between local variables whose
 addresses are never taken and those whose addresses are taken; the
 former are called \Def{purely local} variables. A purely local
 variable is much, much easier to reason about; you know that its value
-can be changed only by a an update that treats its name as an
-lvalue. (In particular, it cannot be modified by function calls, or by
-assignments to other variables or assignments through pointers.)
+can be changed only by a an update through its name 
+(In particular, it cannot be modified by function calls, by
+assignments to other variables, or assignments through pointers.)
 Purely local variables are always considered thread-local (so there is
 no thread-locality check when reading them) and writable (so you never
 have to mention them in writes clauses of loops or blocks). Also, if
@@ -390,8 +396,8 @@ the bottom part of the function\footnote{This won't effect the final
 binary produced by a decent optimizing compiler.}.
 
 \subsection{Arrays}
+\lavel{sect:arrays}
 
-\todo{should the inline expressions below be displayed like the writes clauses?}
 Array accesses are a kind of pointer accesses.
 Thus, before allowing you to read an element of an array VCC checks if it's thread-local.
 Usually you want to specify that all elements of an array are thread-local,
@@ -425,16 +431,43 @@ ones we've seen so far) by simply adding to the specification
 are not recursive. For functions that are recursive (or which look
 potentially recursive to VCC, because of potential callbacks from
 functions whose bodies are hidden from VCC), the termination clause of
-a function gives a measure that decreases for each call that might be
-part of a sequence of calls back the function. Details can be found in
-the VCC manual.
+a function gives a measure that decreases for each call that might start
+a chain of calls back the function. For example, to verify the
+termination of \vcc{my_memcpy} above, you need only add to its
+specification the additional annotation \vcc{_(decreases len)}. This
+annotation defines a ``measure'' on calls to \vcc{my_memcpy} (namely,
+the value passed as the last parameter). VCC checks termination 
+by checking that (1) all loops in the body terminate
+(\secref{loopTermination}), and
+(2) for every function call within the body of
+\vcc{my_memcpy} that is potentially the first of a chain of calls
+leading to a call back to \vcc{my_memcpy}, the called function has a
+\vcc{_(decreases)} specification and the measure of the call to that
+function is strictly less than the measure of the calling function
+instance.  
+
+It is usually a good idea to prove termination for sequential code
+when you can\footnote{ You should also consider doing it for your
+  concurrent code, but here VCC is much more limited in its
+  capabilities. The reason for this is that proving termination for a
+  racy function (e.g., one that has to compete for locks) typically
+  depends on fairness assumptions (e.g., that a function trying to
+  grab a spinlock will eventually get lucky and get it, if the
+  spinlock is infinitely often free) and/or global termination
+  measures (e.g., to make sure that other threads will release
+  spinlocks once they acquire them). VCC does not currently support
+  either of these.}.
+More details on termination measures can be found in the VCC manual.
 
 \subsection{Pure functions}
 \label{sect:pureFunctions}
 A \Def{pure function} is one that has no side effects on the program
 state. In VCC, pure functions are not allowed to allocate memory, and can
 write only to local variables. Only pure functions can be called within VCC
-annotations.
+annotations; such functions are required to terminate\footnote{
+  This is to guarantee that there is indeed a mathematical function
+  satisfying the specification of the function.
+}.
 
 The function \vcc{min()} above
 example of a function that can be declared to be pure; this is done by
@@ -472,8 +505,7 @@ it into a separate function (\eg because you don't want to bother with
 having to pass in a bunch of parameters, or because you want to verify
 code without rewriting it). VCC lets you conduct your verification as
 if you had done so, by putting a function-like specification on the
-block.
-This is done by simply writing function specifications
+block. This is done by simply writing function specifications
 preceding the block, \eg
 \begin{VCC}
 ...
@@ -489,15 +521,14 @@ _(ensures x == 6)
 VCC translates this by (internally) refactoring the block into a
 function, the parameters of which are the variables from the
 surrounding scope that are mentioned within the block (or the block
-specifications). The advantages of this separation is that within the block,
-VCC can ignore what it knows about the preceding context, and
-following the block, VCC can ``forget'' what it knew inside the block
-(other than what escapes through the \vcc{ensures} clauses); in each
-case, this results in less distracting irrelevant detail for the
-theorem prover.
+specifications), so blocks with contracts cannot have statements that
+transfer control outside of the block. The advantages of this
+translation is that within the block, VCC can ignore what it knows
+about the preceding context, and following the block, VCC can
+``forget'' what it knew inside the block (other than what escapes
+through the \vcc{ensures} clauses); in each case, this results in less
+distracting irrelevant detail for the theorem prover.
 
-Block contracts are not allowed if the block contains a \vcc{return},
-or a \vcc{goto} to a label outside the block.
 
 Sometimes, you don't care about information flowing into the block,
 but only care about the information flowing out of the block. In this

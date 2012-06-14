@@ -5,6 +5,7 @@ void my_memcpy(unsigned char *dst, unsigned char *src, unsigned len)
   _(requires \thread_local_array(src, len))
   _(requires \arrays_disjoint(src, len, dst, len))
   _(ensures \forall unsigned i; i < len ==> dst[i] == \old(src[i]))
+  _(decreases 0)
 {
   unsigned k;
   for (k = 0; k < len; ++k)

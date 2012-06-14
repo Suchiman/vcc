@@ -12,6 +12,7 @@ typedef struct SafeString {
 void sstr_init(struct SafeString *s)
   _(writes \span(s))
   _(ensures \wrapped(s))
+  _(decreases 0)
 {
   s->len = 0;
   s->content[0] = '\0';
@@ -23,6 +24,7 @@ void sstr_append_char(struct SafeString *s, char c)
   _(requires s->len < SSTR_MAXLEN)
   _(ensures \wrapped(s))
   _(writes s)
+  _(decreases 0)
 {
   _(unwrap s)
   s->content[s->len++] = c;
@@ -33,9 +35,11 @@ void sstr_append_char(struct SafeString *s, char c)
 int sstr_index_of(struct SafeString *s, char c)
   _(requires \wrapped(s))
   _(ensures \result >= 0 ==> s->content[\result] == c)
+  _(decreases 0)
 {
   unsigned i;
   for (i = 0; i < s->len; ++i)
+	  _(decreases s->len - i)
     if (s->content[i] == c) return (int)i;
   return -1;
 }

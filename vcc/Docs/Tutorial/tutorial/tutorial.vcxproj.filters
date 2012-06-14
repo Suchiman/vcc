@@ -129,5 +129,8 @@
     <ClCompile Include="..\5.7.solutions.c">
       <Filter>Source Files\5 loop invariants</Filter>
     </ClCompile>
+    <ClCompile Include="..\c\02_rand.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,39 +1,32 @@
 \section{Loop invariants}
 
-For the most part, what VCC knows at a control point can be
-computed from what it knew at the immediately preceding control
-points. But when the control flow contains a loop, VCC faces a
+For the most part, VCC computes what it knows at a control point from
+what it knows at earlier control points. This works even if there are
+\vcc{goto}s from earlier control points; VCC just takes the disjunction of 
+what it knows for each of the possible places it came from. 
+But when the control flow contains a loop, VCC faces a
 chicken-egg problem, since what it knows at the top of the loop (i.e.,
 at the beginning of each loop iteration) depends not only on what it
 knew just before the loop, but also on what it knew just before it
 jumped back to the top of the loop from the loop body.
 
 Rather than trying to guess what it should know at the top of a loop,
-VCC lets you tell it what it should know, by providing a \Def{loop
-  invariant}. To make sure that the loop invariant does indeed hold 
+VCC lets you tell it what it should know, by providing \Def{loop
+  invariants}. To make sure that loop invariants indeed hold 
 whenever control reaches the top
-of the loop, VCC asserts that the invariant holds wherever control
+of the loop, VCC asserts that the invariants hold wherever control
 jumps to the top of the loop -- namely, on loop entry and at the end of
 the loop body.
-
-% Repeated below. --MM
-%In addition, VCC knows at the top of a loop
-%that any variable that is not modified in the loop has 
-%the same value it had on entry to the loop.
-%We simulate this by having VCC forget
-%(at loop entry) everything it knew about variables that are modified
-%in the loop body.
 
 Let's look at an example:
 \vccInput[linerange={begin-}]{c/5.1.div.c}
 \noindent
 
-The \vcc{divide()} function computes the quotient and remainder of integer division
-of \vcc{x} by \vcc{d} using the classic division algorithm.
-%% (Later, we'll see similar examples with sets, which are built into
-%% the specification language, but not into C.)
-The loop invariant says that we have a suitable answer, except with a
-remainder that is possibly too big. VCC translates this example roughly as follows:
+The \vcc{divide()} function computes the quotient and remainder of
+integer division of \vcc{x} by \vcc{d} using the classic division
+algorithm.  The loop invariant says that we have a suitable answer,
+except with a remainder that is possibly too big. VCC translates this
+example roughly as follows:
 \vccInput[linerange={begin-end}]{c/5.2.div_assert.c}
 
 \noindent
@@ -46,11 +39,11 @@ acyclic chunks of code in this way.
 Note that the invariant is asserted wherever control moves to the top of the
 loop (here, on entry to the loop and at the end of the loop body). On
 loop entry, VCC forgets the value of each variable modified in the
-loop (in this case just the local variables \vcc{lr} and \vcc{ld}),%
-\footnote{ Because of aliasing, it is not always obvious to VCC that a
-  variable is not modified in the body of the loop. However, VCC can
-  check it syntactically for a local variable if you never take the
-  address of that variable.}
+loop (in this case just the local variables \vcc{lr} and \vcc{ld}),
+%% \footnote{ Because of aliasing, it is not always obvious to VCC that a
+%%   variable is not modified in the body of the loop. However, VCC can
+%%   check it syntactically for a local variable if you never take the
+%%   address of that variable.}
 and assumes the invariant (which places some constraints on these
 variables).  VCC doesn't have to consider the actual jump from the end
 of the loop iteration back to the top of the loop (since it has
@@ -61,44 +54,37 @@ translated into a \vcc{goto} that jumps to just beyond the loop (to
 holds and that \vcc{lr < d}, which together imply that we have
 computed the quotient and remainder.
 
-%% If the loop had been of the form
-%% \begin{VCC}
-%% while (res >= b) 
-%%   _( invariant a % b == res % b )
-%% {
-%%   res -= b;
-%% }
-%% \end{VCC}
-%% the assert/assume translation would be exactly the same: the invariant
-%% would be assumed before checking the guard, despite the fact that
-%% guard syntactically precedes the invariant.
-
 For another, more typical example of a loop, consider 
 the following function that uses linear search to determine if a value
 occurs within an array:
 
-%% \noindent
-%% The first postcondition guarantees that when the returned value
-%% is not \vcc{UINT_MAX}, then \vcc{elt} is indeed found at the returned
-%% index.
-%% \itodo{It is required if we promise to return the first one; make this an exercise?}
-%% This doesn't require an invariant, because the non-\vcc{UINT_MAX} index
-%% is returned only under that condition.
-%% However this specification is not full: what about the case when the result is not found?
-%% The second postcondition says that 
-%% To express that an element is not in an array we will use a universal quantifier:
-
 \vccInput[linerange={begin-}]{c/5.3.lsearch_full.c}
 
-%% Moved the discussion of quantification to the section on
-%% assertions; this just isn't an appropriate place to talk about
-%% quantifiers, because they are not specific to loop invariants. -E
 \noindent
 The postconditions say that the returned value is the minimal array
 index at which \vcc{elt} occurs (or \vcc{UINT_MAX} if it does not occur).
 The loop invariant says that \vcc{elt}  does not occur in \vcc{ar[0]}\dots
 \vcc{ar[i - 1]}.
 
+\subsection{Termination measures for loops}
+\label{sect:loopTermination}
+To prove that a loop terminates, it can be given a \vcc{_(decreases)}
+clause, just as a function can. Before control returns from inside the
+loop to the top of the loop, there is an implicit assertion that the
+measure on the loop has gone down from its value at the beginning of
+the iteration. (Note that if the loop body contains a function call,
+its measure is checked against the measure assigned to the function,
+not to the loop.)
+
+For example, in the \vcc{divide} function, we could specify that the
+loop terminates by adding the specification \vcc{_(decreases lr)} to
+the loop specification. This would then allow us to add the
+specification \vcc{_(decreases 0)} to the divide function itself.
+
+If a function with a termination measure contains a \vcc{for} loop
+without a termination measure, VCC tries to guess one from syntactic
+form of the loop header. Thus, most boilderplate \vcc{for} loops do
+not require explicit termination measures.
 
 \subsection{Writes clauses for loops}
 \label{sect:sorting}
@@ -115,12 +101,14 @@ Otherwise, it will take the writes clause that is specified on
 the function.
 So by default, the loop is allowed to write everything that the function
 can.
-Let's see an example of such implicit writes clause,
-a reinterpretation of \vcc{my_memcpy()} from \secref{TODO}.
+Here is an example of such implicit writes clause,
+a reinterpretation of \vcc{my_memcpy()} from \secref{arrays}.
 
 \vccInput[linerange={begin-end}]{c/5.4.copy_array.c}
+(Note that VCC also inferred an appropriate
+termination measure for the \vcc{for} loop.)
 
-If the loop does not write everything the function can write
+If a loop does not write everything the function can write
 you will often want to provide explicit write clauses.
 Here's a variation of \vcc{memcpy()}, which clears (maybe for security reasons)
 the source buffer after copying it.
