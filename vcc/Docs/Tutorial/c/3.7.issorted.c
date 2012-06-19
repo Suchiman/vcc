@@ -2,7 +2,8 @@
 
 /*{beginsp}*/
 _(def \bool sorted(int *arr, unsigned len) {
-	return \forall unsigned i, j; i <= j && j < len ==> arr[i] <= arr[j];
+  return \forall unsigned i, j; 
+    i <= j && j < len ==> arr[i] <= arr[j];
 })
 /*{endsp}*/
 /*{beginso}*/

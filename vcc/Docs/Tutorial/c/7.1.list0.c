@@ -12,13 +12,18 @@ typedef _(dynamic_owns) struct List {
   _(ghost \bool val[int];)
   _(ghost Node *find[int];)
   _(invariant head != NULL ==> \mine(head))
-  _(invariant \forall Node *n; \mine(n) && n->nxt ==> \mine(n->nxt))
-  _(invariant \forall Node *n; \mine(n) ==> val[n->data])
-  _(invariant \forall int v; val[v] ==> \mine(find[v]) && find[v]->data == v)
+  _(invariant \forall Node *n; \mine(n) && n->nxt 
+     ==> \mine(n->nxt))
+  _(invariant \forall Node *n; \mine(n) 
+    ==> val[n->data])
+  _(invariant \forall int v; val[v] 
+    ==> \mine(find[v]) && find[v]->data == v)
 } List;
 /*{init}*/
 List *mklist()
-  _(ensures \result != NULL ==> \wrapped(\result) && \result->val == \lambda int k; \false)
+  _(ensures \result != NULL ==> 
+      \wrapped(\result) 
+      && \result->val == \lambda int k; \false)
 {
   List *l = malloc(sizeof(*l));
   if (l == NULL) return l;
@@ -35,8 +40,8 @@ int add(List *l, int k)
   _(requires \wrapped(l))
   _(ensures \wrapped(l))
   _(ensures \result != 0 ==> l->val == \old(l->val))
-  _(ensures \result == 0 ==>
-       \forall int p; l->val[p] <==> (\old(l->val)[p] || p == k))
+  _(ensures \result == 0 ==> (\forall int p; l->val[p] 
+       <==> (\old(l->val)[p] || p == k)))
   _(writes l)
 /*{endspec}*/
 {

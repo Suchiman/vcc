@@ -1,7 +1,10 @@
 /*{begin}*/
 #include <vcc.h>
 
-void divide(unsigned x, unsigned d, unsigned *q, unsigned *r)
+void divide(unsigned x, 
+            unsigned d, 
+            unsigned *q, 
+            unsigned *r)
 _(requires d > 0 && q != r)
 _(writes q,r)
 _(ensures x == d*(*q) + *r && *r < d)
@@ -17,7 +20,7 @@ _(ensures x == d*(*q) + *r && *r < d)
   *q = lq;
   *r = lr;
 }
-
+/*{end}*/
 /*`
 Verification of divide succeeded.
 `*/
