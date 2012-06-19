@@ -485,17 +485,15 @@ knowledge) about the state, and as we have seen, VCC takes advantage
 of the kind of information callers maintain to limit the kinds of side
 effects that have to be reported.
 
-A pure function that you don't want to be executed can be defined as a
-logic function, which is essentially a pure function that is defined
-only for specification purposes, and uses the following streamlined syntax:
+A pure function that you don't want to be executed can be defined
+using the \vcc{_(def)} tag, which is essentially a pure ghost function
+(one that can be used only in specifications) that is inlined, and
+uses the following streamlined syntax:
 \vccInput[linerange={beginsp-endsp}]{c/3.7.issorted.c}
 \noindent
 A partial spec for a sorting routine could look like the following:%
 \footnote{We will take care about input being permutation of the output in \secref{ghosts}.}
 \vccInput[linerange={beginso-endso}]{c/3.7.issorted.c}
-
-Logic functions are not executable, but they can be implemented:
-\vccInput[linerange={beginim-endim}]{c/3.7.issorted.c}
 
 
 \subsection{Contracts on Blocks} 
