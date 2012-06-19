@@ -37,12 +37,6 @@ _(def Perm permCompose(Perm p, Perm q) {
 	return r;
 })
 
-_(typedef int IntMap[\natural];)
-
-_(def IntMap array_val(int *buf, unsigned len) {
-	return \lambda \natural i; i < len ? buf[i] : 0;
-})
-
 void sort(int *buf, unsigned len _(out Perm p))
   _(requires \mutable_array(buf,len))
   _(writes \array_range(buf, len))
@@ -51,7 +45,7 @@ void sort(int *buf, unsigned len _(out Perm p))
   _(ensures \forall unsigned i; i < len ==> buf[i] == \old(buf[p.fwd[i]]))
   _(decreases 0)
 {
-  _(ghost IntMap av = array_val(buf,len))
+  _(ghost int av[\natural] = \lambda \natural i; buf[i])
   _(ghost p = permId())
 
   if (len < 2) return;
@@ -75,3 +69,13 @@ void sort(int *buf, unsigned len _(out Perm p))
 		_(ghost p = permCompose(p,permSwap(j,j+1)))
 	  }
 }
+
+/*`
+Verification of sorted succeeded.
+Verification of isPerm succeeded.
+Verification of permId succeeded.
+Verification of permSwap succeeded.
+Verification of permCompose succeeded.
+Verification of array_val succeeded.
+Verification of sort succeeded.
+`*/

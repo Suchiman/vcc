@@ -88,6 +88,8 @@
     <ClCompile Include="..\c\7.2.list.c" />
     <ClCompile Include="..\c\7.1.list0.c" />
     <ClCompile Include="..\c\6.5.table.c" />
+    <ClCompile Include="..\c\7.4.math.c" />
+    <ClCompile Include="..\c\7.5.lists.c" />
     <ClCompile Include="..\c\8.1.lockw.c" />
     <ClCompile Include="..\c\8.2.lockw_wrong.c" />
     <ClCompile Include="..\c\8.3.lockw_wrong2.c" />
