@@ -51,15 +51,6 @@
     <ClCompile Include="..\c\5.3.lsearch_full.c">
       <Filter>Source Files\5 loop invariants</Filter>
     </ClCompile>
-    <ClCompile Include="..\c\5.4.copy_array.c">
-      <Filter>Source Files\5 loop invariants</Filter>
-    </ClCompile>
-    <ClCompile Include="..\c\5.5.copy_and_clear_array.c">
-      <Filter>Source Files\5 loop invariants</Filter>
-    </ClCompile>
-    <ClCompile Include="..\c\5.6.bozosort.c">
-      <Filter>Source Files\5 loop invariants</Filter>
-    </ClCompile>
     <ClCompile Include="..\c\6.1.safestring.c">
       <Filter>Source Files\6 objects</Filter>
     </ClCompile>
@@ -79,9 +70,6 @@
       <Filter>Source Files\7 abstraction</Filter>
     </ClCompile>
     <ClCompile Include="..\c\7.2.list.c">
-      <Filter>Source Files\7 abstraction</Filter>
-    </ClCompile>
-    <ClCompile Include="..\c\7.3.bozosort_perm.c">
       <Filter>Source Files\7 abstraction</Filter>
     </ClCompile>
     <ClCompile Include="..\c\8.1.lockw.c">
@@ -131,6 +119,21 @@
     </ClCompile>
     <ClCompile Include="..\c\02_rand.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\c\7.0.arraySet.c">
+      <Filter>Source Files\7 abstraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\c\5.4.sort.c">
+      <Filter>Source Files\5 loop invariants</Filter>
+    </ClCompile>
+    <ClCompile Include="..\c\5.6.copy_and_clear_array.c">
+      <Filter>Source Files\5 loop invariants</Filter>
+    </ClCompile>
+    <ClCompile Include="..\c\5.5.copy_array.c">
+      <Filter>Source Files\5 loop invariants</Filter>
+    </ClCompile>
+    <ClCompile Include="..\c\7.3.sort.c">
+      <Filter>Source Files\7 abstraction</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

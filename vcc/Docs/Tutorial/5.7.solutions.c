@@ -4,8 +4,9 @@ typedef int BOOL;
 #define TRUE 1
 #define FALSE 0
 
-_(logic BOOL sorted(int *p, unsigned len) 
-	= \forall unsigned i,j; i < j && j < len ==> p[i] <= p[j])
+_(def BOOL sorted(int *p, unsigned len) {
+	return \forall unsigned i,j; i < j && j < len ==> p[i] <= p[j];
+})
 
 // a function that takes two arrays and checks whether the arrays are equal 
 BOOL arrays_eq(int *p, int *q, unsigned len)
