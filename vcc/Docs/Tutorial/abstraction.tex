@@ -284,7 +284,7 @@ Sometimes, you might want to use inductively defined types other than
 (ghost) inductive types, much like modern functional languages, but
 using the following C-like syntax:
 
-\vccInput[linerange={begin-app}{c/7.5.lists.c}
+\vccInput[linerange={begin-app}]{c/7.5.lists.c}
 
 This defines an inductive datatype of lists, where a list is either of
 the empty list \vcc{nil()} or an \vcc{int} followed by a
@@ -292,7 +292,7 @@ list. Values of abstract types are deconstructed using the following
 \vcc{switch} construct (corresponding to matching expressions in
 functional languages):
 
-\vccInput[linerange={app-appAssoc}{c/7.5.lists.c}
+\vccInput[linerange={app-appAssoc}]{c/7.5.lists.c}
 
 Note that unlike the usual C \vcc{switch} statement, fallthrough from
 one case to the next is not allowed (since the scope of variables like
@@ -304,7 +304,7 @@ induction.
 
 We can now prove something about the function we defined:
 
-\vccInput[linerange={appAssoc-rev}{c/7.5.lists.c}
+\vccInput[linerange={appAssoc-rev}]{c/7.5.lists.c}
 
 Note that the recursive call provides the needed inductive case of the
 theorem we're trying to prove. We can similarly use the resulting
