@@ -76,10 +76,11 @@
     <ClCompile Include="..\c\4.2.hash.c" />
     <ClCompile Include="..\c\4.1.hash_fail.c" />
     <ClCompile Include="..\c\5.3.lsearch_full.c" />
-    <ClCompile Include="..\c\5.6.bozosort.c" />
-    <ClCompile Include="..\c\7.3.bozosort_perm.c" />
-    <ClCompile Include="..\c\5.5.copy_and_clear_array.c" />
-    <ClCompile Include="..\c\5.4.copy_array.c" />
+    <ClCompile Include="..\c\5.4.sort.c" />
+    <ClCompile Include="..\c\7.0.arraySet.c" />
+    <ClCompile Include="..\c\7.3.sort.c" />
+    <ClCompile Include="..\c\5.6.copy_and_clear_array.c" />
+    <ClCompile Include="..\c\5.5.copy_array.c" />
     <ClCompile Include="..\c\6.1.safestring.c" />
     <ClCompile Include="..\c\6.2.safestring_assert.c" />
     <ClCompile Include="..\c\6.3.safestring_dynamic.c" />

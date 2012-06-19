@@ -49,13 +49,12 @@ invariant), but fields can also be referred to directly (as in the
 second invariant). 
 
 Because memory in C is allocated without initialization, no nontrivial
-object invariant could be enforced to hold at all times
-(they would not hold right after allocation).
-\Def{Wrapped} objects are ones for which the invariant holds
-and which the current thread directly owns (that is they are not
-part of representation of some higher-level objects).
-After allocating an object we would usually wrap it to make sure its invariant holds
-and prepare it for later use:
+object invariant could be enforced to hold at all times (they would
+not hold right after allocation).  \Def{Wrapped} objects are ones for
+which the invariant holds and which the current thread directly owns
+(that is they are not part of representation of some higher-level
+objects).  After allocating an object we would usually wrap it to make
+sure its invariant holds and prepare it for later use:
 
 \vccInput[linerange={init-append}]{c/6.1.safestring.c}
 
@@ -71,16 +70,14 @@ one pointer for each base type component, so in this example,
 %\footnote{
 %  This is a bite more complicated when embedded structs are involved,
 %  see \secref{TODO}.
-%}
-Thus, the writes clause says that the function 
-%not only can wrap \vcc{s} but can also 
-can write the fields of \vcc{s}. 
-The postcondition says that the function returns with \vcc{s} wrapped,
-which implies also that the invariant of \vcc{s} holds; this invariant
-is checked when the object is wrapped. (You can see this check fail by
-commenting any of the assignment statements.)
+%} 
+Thus, the writes clause says that the function can write the fields
+of \vcc{s}.  The postcondition says that the function returns with
+\vcc{s} wrapped, which implies also that the invariant of \vcc{s}
+holds; this invariant is checked when the object is wrapped. (You can
+see this check fail by commenting any of the assignment statements.)
 
-A function that modifies a wrapped object will first unwrap it, make
+A function that modifies a wrapped object must first unwrap it, make
 the necessary updates, and wrap the object again (which causes another
 check of the object invariant). Unwrapping an object adds all of its
 members to the writes set of a function, so such a function has to

@@ -2,25 +2,25 @@
 #include <stdlib.h>
 
 /*{types}*/
-struct Node {
-  struct Node *next;
+typedef struct Node {
+  struct Node *nxt;
   int data;
-};
+} Node;
 
-_(dynamic_owns) struct List {
-  struct Node *head;
+typedef _(dynamic_owns) struct List {
+  Node *head;
   _(ghost \bool val[int];)
+  _(ghost Node *find[int];)
   _(invariant head != NULL ==> \mine(head))
-  _(invariant \forall struct Node *n;
-                \mine(n) ==> n->next == NULL || \mine(n->next))
-  _(invariant \forall struct Node *n;
-                \mine(n) ==> val[n->data])
-};
+  _(invariant \forall Node *n; \mine(n) && n->nxt ==> \mine(n->nxt))
+  _(invariant \forall Node *n; \mine(n) ==> val[n->data])
+  _(invariant \forall int v; val[v] ==> \mine(find[v]) && find[v]->data == v)
+} List;
 /*{init}*/
-struct List *mklist()
+List *mklist()
   _(ensures \result != NULL ==> \wrapped(\result) && \result->val == \lambda int k; \false)
 {
-  struct List *l = malloc(sizeof(*l));
+  List *l = malloc(sizeof(*l));
   if (l == NULL) return l;
   l->head = NULL;
   _(ghost {
@@ -31,56 +31,33 @@ struct List *mklist()
   return l;
 }
 /*{add}*/
-int add(struct List *l, int k)
+int add(List *l, int k)
   _(requires \wrapped(l))
   _(ensures \wrapped(l))
   _(ensures \result != 0 ==> l->val == \old(l->val))
   _(ensures \result == 0 ==>
-       \forall int p; l->val[p] == (\old(l->val)[p] || p == k))
+       \forall int p; l->val[p] <==> (\old(l->val)[p] || p == k))
   _(writes l)
 /*{endspec}*/
 {
-  struct Node *n = malloc(sizeof(*n));
+  Node *n = malloc(sizeof(*n));
   if (n == NULL) return -1;
   _(unwrapping l) {
-    n->next = l->head;
+    n->nxt = l->head;
     n->data = k;
     _(wrap n)
     l->head = n;
     _(ghost {
       l->\owns += n;
-      l->val = (\lambda int z; z == k || l->val[z]);
+	  l->val = (\lambda int z; z == k || l->val[z]);
+	  l->find = (\lambda int z; z == k ? n : l->find[z]);
     })
   }
   return 0;
-}
-/*{member}*/
-int member(struct List *l, int k)
-  _(requires \wrapped(l))
-  // partial specification, ==> instead of <==>
-  _(ensures \result != 0 ==> l->val[k])
-{
-  struct Node *n;
-
-  n = l->head;
-
-  if (n == NULL)
-    return 0;
-
-  for (;;)
-    _(invariant n \in l->\owns)
-  {
-    if (n->data == k)
-      return 1;
-    n = n->next;
-    if (n == NULL)
-      return 0;
-  }
 }
 /*{out}*/
 /*`
 Verification of List#adm succeeded.
 Verification of mklist succeeded.
 Verification of add succeeded.
-Verification of member succeeded.
 `*/
