@@ -1,7 +1,10 @@
 /*{begin}*/
 #include <vcc.h>
 
-void divide(unsigned x, unsigned d, unsigned *q, unsigned *r)
+void divide(unsigned x, 
+            unsigned d, 
+            unsigned *q, 
+            unsigned *r)
   _(writes q,r)
 {
   // assume the precondition

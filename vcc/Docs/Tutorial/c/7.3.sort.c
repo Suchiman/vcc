@@ -51,23 +51,23 @@ void sort(int *buf, unsigned len _(out Perm p))
   if (len < 2) return;
 
   for (unsigned i = len; i > 0; i--)
-	_(invariant i <= len)
-	_(invariant \forall unsigned u,v; i <= v && u <= v && v < len ==> buf[u] <= buf[v])
-	_(invariant isPerm(p,len))
-	_(invariant \forall unsigned i; i < len ==> buf[i] == av[p.fwd[i]]) 
+    _(invariant i <= len)
+    _(invariant \forall unsigned u,v; i <= v && u <= v && v < len ==> buf[u] <= buf[v])
+    _(invariant isPerm(p,len))
+    _(invariant \forall unsigned i; i < len ==> buf[i] == av[p.fwd[i]]) 
     for (unsigned j = 0; j + 1 < i; j++)
-	  _(decreases i-j)
-	  _(invariant j < i)
-	  _(invariant \forall unsigned u,v; i <= v && u <= v && v < len ==> buf[u] <= buf[v])
-	  _(invariant \forall unsigned u; u < j ==> buf[u] <= buf[j])
-	  _(invariant isPerm(p,len))
-	  _(invariant \forall unsigned i; i < len ==> buf[i] == av[p.fwd[i]]) 
+      _(decreases i-j)
+      _(invariant j < i)
+      _(invariant \forall unsigned u,v; i <= v && u <= v && v < len ==> buf[u] <= buf[v])
+      _(invariant \forall unsigned u; u < j ==> buf[u] <= buf[j])
+      _(invariant isPerm(p,len))
+      _(invariant \forall unsigned i; i < len ==> buf[i] == av[p.fwd[i]]) 
       if (buf[j] > buf[j+1]) {
-		int tmp = buf[j];
-		buf[j] = buf[j+1];
-		buf[j+1] = tmp;
-		_(ghost p = permCompose(p,permSwap(j,j+1)))
-	  }
+        int tmp = buf[j];
+        buf[j] = buf[j+1];
+        buf[j+1] = tmp;
+        _(ghost p = permCompose(p,permSwap(j,j+1)))
+      }
 }
 
 /*`

@@ -133,10 +133,6 @@ update the owns set to include the new node, update the abstract value
 \vcc{val} and the witness \vcc{find}, and finally wrap the list up
 again (when exiting the \vcc{_(unwrapping)} block). 
 
-\begin{note}
-The rest of this section can be skipped on first reading.
-\end{note}
-
 The invariants of our list say that the abstract value contains
 exactly the \vcc{data} fields of nodes owned by the list. It also said
 that pointers from list nodes take you to list nodes. But it doesn't

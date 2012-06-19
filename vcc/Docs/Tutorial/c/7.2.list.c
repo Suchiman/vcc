@@ -76,12 +76,11 @@ int member(List *l, int k)
   Node *n;
   _(assert \inv(l))
   for (n = l->head; n; n = n->nxt) 
-	  _(invariant n ==> n \in l->\owns && n \in \domain(l))
-	  _(invariant  \forall Node *m; m \in l->\owns && m->data == k 
-		==> m==n || (n && l->idx[m] > l->idx[n]))
+    _(invariant n ==> n \in l->\owns && n \in \domain(l))
+    _(invariant  \forall Node *m; m \in l->\owns && m->data == k 
+      ==> m==n || (n && l->idx[m] > l->idx[n]))
   {
-	if (n->data == k) 
-      return 1;
+	if (n->data == k) return 1;
   }
   _(assert l->val[k] ==> l->find[k] \in l->\owns)
   return 0;
