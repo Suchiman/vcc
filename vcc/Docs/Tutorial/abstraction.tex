@@ -242,12 +242,74 @@ function to the variable \vcc{myperm} on exit from the function.
 
 The second feature is the use of \Def{record} types. A record type is
 introduced by putting \vcc{_(record)} before the definition of a 
-like a \vcc{struct} type, but is a pure (ghost) value. Fields of
-records do not have distinct addresses, and two records are equal iff
-their fields are all equal (whereas C does not even allow \vcc{==} to be
-applied to instances of \vcc{struct} types, because of
-padding). Thus, VCC does not allow a \vcc{struct} type to be used as
-the domian of a map, but does allow record types.
+like a \vcc{struct} type. They are mathematically cleaner than
+\vcc{structs}, in several ways:
+\begin{itemize}
+\item A record is a single, indivisible value (like a map), so you
+  don't have to worry about aliasing individual fields of a record.
+\item Two records are equal iff their corresponding fields are
+  equal. Conversely, C doesn't allow \vcc{==} on struct values
+  (primarily because padding makes the meaning problematic).
+\item Because \vcc{==} makes sense on records, a record type can be
+  used as the domain of a map, whereas a \vcc{struct} type cannot.
+\end{itemize}
+However, records also have some limitations relative to \vcc{struct}s:
+\begin{itemize}
+\item Records are values, not objects, so records cannot have
+  invariants.
+\item Record fields can be of record type, but cannot be of compound
+  (\vcc{struct} or \vcc{union}) type.
+\item You can't take the address of a field of a record (and so cannot
+  pass it to a function that updates it). However, you can use record
+  fields as \vcc{_(out)} parameters.
+\end{itemize}
+
+\subsection{Inductive Proofs}
+Sometimes, you will want to verify programs that depend on
+mathematics that is too hard for VCC to do on its own, typically
+because they require guidance. In VCC, you do this by writing ghost
+code. In particular, you can do inductive proofs by writing loops or
+by writing recursive functions, with the loop invariant or function
+spec serving as the inductive hypothesis. Because C doesn't allow the
+definition of anonymous recursive functions, loops are usually more
+convenient. 
+
+Here is a small example of using ghost code to prove the formula for
+triangular numbers:
+
+\vccInput[linerange={begin-end}]{c/7.4.math.c}
+
+Sometimes, you might want to use inductively defined types other than
+\vcc{\natural} or \vcc{\integer}. VCC lets you define your own
+(ghost) inductive types, much like modern functional languages, but
+using the following C-like syntax:
+
+\vccInput[linerange={begin-app}{c/7.5.lists.c}
+
+This defines an inductive datatype of lists, where a list is either of
+the empty list \vcc{nil()} or an \vcc{int} followed by a
+list. Values of abstract types are deconstructed using the following
+\vcc{switch} construct (corresponding to matching expressions in
+functional languages):
+
+\vccInput[linerange={app-appAssoc}{c/7.5.lists.c}
+
+Note that unlike the usual C \vcc{switch} statement, fallthrough from
+one case to the next is not allowed (since the scope of variables like
+\vcc{v} and \vcc{l} introduced by the \vcc{case} construct only go to
+the end of the case). Note that VCC automatically chooses the
+termination measure \vcc{_(decreases size(x), size(y))}, which
+suffices for typical functions where termination follows by structural
+induction. 
+
+We can now prove something about the function we defined:
+
+\vccInput[linerange={appAssoc-rev}{c/7.5.lists.c}
+
+Note that the recursive call provides the needed inductive case of the
+theorem we're trying to prove. We can similarly use the resulting
+function as a lemma in proving other theorems. 
+
 
 \subsection*{Exercises}
 \begin{enumerate}
@@ -255,5 +317,9 @@ the domian of a map, but does allow record types.
 \item 
 Verify your favorite sorting functions (quicksort, heapsort,
 mergesort, etc.).
-
+\item
+Using \vcc{app}, define a recursive function that reverses a
+\vcc{List}. Prove that reversing a list twice gives you the same list
+back. (Hint: you will need some additional lemmas along the way.) (A
+solution can be found in \vcc{7.5.lists.c}.)
 \end{enumerate}

@@ -135,5 +135,11 @@
     <ClCompile Include="..\c\7.3.sort.c">
       <Filter>Source Files\7 abstraction</Filter>
     </ClCompile>
+    <ClCompile Include="..\c\7.4.math.c">
+      <Filter>Source Files\7 abstraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\c\7.5.lists.c">
+      <Filter>Source Files\7 abstraction</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
