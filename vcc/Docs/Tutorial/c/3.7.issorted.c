@@ -24,5 +24,6 @@ int check_sorted(int *arr, unsigned len)
 }
 /*{endim}*/
 /*`
+Verification of sorted succeeded.
 Verification of check_sorted succeeded.
 `*/

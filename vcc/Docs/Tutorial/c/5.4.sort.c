@@ -33,5 +33,6 @@ void sort(int *buf, unsigned len)
 }
 /*{out}*/
 /*`
+Verification of sorted succeeded.
 Verification of sort succeeded.
 `*/

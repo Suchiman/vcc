@@ -94,3 +94,12 @@ void ArraySetDel(ArraySet *s, int v)
   _(ghost s->mem[v] = \false)
   _(wrap s)
 }
+
+/*`
+Verification of ArraySet#adm succeeded.
+Verification of arraySetInit succeeded.
+Verification of arraySetMem succeeded.
+Verification of ArraySetAdd succeeded.
+Verification of ArraySetDel succeeded.
+Verification of arraySetMem#reads succeeded.
+`*/

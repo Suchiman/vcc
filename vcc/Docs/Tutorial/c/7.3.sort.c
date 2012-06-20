@@ -76,6 +76,5 @@ Verification of isPerm succeeded.
 Verification of permId succeeded.
 Verification of permSwap succeeded.
 Verification of permCompose succeeded.
-Verification of array_val succeeded.
 Verification of sort succeeded.
 `*/
