@@ -79,21 +79,11 @@
       <Component Id="sample2701A94C0EB55CBD958A87DFF3E959673FF1BF53" Guid="7E7B1920-5E02-4BBC-AB3F-8DDD689EFE63"><!-- Tutorial -->
         <RemoveFolder Id="dir2701A94C0EB55CBD958A87DFF3E959673FF1BF53" On="uninstall" />
         <RegistryValue Root="HKCU" Key="Software\Microsoft Research\Vcc" Name="sample2701A94C0EB55CBD958A87DFF3E959673FF1BF53" Type="integer" Value="1" KeyPath="yes" />
-        <File Id="fil395FB48DC0F59F8CC77B780E2FC7D1191BD9ECA9" Name="01_copy_array.c" />
-        <File Id="fil39701572F5EFDFA68FE4F63ABF052C890A0B563D" Name="01_copy1.c" />
-        <File Id="fil55A1761C6F12591189D277DB57CA69D4E095121D" Name="01_issorted.c" />
-        <File Id="fil4120A7C7DACAFCF143995C095F376C945456CD91" Name="01_min_assert.c" />
         <File Id="filD00037D671992869D52DAA199A52EC99CD928B22" Name="01_min1.c" />
-        <File Id="fil089EC1E83A59E0977B32D0E475A82B10BFFC7BF8" Name="01_min2.c" />
-        <File Id="fil4B4B30723F1ECF2E27B9708710BD093A35AB4C7C" Name="01_min3.c" />
         <File Id="fil0659F6DB4EF717D0F027985681062E4AA9356352" Name="01_min4.c" />
-        <File Id="filF65903DADB2A4EEC9FF8DC42B608DF66C9115DA9" Name="01_min5.c" />
         <File Id="fil48FC851545A167D9C1994606D28833606AED31CB" Name="01_min6.c" />
-        <File Id="fil4D5E1F36FF975F1730C5A61F62983DAE3AE94F0A" Name="01_minInline1.c" />
-        <File Id="filED56B6E1C16072D47D52AB4D748099FA1D100629" Name="01_minInline2.c" />
         <File Id="filB25A89F0071D328351C40C563B92FD23BC7660A4" Name="01_read.c" />
         <File Id="filE3D91DA3EB6752970A1D6BB03DCEFDE260457082" Name="01_read_wrong.c" />
-        <File Id="fil986D2DC0481AED9B310115CA05867AE995E6C358" Name="01_rw.c" />
         <File Id="fil516EC6266BFFE5F22E9B39AC926A72E2231049BC" Name="01_swap.c" />
         <File Id="filC9C221999A632797B18EB815957034B35CA508B7" Name="01_swap1.c" />
         <File Id="filA30B85888E62AFEB03B096F334E06CE04DE58BB8" Name="01_swap2.c" />
@@ -103,44 +93,57 @@
         <File Id="filDA09FC6DFE3BFF5E3A213F13F2A4B9BC784F91F1" Name="01_writes2.c" />
         <File Id="fil30F63DE6E0DB12B864716F3B47E80D3F71BF538E" Name="01_writes3.c" />
         <File Id="filEED25A85554161478B3AB07BA2771621C5E00AF6" Name="01_writes4.c" />
-        <File Id="filE7AFD32F0735CC6F0B102B251AB146A81DD50837" Name="02_div.c" />
-        <File Id="fil72DBC1B0421C848944BEFA4E387408BC49B1867A" Name="02_div_assert.c" />
-        <File Id="fil622A3BBEA05654E3A2621E9D51B2526B3813F3F0" Name="02_hash.c" />
-        <File Id="fil485EE7CCE8C131E67731B0AF597A5BC1F487B975" Name="02_hash_fail.c" />
         <File Id="fil0896E046F9766A1CFB0CD12A0964EBBB64910D2E" Name="02_rand.c" />
         <File Id="filDC1B898CC664CC9FA5B033A026A5D2D484ED10BE" Name="02_sqrt.c" />
         <File Id="filB3BF04289A4A99FEF939DB497492DE837B7B6DC1" Name="02_sqrt_assert.c" />
         <File Id="fil35D2DD5C01AA0DD125468082FAF880C75D7B9586" Name="02_sqrt_ovf.c" />
         <File Id="fil3860FE5188146D36619FCCF211D4214ED879F536" Name="03_lsearch.c" />
-        <File Id="fil83C56AFDB01458E6CB89D364447FA312AAD9AB09" Name="03_lsearch_full.c" />
-        <File Id="filA44B45DC0917E13363B7D0C77D5BCC792EBAE5B2" Name="04_bozosort.c" />
-        <File Id="filF6E616D5C5816D91C94180618FBBFFAA6EC1C9DF" Name="04_bozosort_perm.c" />
         <File Id="filF6FEDF588DDEB44BC46F37FB629AA1D6D7B7B669" Name="04_bubblesort_perm.c" />
-        <File Id="fil0BB66E92670D089EB89D353A69A0F80467C8A851" Name="04_copy_and_clear_array.c" />
-        <File Id="fil049C8B50077E9BF3DC38E21E09C6756F1C76A5F0" Name="04_copy_array.c" />
         <File Id="filAADFE510EA62D9CFD6F7C3FAF5D6E1EC9BA50DBD" Name="04_copy_array2.c" />
         <File Id="filA88F112DCF4C045716F1E7C5D973229D5D72FE36" Name="04_copy_array3.c" />
         <File Id="filE279F632D272EE7F5F60DF38A88AB814919BB402" Name="04_copy_array4.c" />
         <File Id="filEB8A2CCFB1EB3C1E539045D7D083B42EE8DB7510" Name="04_insertionsort.c" />
         <File Id="filF06A71F9D903DE683BC2AF4C78421990FFF59A1C" Name="04_insertionsort_perm.c" />
         <File Id="fil2245907DB0738E684F1A3ACA35DF70FD29E2CF0A" Name="04_partition.c" />
-        <File Id="filA126BF6EE0D7DC526E4A9B6B6A1C3404125042B7" Name="05_safestring.c" />
-        <File Id="filE198EC6F87A4F90F049437DC0C46CE9B69F8BB40" Name="05_safestring_assert.c" />
-        <File Id="fil19A052900DA89491939D09BF547747A23F79AB81" Name="06_safestring_dynamic.c" />
-        <File Id="fil4E90D261B6B3534A1F0B3CD0A51F2FF997205481" Name="06_safestring_dynamic_assert.c" />
         <File Id="filC96935F134E3168992F2527051ADF3BA1F0597EC" Name="07_hashtable.c" />
-        <File Id="fil591FA6E3771D6C413804DBD2CEDDCE8ACFC76943" Name="07_list.c" />
-        <File Id="filAAB06B79706F278B0C2202C29A309CA1CE20514C" Name="07_list0.c" />
-        <File Id="filE0F3B9808C4F41111E556C8B74E46E76C08DBC31" Name="07_table.c" />
         <File Id="filE57557F0F4364CB3C0B4B343F17D3634511A419C" Name="08_lock.c" />
-        <File Id="fil77A616970D15CE7EC604D925D73F73CE2E31A818" Name="08_lock_claimsobj.c" />
-        <File Id="fil020A7FD7DBA6B3F4D911ED31D050615DA8560200" Name="08_lockw.c" />
-        <File Id="fil204748376AB4A45A16146FB928F172C21AB21664" Name="08_lockw_wrong.c" />
-        <File Id="filC3EF7D5C81B02296BF83B76EC48EB6F7EBE9B1AE" Name="08_lockw_wrong2.c" />
         <File Id="filB187E28A7CAB44CC3F7492BB5BFD8BB78A404D00" Name="08_ticketlock.c" />
-        <File Id="fil8E17B761C30C7E3D9606ACD0A29F8513252FECED" Name="09_counter.c" />
-        <File Id="fil440B44D4E478122DACC90DE0A477C07E76CF6AB3" Name="10_rundown.c" />
         <File Id="filD6A64570EF2A80E7E94B9F726AA536F942480E32" Name="10_rwlock.c" />
+        <File Id="filAD3CE88A3C377C82D209922326CA80EE94BA7FC4" Name="2.1.minInline.c" />
+        <File Id="fil1A579F3C67863BBFBA651286DAA3381639034EE1" Name="3.1.min2.c" />
+        <File Id="fil9B2E355D760D1123FF74A6CE7B870A545751D514" Name="3.1min2.model" />
+        <File Id="fil591FBEB30AFE605C14FB2E77A1C50A4B0C04CA7D" Name="3.2.min3.c" />
+        <File Id="fil8B82A26145C6CB3B3E5AE2C0C59807939ADD63F0" Name="3.3.min_assert.c" />
+        <File Id="filDD5B0D9A695AABD243B3E1B378DB853A6CA303CC" Name="3.4.rw.c" />
+        <File Id="fil0CCC99FA0D64DE71454254E8B3D3D764F8E826BE" Name="3.5.copy1.c" />
+        <File Id="fil2218D01104410513DA33BF8069250CED6A49A255" Name="3.6.copy_array.c" />
+        <File Id="fil3C19D4F0390FB488039F3362124A2122DD71147C" Name="3.7.issorted.c" />
+        <File Id="fil90E74EFB8066E33AD7BC47C3C84D1F8E1D8492A0" Name="4.1.hash_fail.c" />
+        <File Id="fil1980BF6C654894DA4F3430CC1A62B964C7B4EF10" Name="4.2.hash.c" />
+        <File Id="fil0AB9D7652ED16BE45274ED32BC2479E90412A7E6" Name="4.3.min5.c" />
+        <File Id="filECF0683EA97C879D0EF44A81BF5F38BA0F1EC0F8" Name="5.1.div.c" />
+        <File Id="filF236AC59892B331D8E8397CCF7AC30C69FFB1F5E" Name="5.2.div_assert.c" />
+        <File Id="fil5797ECFBC8ACDDEDED89875135F08A8B015E6344" Name="5.3.lsearch_full.c" />
+        <File Id="fil4DD2C26890426B6F2BF3C7CDF3D8365DD2DFDEB4" Name="5.4.sort.c" />
+        <File Id="filE7DC8EA889861D9F8F13F05904B0ED36BDC297B8" Name="5.5.copy_array.c" />
+        <File Id="fil32089FF827036D1F9492B5FE093FFDF88C5F1AA6" Name="5.6.copy_and_clear_array.c" />
+        <File Id="filDC668A9D6ADAC1AC08B662787DC6F38D8687B99F" Name="6.1.safestring.c" />
+        <File Id="fil2B4E82ED0D00C90709F2E7F7C3A2124750721D9D" Name="6.2.safestring_assert.c" />
+        <File Id="fil56CF3ABACB73C66950F85CBF9278648A8ED061A3" Name="6.3.safestring_dynamic.c" />
+        <File Id="filEA766CB780788397F59D7A3602AAC2DFBB430B78" Name="6.4.safestring_dynamic_assert.c" />
+        <File Id="fil911DF44B8D21AB21D9F27541DE80589F377229EB" Name="6.5.table.c" />
+        <File Id="filE73205B1C9BB2A4C4137D923B53FA829694EA2C9" Name="7.0.arraySet.c" />
+        <File Id="filA72E1F02E0296297331A5ACB426003901EC8501A" Name="7.1.list0.c" />
+        <File Id="fil5A0BA8D44D5226BC447AEB5AC7822A34319D3773" Name="7.2.list.c" />
+        <File Id="fil34FFCEEACB8AD8B1F9BA8F5684DE4178157DD95D" Name="7.3.sort.c" />
+        <File Id="filDB1D47F4940988D7E16A97A323A12C7BA96D3C62" Name="7.4.math.c" />
+        <File Id="filA9DE4C60A98E5C3821B7C0ADB199867FAB17AEFE" Name="7.5.lists.c" />
+        <File Id="fil69EAC4DC21324D4ADA3995F2574765E647355C8E" Name="8.1.lockw.c" />
+        <File Id="fil6EA1569780D486382B5C3F5D3DCE69020CEEC3F7" Name="8.2.lockw_wrong.c" />
+        <File Id="fil532F47ED15BDB263A950A544ACF52F06B18A12E5" Name="8.3.lockw_wrong2.c" />
+        <File Id="fil6C5BF5FFF33F47626CB6FC1E19B41C70B7666EFC" Name="8.4.lock_claimsobj.c" />
+        <File Id="fil22D846F1F220F03DA828936949FBE43DC8963BB6" Name="8.5.counter.c" />
+        <File Id="fil69316E7DED2E19EB9ADA211CB75CC28A7A9E49BC" Name="8.6.rundown.c" />
       </Component>
     </DirectoryRef>
   </Fragment>
@@ -246,6 +249,7 @@
         <File Id="fil4608EF06381C5EAACF18474C8FC0788BD517F32F" Name="abstract-with-no-body-02" />
         <File Id="filD96CA6D5A409F73B6C3C225CBF0572A49E84552E" Name="addressOfDeref" />
         <File Id="fil9DD6F90F0747CCC98EDDB52F4E609A0347BA1D3D" Name="addressOfFieldInForallCrash" />
+        <File Id="fil590DD2B84890DE3DA4C483F0FE32721C40E02FF0" Name="addressOfMe-00" />
         <File Id="fil44172036F06D517D0963BEBB7606AD5D5C7EA8B8" Name="adjecent_arrays_disjoint" />
         <File Id="filF0E833445702C1B8FFBF558BAE60271AA5B76687" Name="allocation-00" />
         <File Id="filE2BFC55837B8D7701B1D346A94E87C4661939295" Name="allocation-01" />
@@ -862,6 +866,7 @@
         <File Id="filFCA43F7B6D3DDB903C992C801E0E1F8AD0910234" Name="implicit-conversion-00" />
         <File Id="fil3429365CF98A46B3746A1D35B80336DA27C9CF99" Name="implicitConversionFromPtrToInt" />
         <File Id="filB28ACFCA2C438438DDE702DEB681B55EE0D18A44" Name="impureFunctionCallIndistinguishableFromPureFunction" />
+        <File Id="filB94BE4D28F29079188D864437E5EA3AD808BFEF0" Name="in_claim_domain-transitive" />
         <File Id="fil1F47460046384ABDABBBA8E88158CB93F4F8CF8B" Name="incByte" />
         <File Id="filEAE150E17966C2E8F5C6988A0F87E3CDDF25EEDC" Name="increment-uint8-00" />
         <File Id="fil8B4D1939F6D811D82C5E265F13FABCF4AB77F3C5" Name="index-within" />
@@ -881,6 +886,7 @@
         <File Id="fil2DC2AA49D3E29072DE2066B3B4BC05B99A74D753" Name="inlineArrayInitialization1" />
         <File Id="fil0F584515E8A095BF9CF77F8CFCA37D908FEF1141" Name="inoutEnum" />
         <File Id="filEC86BC6F2AE6C1ABC67515FAD1BD4C431EAE5DD7" Name="inoutInt" />
+        <File Id="fil168C6849197E288940597499FCCF3DB77EDF18C9" Name="intConversion-00" />
         <File Id="fil53F89AD54A399795A963CE15D1F6AC8A96571463" Name="integerDivision" />
         <File Id="filFE7470A96C06EF1F7C1D711EFFF652CE8DE9FAE8" Name="interlocked" />
         <File Id="fil176AEA59C531B4314DAEFFCE2E32C16D9299687C" Name="interlockedIncrement" />
@@ -1010,6 +1016,7 @@
         <File Id="filE04852BB945DB3BCA416CA8CD8B1769240B357E5" Name="mathnat-06" />
         <File Id="fil34C80C8C82C6827367B876C26ED6A5D31CB958D2" Name="mathnat-07" />
         <File Id="filF6BC4F48970C0D38E2E2469118A61F35317677B7" Name="mathnat-08" />
+        <File Id="fil8FA1EA2A565F977F074EDC581B11A0F764000CAB" Name="meInInvariant-00" />
         <File Id="fil72BF7F3C12F3B684E9947C8B844499C7A57A87A7" Name="member-name-00" />
         <File Id="fil548A87C1A360CD1E7161FED3B869500A76411BED" Name="memoryReintp-00" />
         <File Id="filB411E5EB393B725F537BF15D654A1C1B40511D29" Name="memoryReintp-01" />
@@ -1440,6 +1447,7 @@
         <File Id="fil0F940A29558877BF9CDB1054115D9C00F4D792E6" Name="termination-loops-00" />
         <File Id="fil2D6745B6A1A1C2154E28A7878D77D0EEB4E333D1" Name="termination-loops-01" />
         <File Id="filDBDF779E918E61EAA3C2CEA3F339856A217E140A" Name="termination-loops-02" />
+        <File Id="filB242FF66B612C9B12B822806859CD7C540FFE294" Name="termination-loops-03" />
         <File Id="fil6D7CA89E16229F56150B4F6A2723A02EBB34E623" Name="termination-loops-and-calls" />
         <File Id="filAE165D1D6F70631478D119E7A24E97D853542605" Name="termination-missing-is-top" />
         <File Id="fil3220139FD50230A9CA1D5EAE03B6C7D0A709761D" Name="termination-name-clashes" />
