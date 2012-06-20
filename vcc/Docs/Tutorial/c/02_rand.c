@@ -6,3 +6,6 @@ unsigned random(unsigned bound)
   _(ensures \result < bound)
   _(decreases 0)
 ;
+
+/*`
+`*/

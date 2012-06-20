@@ -63,8 +63,8 @@ _(ensures rev(rev(x)) == x)
 })
 /*{end}*/
 /*`
-Verification of app succeeded. 
-Verification of appAssoc succeeded. 
+Verification of app succeeded.
+Verification of appAssoc succeeded.
 Verification of rev succeeded.
 Verification of appNil succeeded.
 Verification of revApp succeeded.

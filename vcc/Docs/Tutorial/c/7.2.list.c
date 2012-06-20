@@ -88,7 +88,7 @@ int member(List *l, int k)
 /*{out}*/
 /*`
 Verification of List#adm succeeded.
-Verification of mklist succeeded.
+Verification of listInit succeeded.
 Verification of add succeeded.
 Verification of member succeeded.
 `*/
