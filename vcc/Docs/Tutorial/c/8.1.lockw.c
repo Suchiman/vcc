@@ -20,7 +20,8 @@ void InitializeLock(struct Lock *l _(ghost \object obj))
   })
 }
 /*{xchg}*/
-_(atomic_inline) int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
+_(atomic_inline) 
+int InterlockedCompareExchange(volatile int *Destination, int Exchange, int Comparand) {
   if (*Destination == Comparand) {
     *Destination = Exchange;
     return Comparand;
