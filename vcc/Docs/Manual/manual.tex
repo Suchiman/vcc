@@ -253,9 +253,12 @@ word ``object'' means a particular subset of these pointers.
 \section{Overview}
 
 The program operates on a fixed set of typed \Def{objects}; 
-\todo{not sure about the word 'fixed' - it may suggest bounded model checking --M}
 the identity
-of an object is given by its \Def{address} and its \Def{type}. Each
+of an object is given by its \Def{address} and its \Def{type}. 
+(For example, in a C program including a user-defined \vcc{struct}
+type, there will be an object for each address such that an object of
+that type would be properly aligned.)
+Each
 object has a collection of \Def{fields} determined by its type.
 A \Def{state} of the program is a function from objects and field
 names to values satisfying certain declared \Def{axioms}.
@@ -277,10 +280,9 @@ A transition \Def{updates} an object if some field of the object differs
 between the prestate and poststate of the transition. A transition
 is \Def{legal} if its prestate is not good or if it satisfies the
 invariants of all updated objects. A sequence of states is an
-\todo{maybe call it 'legal execution' to make it clear what's going on? --M}
-\Def{execution} iff the initial state
+\Def{legal execution} iff the initial state
 is good and the transition from each nonterminal state of the sequence
-to its successor is legal. The program is good iff every execution of
+to its successor is legal. The program is good iff every legal execution of
 the program is good; successful verification of the program shows that
 it is good.
 
@@ -288,7 +290,7 @@ A type is \Def{admissible} iff, for every object \vcc{o} of the type,
 (1) every legal transition with a good prestate satisfies the
 invariant of \vcc{o}, and (2) the poststate of every good transition
 from a good state satisfies the invariant of \vcc{o}. It is easy to
-prove by induction on executions that if all object types are
+prove by induction on legal executions that if all object types are
 admissible, the program is good. The program is verified by proving
 that every type of the program is admissible.
 
@@ -314,14 +316,14 @@ size.  Each object has a ghost field indicating when the
 object is \Def{valid}, and an invariant saying that concrete fields
 of valid objects don't overlap. An invariant
 of each activation is that it reads and writes only valid
-objects. This implies that every execution of good program is
-simulated by an execution in which concrete field accesses are replaced
+objects. This implies that every legal execution of good program is
+simulated by a legal execution in which concrete field accesses are replaced
 by memory accesses to shared C heap. 
 The program can include ghost code not included in the unannotated
 program; however, verification guarantees that all such code
 terminates, and its execution does not change the concrete state. 
-This implies that every execution of the unannotated program is 
-the projection of an execution of the program, which allows properties
+This implies that every legal execution of the unannotated program is 
+the projection of a legal execution of the program, which allows properties
 of the program to be projected to properties of the unannotated
 program. 
 
@@ -539,7 +541,13 @@ Caveat: Because of compiler limitations, VCC currently does not allow
 \vcc{<<} or \vcc{>>} operators with the second argument a literal over \vcc{63}.
 }. 
 On any checked arithmetic operation, VCC asserts that the operation
-does not overflow or underflow. On any checked division, VCC asserts
+does not overflow or underflow\footnote{
+  VCC should not allow unchecked signed overflows or underflows (at
+  least in concrete code),
+  because the C standard specifies these as resulting in undefined
+  behavior; however currently VCC assumes that these produce some
+  arbitrary but fixed function of the inputs.
+}. On any checked division, VCC asserts
 that the divisor is nonzero. On any checked cast between arithmetic
 types, VCC asserts that the cast value fits in the range of the target
 arithmetic type\footnote{
@@ -550,8 +558,6 @@ or division by zero. However, on platforms where floating point
 exceptions do not affect control flow, verification remains sound for
 programs that uses \vcc{float}s or \vcc{double}s.
 }.
-\todo{say something about our treatment of signed overflows - these 
-are undefined in C standard, but we treat them as unknown but fixed functions}
 
 \subsection{Record Types}
 \vcc{_(record)}\\
@@ -1234,8 +1240,9 @@ in a state (perhaps implicitly) is the only way to trigger
 instantiation of the invariant of \vcc{c} in that state.
 \\\\
 \vcc{\bool \claims_claim(\claim c, \claim c1)}\\
-(Deprecated) Equivalent to \vcc{\claims(c, c1->\closed && \valid_claim(c1))}
-\todo{it may trigger differently; need to check --M}
+(Deprecated) Equivalent to 
+\vcc{\claims(c, c1->\closed && \valid_claim(c1))}, 
+but triggers somewhat differently.
 \\\\
 \vcc{\bool \claimable(\object o)}\\
 Equivalent to \vcc{o->\claimable}.
@@ -1715,7 +1722,7 @@ A quantification has one of the forms
 where \vcc{<decl>} is a variable declaration. In each variable
 declarations, the scope of the declared variable is to the end of the
 expression. Optional patterns may appear after the semicolon
-\todo{add reference}.
+(\secref{triggers}). 
 The forall/exists evaluates to 
 \vcc{\true} iff \vcc{p} evaluates to a non-\vcc{\false} value for
 each/some possible instantiation of the quantified variables.
@@ -2305,7 +2312,7 @@ If \vcc{\wrapped(e)} is a top-level conjunct of a precondition of a
 function, then  \vcc{_(requires e _(assume) \in \domain(e))} is implicitly added
 to the function contract, unless ??. If \vcc{e} is of \vcc{\claim}
 type, then \vcc{_(requires _(assume) \valid_claim(e))} is implicitly added to
-the contract, unless ??.
+the contract, unless \todo{--E}.
 
 If \vcc{\claims(c, \closed(o))} is a top-level conjunct of a
 precondition of a function, then the
@@ -2340,6 +2347,7 @@ function.
 
 
 \subsection{Triggering}
+\label{sect::triggers}
 VCC uses an SMT solver as its reasoning backend. SMT solvers typically
 work at the level of ground terms, and handle quantifiers by means of
 triggers - patterns that, when matched by terms arising in deduction,
