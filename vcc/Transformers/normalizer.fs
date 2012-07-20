@@ -111,8 +111,6 @@ namespace Microsoft.Research.Vcc
         else if ctx.IsPure then
           match p1.Type, p2.Type with
             | Ptr(t1), Ptr(t2) ->
-              if t1 <> t2 then
-                helper.Warning (c.Token, 9124, "pointers of different types (" + t1.ToString() + " and " + t2.ToString() + ") are never equal in pure context")
               Some (Expr.Macro (c, name + "_pure", [self p1; self p2]))
             | ObjectT, Ptr(_)
             | Ptr(_), ObjectT
@@ -130,7 +128,7 @@ namespace Microsoft.Research.Vcc
     deepMapExpressions (doHandleComparison helper) >> 
     deepMapExpressions doHandleConversions >>
     handlePurePtrEq helper
-    
+
   // ============================================================================================================      
   
   let init (helper:TransHelper.TransEnv) =
