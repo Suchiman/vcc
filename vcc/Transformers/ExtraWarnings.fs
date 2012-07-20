@@ -258,10 +258,23 @@ namespace Microsoft.Research.Vcc
       List.map doDecl
 
     // ============================================================================================================
+    
+    let pointerCmpWarning self = function
+      | Expr.Macro (c, ("_vcc_ptr_eq_pure"|"_vcc_ptr_neq_pure"), [p1; p2]) ->
+          match p1.Type, p2.Type with
+            | Ptr(t1), Ptr(t2) ->
+              if t1 <> t2 then
+                helper.Warning (c.Token, 9124, "pointers of different types (" + t1.ToString() + " and " + t2.ToString() + ") are never equal in pure context")
+              None
+            | _ -> None
+      | _ -> None
+    
+    // ============================================================================================================
 
     helper.AddTransformer ("warn-begin", TransHelper.DoNothing)
     helper.AddTransformer ("warn-two-state-inv-without-volatile", TransHelper.Decl warnForOldWithoutVolatiles)
     helper.AddTransformer ("warn-unchecked-ghost-loops", TransHelper.Decl warnForUncheckedGhostLoops)
     helper.AddTransformer ("warn-writes-on-pure-functions", TransHelper.Decl warnForWritesOnPureFunctions)
+    helper.AddTransformer ("warn-pointer-cmp", TransHelper.Expr pointerCmpWarning)
     helper.AddTransformer ("warn-end", TransHelper.DoNothing)
 

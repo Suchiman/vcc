@@ -152,8 +152,12 @@ namespace Microsoft.Research.Vcc
       let captureState suff tok =
         B.Stmt.Assume (captureStateAttrs suff tok, bTrue)
 
-      let addType t e =
+      let rec addType t e =
         match t with
+          | C.PtrSoP (C.Type.Ref td, gh) when td.IsGroup -> 
+            let p = addType (C.Type.MkPtr (C.Type.Ref td.Parent.Value, gh)) e
+            let f = td.Parent.Value.Fields |> List.find (fun f -> f.Type = C.Type.Ref td)
+            bCall "$dot" [p; er (fieldName f)]
           | C.Type.SpecPtr t -> bCall "$spec_ptr_cast" [e; toTypeId t]
           | C.Type.PhysPtr t -> bCall "$phys_ptr_cast" [e; toTypeId t]
           | _ -> e
