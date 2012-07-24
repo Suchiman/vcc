@@ -6,6 +6,7 @@ unsigned binary_search(int val, int *buf, unsigned len)
   _(requires \forall unsigned i, j; i < j && j < len ==> buf[i] <= buf[j])         // buffer sorted
   _(ensures \result != UINT_MAX ==> buf[\result] == val)                           // val found
   _(ensures \result == UINT_MAX ==> \forall unsigned i; i < len ==> buf[i] != val) // val not found
+  _(decreases 0)
 {
   unsigned low, high, mid;
   low = 0; high = len;
