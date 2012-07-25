@@ -1926,6 +1926,35 @@ follow from the invariants of objects earlier in the list (along with
 thread-local information). The list included as part of an atomic
 action is required to include all objects that are read or written in
 the atomic action (other than those that are \vcc{\mutable}). 
+\\\\
+To validate an object \vcc{o} in the list is to 
+\vcc{_(assert \active_claim(o))} if \vcc{o} is a \vcc{\claim} and
+\vcc{_(assert o->\closed && \inv(o))} otherwise.
+To validate an object list is to validate its elements in
+left-to-right order. A validation of the list consists of this
+sequence of assertions performed in a particular state. The read
+objects of a validation is the set of objects ocurring in the list,
+along with the union of sets ocurring in the list, as evaluated in the
+validation state. The set of write objects of a validation is defined
+the same way, but omitting those elements annotated
+as \vcc{_(read_only)}.
+\\\\
+Execution of an atomic block translates approximately as follows:
+\begin{VCC}
+\state s = \now();
+<set the current state to an arbitrary good state>
+_(assert \me == \at(s,\me))
+_(assert \forall \object o; \at(s, \wrapped(o) || \mutable(o))
+    ==> \unchanged(o->\version) && \unchanged(o->\volatile_version))
+s = \stutter(\now());
+<translation code block before _(begin_update)>
+<validate obs>
+s = \now();
+<translation of code block after _(begin_update)>
+foreach (\object o \in obs not marked _(read_only))
+  _(assert \inv2s(o, s,\now()))
+\end{VCC}
+
 
 \subsubsection{Ghost Atomic Actions}
 \vcc{_(ghost_atomic obs block)} (statement)\\
@@ -2011,105 +2040,14 @@ to the implicit sequentialization of the compuation of the term to
 which it is applied.
 
 \section{Verifying Functions}
-Each function body is implicitly converted to one of the following
-restricted forms, where each statement or block below is also in one
-of these restricted forms, and all local variable declarations are at
-the outermost level. We define three predicates:
-\begin{itemize}
-\item
-\vcc{Oblig(B,P,L)}, where \vcc{B} is a restricted statement, \vcc{P}
-is a predicate, and \vcc{L} is a function from labels to predicates.
-This gives a proof obligation sufficient to verify that executing \vcc{B}
-from a state satisfying \vcc{P} (or from a jump to label \vcc{l}
-satisfying \vcc{L(l)}) generates only legal state transitions and only
-returns satisfying the postcondition of the function.
-\item
-\vcc{Post(B,P,L}}, which gives what is known after normal exit from
-\vcc{B} starting from a state satisfying \vcc{P} (or from a
-jump to label \vcc{l} satisfying \vcc{L(l)}).
-\item
-\vcc{Exit(B,P,l)}, giving what is guaranteed to hold
-if \vcc{B} exits with a \vcc{goto} to label \vcc{l}.
-\end{itemize}
-
-Succesful verification that the function meets its specification
-follows from \vcc{Oblig(B,P,(\lambda l; \false))}, where \vcc{B} is the body of the
-function (not including the local variable declarations) \vcc{P} 
-is the precondition of the function.
-At entry to the function, VCC knows the
-precondition of the function, and that all object invariants hold. On
-exit from the function, it is asserted that the postcondition of the
-function holds.
-
-We define these functions as follows. In each case, \vcc{Exit(B,P,l)}
-is \vcc{\false} unless defined otherwise.
-\begin{itemize} 
-\vcc{Oblig(B;C, P, L) == 
-  Oblig(B,P,L) && Oblig(C,Post(B,P,L), or(L,
-
-
-\vcc{B} is \vcc{x = e}, where \vcc{e} is the application of a single
-operator (other than \vcc{++} or \vcc{--}) to a
-suitable number of purely local variables other than \vcc{x}, or 
-application of \vcc{&} to a local variable:\\
-\begin{VCC}
-Post(B,P) == ((\exists x P) && x == e)}
-Oblig(x = y op z,P) == (P ==> <y op z doesn't overflow or underflow>)
-Oblig(x = *y,P) == 
-  (P ==> \non_primitive_ptr(y) ? \mutable(y) : \mutable(\embedding(y))
-\end{VCC}
-
-\item
-\vcc{B} is \vcc{x = f(<args>)} where \vcc{args} is  a list of purely local
-variables not including \vcc{x}, and \vcc{f} has the contract
-\vcc{_(requires pre) _(writes w) _(ensures post)}:
-\begin{VCC}
-Oblig(B,P) == 
-  <pre after parameter substitution>
-  && (\forall \object o; o \in w ==> \writable(o))
-Post(B,P) == 
-\exists \state s; 
-  \at(s,P)
-  && <post with parameter substitution and \old(e) replaced by \at(s,e)>
-  && (\forall \object o; !(o \in w) ==> 
-       (\non_primitive_ptr(o) && \old(o->\owner == \me) 
-         ==> \unchanged(o->\version) 
-             && \unchanged(o->\volatile_version))
-       && (!\non_primitive_ptr(o) && \old(\mutable(o)) ==> \unchanged(o))
-\end{VCC}
-
-\item
-\vcc{B} is \vcc{l:} (declaring a label):  After \vcc{B} 
-what is known is the disjunction of \vcc{P} and the disjunction, over
-locations immediately preceding \vcc{goto l}, of what is known at each
-such location.
-
-\item 
-\vcc{B} is \vcc{goto l} where \vcc{l} is a label that occurs syntactically
-later in the function body: after \vcc{B}, what is known is \vcc{\false}.
-
-\item
-\vcc{_(atomic ...) <block>} where \vcc{<block>} is a simplified
-block\\
-
-\vcc@_(ghost B)@ where \vcc{B} is a simplified block\\
-\vcc@_(atomic obs) B@ where \vcc{obs} is a sequence of purely local
-variables and \vcc{B} is a simplified block\\
-\vcc@_(ghost_atomic obs) B@ where \vcc{obs} is a sequence of purely
-local variables and \vcc{B} is a simplified block
-\vcc@if (v) B@
-where \vcc{v} is a purely local variable and \vcc{B} is a simplified block;\\
-\vcc@while (v) _(invariant p) _(writes s) B @
-where \vcc{v} is a purely local variable and \vcc{B} is a simplified block;\\
+For this section, consider a fixed function body, where all local variables
+of the function have been lifted to topmost scope. Define
+a \Def{predicate} to be a boolean expression whose free variables
+are local variables of the function or parameters of the
+function. Define a \Def{label function} to be a function from program
+labels to predicates. Given two label functions \vcc{l1} and \vcc{l2},
+define \vcc{or(l1,l2)(l) == l1(l) || l2(l)}. 
 \\\\
-Conversion into this normalized form can involve changing the
-semantics of the C program, because of C's liberality in order of
-evaluation. Additional assertions are added to allow the program to be
-converted into such a form, e.g. that the order in which parameters to
-a function are evaluated doesn't matter.
-
-\subsection{Interpreting Writes Clauses}
-
 Let \vcc{S} and \vcc{S'} be two states, let \vcc{w} be a pointer
 set, and let \vcc{t} be a thread. Define
 \begin{VCC}
@@ -2126,100 +2064,129 @@ havocOnlyUnowned(S,S',t) <==>
   ==> agree(S,S',o->\version) && \agree(S,S',o->\volatile_version)
 \end{VCC}
 
-\subsection{The Implicit Invariant}
-
-For a body that is a simplified block, we define what VCC ``knows'' at
-each control point as follows. At entry to the function, VCC knows the
-conjunction of the preconditions of the function, that the writes set
-is equal to the set of pointers listed in the writes clauses of the
-function, and that all object invariants hold. 
-Let \vcc{St} be a statement of one of the forms above, and let \vcc{P}
-be what VCC knows just before \vcc{St}. Then 
+Each function body is implicitly converted to one of the following
+restricted forms, where each statement or block below is also in one
+of these restricted forms, and all local variable declarations are at
+the outermost level. We define three functions:
 \begin{itemize}
+\item
+\vcc{Oblig(B,P,L)}, where \vcc{B} is a restricted statement, \vcc{P}
+is a predicate, and \vcc{L} is a label function. 
+This gives a proof obligation sufficient to verify that executing \vcc{B}
+from a state satisfying \vcc{P} (or from a jump to label \vcc{l}
+satisfying \vcc{L(l)}) generates only legal state transitions and only
+returns satisfying the postcondition of the function.
+\item
+\vcc{Post(B,P,L)}, which gives what is known after normal exit from
+\vcc{B} starting from a state satisfying \vcc{P} (or from a
+jump to label \vcc{l} satisfying \vcc{L(l)}).
+\item
+\vcc{Exit(B,P,L)}, which gives a label function which, when applied to a
+given label, gives the condition known to hold 
+if \vcc{B} exits with a \vcc{goto} to the given label.
+\end{itemize}
 
-\item If \vcc{St} is \vcc{v = f(<args>)}, then after \vcc{St} VCC
-knows 
+Succesful verification that the function meets its specification
+follows from \vcc{Oblig(B,P,(\lambda l; \false))}, where \vcc{B} is the body of the
+function (not including the local variable declarations) \vcc{P} 
+is the precondition of the function, conjoined with the condition that 
+all object invariants hold.
+We define these functions as follows. In each case, \vcc{Exit(B,P,L)}
+is \vcc{L} unless defined otherwise.
+\begin{itemize}
+\item
 \begin{VCC}
-\exists \state S; \at(s,\me) == \me && differOnlyAt(s,\now(),w,\me) && post
+Oblig(B;C, P, L) == 
+  (Oblig(B,P,L) && Oblig(C,Post(B,P,L), or(L,Exit(B,P,L))))
+Post(B;C, P, L) ==
+  Post(C,Post(B,P,L), or(L,Exit(B,P,L)))
+Exit(B;C,P,L) ==
+  Exit(C,Post(B,P,L), or(L,Exit(B,P,L)))
 \end{VCC}
-where \vcc{w} is the writes set in the specification of \vcc{f}
-and \vcc{post} is the postcondition in the specification of \vcc{f}
-(both after substitution of formal parameters). The generated
-obligation is
-
-
-\item If \vcc{St} is \vcc{l:} then after \vcc{St}, VCC knows the
-disjunction of \vcc{P} and the disjunction of what it knew before each
-statement \vcc{goto l} preceding \vcc{St} in the function body.
-
-\item If \vcc{St} is \vcc{goto l;} then after \vcc{St} VCC
-knows \vcc{\false}.
 
 \item
-if \vcc{St} is @if (v) B@ then at entry to \vcc{B}, VCC knows 
-\vcc{P && B}. If at the end of \vcc{B} VCC knows \vcc{P'}, then
-after \vcc{St} VCC knows \vcc{(v ? P' : P)}
-\item if \vcc{St} is \vcc@while (v) _(invariant p) _(writes s) {B'}@
-then at entry to \vcc{B'} and after the block, VCC knows
+If \vcc{B} is \vcc{x = e}, where \vcc{e} is the application of a single
+operator (other than \vcc{++} or \vcc{--}) to a
+suitable number of purely local variables other than \vcc{x}, or 
+application of \vcc{&} to a local variable, then
 \begin{VCC}
-\exists \state S; \at(s,\me) == \me && \at(s, P) && p 
- && differOnlyAt(S,\now(),s,\me)
-\end{VCC}
-In addition, after \vcc{St} VCC knows \vcc{!v}.
-
-\item If \vcc{St} is \vcc{_(assert p)} or \vcc{_(assume p)}, then
-afte \vcc{St} VCC knows \vcc{P && p}.
-
-\end{itemize}
-
-
-\subsection{Proof Obligations}
-
-For each of the above constructs, there is a corresponding proof
-obligation. Let \vcc{P} be what VCC knows before \vcc{St}; then
-\begin{itemize}
-\item if \vcc{St} is \vcc@while (v) _(invariant p) _(writes s) {B'}@
-then there is a proof obligation \vcc{P || Q ==> p}, where \vcc{Q} is
-what VCC knows at the end of \vcc{B'}.
-
-\item If \vcc{St} is \vcc{v = f(<args>)}, then the generated proof
-obligations are (1) \vcc{P ==> Q}, where \vcc{Q} is the precondition
-of \vcc{f}, and (2) \vcc{P ==> w \subset ws}, where \vcc{w} is the set
-of pointers in the writes set of \vcc{f}, and \vcc{ws} is the writes
-set.
-
-
-To validate an object \vcc{o} in the list is to 
-\vcc{_(assert \active_claim(o))} if \vcc{o} is a \vcc{\claim} and to
-\vcc{_(assert o->\closed && \inv(o))} if it is not.
-To validate an object list is to validate its elements in
-left-to-right order. A validation of the list consists of this
-sequence of assertions performed in a particular state. The read
-objects of a validation is the set of objects ocurring in the list,
-along with the union of sets ocurring in the list, as evaluated in the
-validation state. The set of write objects of a validation is defined
-the same way, but omitting those elements annotated
-as \vcc{_(read_only)}.
-\\\\
-
-Execution of an atomic block translates approximately as follows:
-\begin{VCC}
-\state s = \now();
-<set the current state to an arbitrary good state>
-_(assert \me == \at(s,\me))
-_(assert \forall \object o; \at(s, \wrapped(o) || \mutable(o))
-    ==> \unchanged(o->\version) && \unchanged(o->\volatile_version))
-s = \stutter(\now());
-<translation code block before _(begin_update)>
-<validate obs>
-s = \now();
-<translation of code block after _(begin_update)>
-foreach (\object o \in obs not marked _(read_only))
-  _(assert \inv2s(o, s,\now()))
+Oblig(x = y op z,P) == (P ==> <y op z doesn't overflow or underflow>)
+Oblig(x = *y,P) == 
+  (P ==> \non_primitive_ptr(y) ? \mutable(y) : \mutable(\embedding(y))
+Post(B,P,L) == ((\exists x; P) && x == e)
 \end{VCC}
 
+\item
+If \vcc{B} is \vcc{x = f(<args>)} where \vcc{args} is  a list of purely local
+variables not including \vcc{x}, and \vcc{f} has the contract
+\vcc{_(requires pre) _(writes w) _(ensures post)}:
+\begin{VCC}
+Oblig(B,P,L) == 
+  <pre after parameter substitution>
+  && (\forall \object o; o \in w ==> \writable(o))
+Post(B,P,L) == 
+  \exists \state S; \at(s,\me) == \me && differOnlyAt(s,\now(),w,\me) && post
+\end{VCC}
 
+\item
+If \vcc{B} is \vcc{l:} (declaring a label), then
+\begin{VCC}
+Oblig(B,P,L) == \true
+Post(B,P,L) == P || L(l)
+Exit(B,P,L) == \lambda \label x; x == l ? \false : L(x)
+\end{VCC}
+
+\item 
+If \vcc{B} is \vcc{goto l} where \vcc{l} is a label that occurs syntactically
+later in the function body, then
+\begin{VCC}
+Oblig(B,P,L) == \true;
+Post(B,P,L) == \false;
+Exit(B,P,L) == \lambda \label x; x == l ? P : l(x)
+\end{VCC}
+
+\item
+If \vcc{B} is \vcc@if (v) C@, 
+where \vcc{v} is a purely local variable and \vcc{C} is a simplified
+block, then
+\begin{VCC}
+Oblig(B,P,L) == Oblig(C,P && v, L)
+Post(B,P,L) == v ? Post(C,P && v, L) : P
+Exit(B,P,L) == \lambda \label l; v ? Exit(C,P && v, L)(l) : L(l)
+\end{VCC}
+
+\item
+If \vcc{B} is \vcc@while (v) _(invariant p) _(writes s) C @
+where \vcc{v} is a purely local variable and \vcc{C} is a simplified
+block, then
+\begin{VCC}
+q == \exists \state S; \at(s,\me) == \me && \at(s, P) && p 
+                       && differOnlyAt(S,\now(),s,\me)
+Oblig(B,P,L) == [P ==> p] 
+     && Oblig(C,q,\lambda \label l; \false)
+     && [Post(C,q,\lambda \label l; \false) ==> p]
+Post(B,P,L) == q && !v
+Exit(B,P,L) == or(L,Exit(C,q,\lambda \label l; \false))
+\end{VCC}
+
+\item If \vcc{B} is \vcc{_(assert p)}, then
+\begin{VCC}
+Oblig(B,P,L) == [P ==> p]
+Post(B,P,L) == P && p
+\end{VCC}
+
+\item Uf \vcc{B} is \vcc{_(assume p)}, then
+\begin{VCC}
+Oblig(B,P,L) == \true
+Post(B,P,L) == P && p
+\end{VCC}
 \end{itemize}
+
+Conversion into this normalized form can involve changing the
+semantics of the C program, because of C's liberality in order of
+evaluation. Additional assertions are added to allow the program to be
+converted into such a form, e.g. that the order in which parameters to
+a function are evaluated doesn't matter.
 
 
 \section{Utility Functions}
@@ -2401,8 +2368,7 @@ Equivalent to \vcc{(\old(e) == e)}. Note that \vcc{\old} has
 different meanings depending on context.\\
 
 \section{Macros}
-VCC allows the user to define new annotation tags. This is done with
-a top-level annotation of the form
+A new annotation tag can be defined with an annotation of the form
 \begin{VCC}
 _(\bool \macro_<Name>(args) {
   <body>
@@ -2410,23 +2376,23 @@ _(\bool \macro_<Name>(args) {
 \end{VCC}
 where \vcc{<Name>} is the name of the new annotation tag,
 and \vcc{<args>} gives the remaining arguments that occur within the
-annotation. \todo{--E}
+annotation. This defines the annotation
+\vcc{_(<Name> args)} to expand to \vcc{<body>}.
 
 \section{Inference}
 
 If \vcc{\wrapped(e)} is a top-level conjunct of a precondition of a
 function, then  \vcc{_(requires e _(assume) \in \domain(e))} is implicitly added
-to the function contract, unless ??. If \vcc{e} is of \vcc{\claim}
+to the function contract. If \vcc{e} is of \vcc{\claim}
 type, then \vcc{_(requires _(assume) \valid_claim(e))} is implicitly added to
-the contract, unless \todo{--E}.
-
+the contract.
+\\\\
 If \vcc{\claims(c, \closed(o))} is a top-level conjunct of a
 precondition of a function, then the
 preconditions \vcc{_(requires _(assume) \always_by_claim(c,o))}
 and \vcc{_(requires _(assume) \inv(o)} are added to the
-function, unless the function is preceded by the .
-
-
+function.
+\\\\
 \vcc{_(isolate_proof)} (function attribute)\\
 This causes VCC to verify this function in a prover session that is
 isolated from the rest of the verification session. (That is, the
@@ -2463,7 +2429,8 @@ inclusion of explicit triggers. If these are not included, VCC
 generates triggers automatically. In most cases, it is best to allow
 VCC to generate triggers on its own, since it avoids the possibility
 of instantiation loops. However, on rare occasions, you may want to
-provide your own. \todo{--E}
+provide your own. See the section on triggers in the tutorial for more
+information. 
 \\\\
 \vcc{_(bool _:pure \match_long(__int64 ) _(ensures \result == \true);)}\\
 \vcc{_(bool _:pure \match_ulong(unsigned __int64) _(ensures \result == \true);)}\\
