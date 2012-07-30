@@ -209,6 +209,10 @@ int DivisionByZeroTestFails2() {
   return x;
 }
 `
+testcase(32,20) : warning VC9326: [possible unsoundness]: signed overflow (of '*') has undefined behavior in C
+testcase(78,28) : warning VC9326: [possible unsoundness]: signed overflow (of '*') has undefined behavior in C
+testcase(116,27) : warning VC9326: [possible unsoundness]: signed overflow (of '*') has undefined behavior in C
+testcase(157,20) : warning VC9326: [possible unsoundness]: signed overflow (of '*') has undefined behavior in C
 Verification of AllIntegralOperationsTestOk succeeded.
 Verification of IntOperationsTestOk succeeded.
 Verification of IntShiftOperationsTestOk succeeded.

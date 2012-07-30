@@ -103,6 +103,7 @@ void reint4()
   if (b != NULL) reint2(b);
 }
 `
+testcase(45,23) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
 Verification of foo succeeded.
 Verification of bar succeeded.
 Verification of baz succeeded.
