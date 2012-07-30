@@ -12,6 +12,7 @@ void bar() {
   _(assert foo(1,2 _(out c)) == 3 && c == 5)
 }
 `
+testcase(7,25) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
 Verification of foo succeeded.
 Verification of bar succeeded.
 `

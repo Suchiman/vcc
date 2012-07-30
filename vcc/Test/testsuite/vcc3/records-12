@@ -21,6 +21,7 @@ int bar(int a, int b)
   return foo(s);
 })
 `
+testcase(13,23) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
 Verification of foo succeeded.
 Verification of bar succeeded.
 `

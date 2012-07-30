@@ -21,6 +21,7 @@ void foo()
 	}
 }
 `
+testcase(16,57) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
 Verification of foo succeeded.
 Verification of foo#bv_lemma#0 succeeded.
 `

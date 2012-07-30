@@ -53,7 +53,7 @@ namespace Microsoft.Research.Vcc
       // 9601 <= code <= 9799; First available: 9751
       member this.Error(token, code, msg) = this.Error(token, code, msg, None)
 
-      // 9300 <= code <= 9399; First available: 9326
+      // 9300 <= code <= 9399; First available: 9327
       member this.GraveWarning(token, code, msg) = this.GraveWarning(token, code, msg, None)
 
       member this.GraveWarning(token, code, msg, related) = this.Warning(token, code, "[possible unsoundness]: " + msg, related)
