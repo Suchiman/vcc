@@ -1,4 +1,4 @@
- \ifdense
+\ifdense
 \documentclass[preprint,nocopyrightspace]{sigplanconf}
 \else
 \documentclass{article}
@@ -2055,9 +2055,9 @@ agree(S,S',E) == (\at(S,E) == \at(S',E))
 
 differOnlyAt(S,S',w,t) <==>
 \forall \object o; !(o \in w) && \non_primitive_ptr(o) && \at(S,o->\owner == t) 
-         ==> (\at(S,o->\closed) ==> agree(S,S',o->\version) 
-                                    && agree(S,S',o->\volatile_version))
-             && (\forall <field> f; !(&(o->f) \in w) ==> agree(S,S',o->f))
+  ==>  (\at(S,o->\closed) ==> 
+          agree(S,S',o->\version) && agree(S,S',o->\volatile_version))
+     && (\forall <field> f; !(&(o->f) \in w) ==> agree(S,S',o->f))
 
 havocOnlyUnowned(S,S',t) <==>
 \forall \object o; \non_primitive_ptr(o) && \at(S,o->\owner == t)
@@ -2443,7 +2443,7 @@ of verifications; they should never appear in a final program. Use of
 any of these annotation may render verification unsound.
 \\\\
 \vcc{\bool \start_here()}\\
-This predicate can appear only in the
+This predicate can appear only in the 
 annotation \vcc{_(assume \start_here())}; it tells VCC to not verify
 any of the assertions in the current function that lexically precede
 this statement. At most one such annotation should appear within any
