@@ -645,6 +645,9 @@ namespace Microsoft.Research.Vcc
          | Expr.Macro (cmn, "&", [Expr.Ref (c, ({ Kind = (VarKind.Parameter|VarKind.SpecParameter|VarKind.OutParameter) } as v))]) when not inBody ->
            helper.Error(cmn.Token, 9666, "Cannot take an parameter's address inside of function contracts")
            true
+         | Expr.VarDecl (c, ({ Type = Type.Ref td } as v), _) when td.IsUnion ->
+           pointernize c v 
+           true
          | _ -> true
             
       let doFunction (d:Function) =
