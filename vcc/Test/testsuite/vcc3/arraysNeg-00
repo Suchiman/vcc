@@ -18,6 +18,7 @@ int sumup(int *p, int sz)
   return sum;
 }
 `
+testcase(14,24) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
 Verification of sumup failed.
 testcase(14,30) : error VC8512: Assertion 'p[i] is thread local' did not verify.
 `

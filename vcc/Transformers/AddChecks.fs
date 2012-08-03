@@ -472,6 +472,10 @@ namespace Microsoft.Research.Vcc
           Some(Prim(c, Op(opName, Processed), selfs args))                      
         | Prim ({Type = Type.MathInteger(Signed)} as c, Op(opName, (Checked|Unchecked)), args)  ->
           Some(Prim(c, Op(opName, Processed), selfs args))
+        // for % and / we always add the checks
+        | Prim (c, Op(("+"|"-"|"*") as opName, Unchecked), [arg1; arg2]) when not ctx.IsPure && (arg1.Type.IsSignedInteger && arg2.Type.IsSignedInteger) ->
+          helper.GraveWarning (c.Token, 9326, System.String.Format ("signed overflow (of '{0}') has undefined behavior in C", opName))
+          None
         | Prim (c, (Op(opName, Checked) as op), args) as e when not ctx.IsPure ->
           let args = selfs args
           let newop = Prim (c, Op(opName, Processed), args)

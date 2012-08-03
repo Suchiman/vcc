@@ -109,6 +109,9 @@ _(ghost int fooSafe()
   return _(unchecked)(a[0] + a[1]);
 })
 `
+testcase(30,24) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
+testcase(98,25) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
+testcase(109,23) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
 Verification of setk2 succeeded.
 Verification of sumup succeeded.
 Verification of setk succeeded.

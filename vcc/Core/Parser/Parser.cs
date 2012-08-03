@@ -2687,7 +2687,7 @@ namespace Microsoft.Research.Vcc.Parsing {
     }
 
     protected Expression ConvertToInt32(Expression expression) {
-      return new UncheckedExpression(new VccCast(expression, this.GetTypeExpressionFor(TypeCode.Int32, expression.SourceLocation), expression.SourceLocation), expression.SourceLocation);      
+      return new VccCast(expression, this.GetTypeExpressionFor(TypeCode.Int32, expression.SourceLocation), expression.SourceLocation);
     }
 
     protected Expression ParseComplexExpression(Token operator0, Expression operand1, Token operator1, Expression operand2, TokenSet followers)

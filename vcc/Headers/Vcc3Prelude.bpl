@@ -238,6 +238,7 @@ axiom (forall p:$ptr :: {$in_range_phys_ptr(p)}
   (!$in_range_phys_ptr(p) ==> $in_range_spec_ptr(p)) &&
   true
 // TODO this unmasks a number of problems with our treatment of ghost pointers
+// related issue: 6565
 //  ($in_range_phys_ptr(p) && $non_null(p) ==> !$in_range_spec_ptr(p))
   );
 
