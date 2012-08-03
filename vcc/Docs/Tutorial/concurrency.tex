@@ -1,14 +1,20 @@
 \section{Atomics}
 \label{sect:concurrency}
 
-Writing concurrent programs is generally considered to be harder than writing
-sequential programs.
-Similar opinions are held about verification.
-Surprisingly, in VCC the leap from verifying sequential programs to
-verifying fancy lock-free code is not that big.
-This is because the verification in VCC is inherently based on invariants:
-conditions that are attached to data and need to hold \emph{no matter which thread}
-accesses it.
+Writing concurrent programs is generally considered harder than
+writing sequential programs.  Similar opinions are held about
+verification.  However, in VCC the leap from verifying sequential
+programs to verifying fancy lock-free code is not that big.  This is
+because verification in VCC is inherently based on object invariants.
+
+Coarse-grained concurrency - where objects are protected by locks - is
+really no different from sequential programming. Each lock protects a
+single (typically fixed) object; when you acquire an exclusive 
+lock, you obtain ownership of the object protected by the lock. You
+are then free to operate on tht object just as you would in sequential
+programming; you can unwrap it, play with it, and eventually wrap it
+up and release the lock, giving ownership of the protected object back
+to the lock. 
 
 But let us move from words to actions, and verify a canonical example
 of a lock-free algorithm, which is the implementation of a spin-lock itself.
