@@ -78,6 +78,8 @@ void bar_funky()
   }
 }
 `
+testcase(55,23) : warning VC9326: [possible unsoundness]: signed overflow (of '-') has undefined behavior in C
+testcase(75,23) : warning VC9326: [possible unsoundness]: signed overflow (of '-') has undefined behavior in C
 testcase(44,3) : warning VC9323: [possible unsoundness]: failed to infer _(decreases ...) clause for the loop; please supply one
 Verification of foo succeeded.
 Verification of foo_fail1 failed.

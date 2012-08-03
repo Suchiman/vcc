@@ -97,6 +97,7 @@ _(abstract \bool lemma_pred(unsigned x)
 })
 
 /*`
+testcase(54,55) : warning VC9326: [possible unsoundness]: signed overflow (of '-') has undefined behavior in C
 Verification of validBits succeeded.
 Verification of bits succeeded.
 Verification of singleton succeeded.

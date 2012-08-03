@@ -23,6 +23,8 @@ void test006b(int a, int b, int c2)
     _(assert LHS == _(unchecked)(RHS))
 }
 `
+testcase(14,31) : warning VC9326: [possible unsoundness]: signed overflow (of '*') has undefined behavior in C
+testcase(22,22) : warning VC9326: [possible unsoundness]: signed overflow (of '*') has undefined behavior in C
 Verification of test006a succeeded.
 Verification of test006b succeeded.
 `

@@ -1646,6 +1646,9 @@ namespace Microsoft.Research.Vcc
         exprRes <- 
           match unfolded with
             | None -> cconst
+            // char a[1]; sizeof(a) -> we get the type of 'a' to be char* so the size is 8, whereas the constant correctly says 1.
+            // just ignore the sizeof part.
+            | Some (C.SizeOf _) -> cconst
             | Some uconst -> 
               let uconst' = if uconst.Type <> cconst.Type then C.Expr.Cast({uconst.Common with Type = cconst.Type}, C.CheckedStatus.Unchecked, uconst) else uconst
               if cconst.ExprEquals(uconst') then cconst 

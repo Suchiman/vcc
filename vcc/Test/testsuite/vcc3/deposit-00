@@ -14,5 +14,6 @@ void deposit(struct Acct *a, int x)
   _(wrap a)
 }
 `
+testcase(13,28) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
 Verification of deposit succeeded.
 `

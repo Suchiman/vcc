@@ -29,6 +29,7 @@ void barReportSoundnessWarning(struct S *s)
 
 `
 testcase(26,16) : warning VC9302: [possible unsoundness]: more than one access to physical memory in atomic block ('s->a' and 's->a'); extra accesses might be due to bitfield operations
+testcase(11,22) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
 Verification of add succeeded.
 Verification of foo succeeded.
 Verification of barReportSoundnessWarning succeeded.
