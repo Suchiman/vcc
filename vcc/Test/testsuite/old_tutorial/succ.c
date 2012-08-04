@@ -21,6 +21,7 @@ int succ_unchecked(int i)
 }
 
 /*`
+testcase(20,24) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
 Verification of succ failed.
 testcase(7,10) : error VC8004: i + 1 might overflow.
 Verification of succ_INT_MAX succeeded.
