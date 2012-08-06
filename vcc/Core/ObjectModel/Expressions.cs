@@ -4237,6 +4237,12 @@ namespace Microsoft.Research.Vcc {
       return null;
     }
 
+    public int CompileTimeValue() {
+      var res = this.GetValue();
+      if (res != null) return (int)((uint)res);
+      return -1;
+    }
+
     /// <summary>
     /// Makes a copy of this expression, changing the ContainingBlock to the given block.
     /// </summary>
