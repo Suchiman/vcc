@@ -45,6 +45,10 @@ void move(struct rect *r, int dx, int dy)
 }
 
 /*`
+testcase(38,28) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
+testcase(39,28) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
+testcase(40,28) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
+testcase(41,28) : warning VC9326: [possible unsoundness]: signed overflow (of '+') has undefined behavior in C
 Verification of rect#adm succeeded.
 Verification of move succeeded.
 Verification of within_bounds#reads succeeded.

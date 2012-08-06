@@ -432,7 +432,12 @@ namespace Microsoft.Research.Vcc
       C.Expr.SizeOf(this.ExprCommon (sizeOf :> Expression), this.DoType(sizeOf.Expression.ResolvedType))
 
     member this.DoSizeOf(sizeOf : VccSizeOf) = 
-      C.Expr.SizeOf(this.ExprCommon (sizeOf :> Expression), this.DoType(sizeOf.TypeToSize.ResolvedType))
+      let tp = this.DoType(sizeOf.TypeToSize.ResolvedType)
+      let v = sizeOf.CompileTimeValue()
+      if v > 0 && v <> tp.SizeOf then
+        C.Expr.IntLiteral (this.ExprCommon (sizeOf :> Expression), new bigint(v))
+      else
+        C.Expr.SizeOf(this.ExprCommon (sizeOf :> Expression), tp)
 
 
     member this.DoCompileTimeConstant(constant : ICompileTimeConstant) =
@@ -1643,12 +1648,9 @@ namespace Microsoft.Research.Vcc
 
         let cconst = this.DoCompileTimeConstant(constant)
 
-        exprRes <- 
+        exprRes <-
           match unfolded with
             | None -> cconst
-            // char a[1]; sizeof(a) -> we get the type of 'a' to be char* so the size is 8, whereas the constant correctly says 1.
-            // just ignore the sizeof part.
-            | Some (C.SizeOf _) -> cconst
             | Some uconst -> 
               let uconst' = if uconst.Type <> cconst.Type then C.Expr.Cast({uconst.Common with Type = cconst.Type}, C.CheckedStatus.Unchecked, uconst) else uconst
               if cconst.ExprEquals(uconst') then cconst 

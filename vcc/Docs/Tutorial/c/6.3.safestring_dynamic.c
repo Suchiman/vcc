@@ -55,9 +55,6 @@ struct SafeString *sstr_alloc(unsigned capacity)
 }
 
 /*`
-testcase(38,7) : warning VC9315: [possible unsoundness]: termination checking not enabled for function 'malloc'; consider supplying _(decreases ...) clause
-testcase(41,16) : warning VC9315: [possible unsoundness]: termination checking not enabled for function 'malloc'; consider supplying _(decreases ...) clause
-testcase(43,5) : warning VC9315: [possible unsoundness]: termination checking not enabled for function 'free'; consider supplying _(decreases ...) clause
 Verification of SafeString#adm succeeded.
 Verification of sstr_append_char succeeded.
 Verification of sstr_alloc succeeded.
