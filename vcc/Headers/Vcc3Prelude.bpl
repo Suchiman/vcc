@@ -1836,7 +1836,7 @@ function $admissibility_start(p:$ptr, t:$ctype) : bool
   { $is(p, t) && $is_proper(p) }
 
 function {:inline true} $stuttering_pre(S:$state, p:$ptr) : bool
-  { (forall q: $ptr :: {$closed(S, q)} $closed(S, q) ==> $inv2_without_lemmas(S, S, q, $typ(q))) &&
+  { (forall q: $ptr :: {:weight 10} {$closed(S, q)} $closed(S, q) ==> $inv2_without_lemmas(S, S, q, $typ(q))) &&
     $good_for_admissibility(S)
   }
 
@@ -1859,6 +1859,7 @@ procedure $havoc_others(p:$ptr, t:$ctype);
   ensures $good_for_post_admissibility($s);
 
   ensures (forall q: $ptr :: {$closed($s, q)} {$closed(old($s), q)}
+    {:weight 10}
     $closed(old($s), q) || $closed($s, q) ==>
       ($spans_the_same(old($s), $s, q, $typ(q)) && $closed(old($s), q) == $closed($s, q)) || 
       ($inv2(old($s), $s, q, $typ(q)) && $nonvolatile_spans_the_same(old($s), $s, q, $typ(q))));
@@ -1879,7 +1880,7 @@ function {:inline true} $unwrap_check_pre(S:$state, p:$ptr) : bool
   { $wrapped(S, p, $typ(p)) && 
     (! $is_claimable($typ(p)) || $ref_cnt(S, p) == 0) &&
     $inv(S, p, $typ(p)) &&
-    (forall q: $ptr :: {$closed(S, q)} $closed(S, q) ==> $inv(S, q, $typ(q))) &&
+    (forall q: $ptr :: {:weight 10} {$closed(S, q)} $closed(S, q) ==> $inv(S, q, $typ(q))) &&
     $good_for_pre_can_unwrap(S)
   }
 
