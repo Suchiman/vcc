@@ -633,10 +633,18 @@ function {:inline true} $is_array_stateless(p:$ptr, T:$ctype, sz:int) : bool
     && $field_arr_size($field(p)) >= $field_arr_index($field(p)) + sz
     && p == $idx($ptr($field_arr_root($field(p)), $base(p)), $field_arr_index($field(p)))
     && $field_kind($field(p)) != $fk_base
-//    && ($in_range_phys_ptr(p) ==> $in_range_uintptr($addr0(p) + $sizeof(T) * sz))
+    // && ($in_range_phys_ptr(p) ==> $in_range_uintptr($addr0(p) + $sizeof(T) * sz))
     && $field_arr_index($field(p)) >= 0)
 //    && $is_non_primitive($typ($emb0(p))))
 }
+
+axiom (forall p:$ptr ::
+  {$addr(p), $field_arr_size($field(p))}
+  $is_proper(p) &&
+  $in_range_phys_ptr(p) ==> 
+     $in_range_uintptr($addr(p) + 
+                       $sizeof($typ(p)) * 
+                         ($field_arr_size($field(p)) - $field_arr_index($field(p)))));
 
 function $is_thread_local_array(S:$state, p:$ptr, T:$ctype, sz:int) : bool
 {
