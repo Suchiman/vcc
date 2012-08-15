@@ -6,7 +6,6 @@
 using System;
 using System.Reflection;
 using System.Text;
-using Microsoft.VisualStudio.VCProjectEngine;
 using EnvDTE;
 
 namespace Microsoft.Research.Vcc.VSPackage {
@@ -35,8 +34,8 @@ namespace Microsoft.Research.Vcc.VSPackage {
 
     public CompilerSettings(ProjectItem prjItem) 
     {     
-      var vcProject = prjItem.ContainingProject.Object as VCProject;
-      var file = prjItem.Object as VCFile;
+      dynamic vcProject = prjItem.ContainingProject.Object;
+      dynamic file = prjItem.Object;
       var activeConf = prjItem.ContainingProject.ConfigurationManager.ActiveConfiguration;
       var activeSetting = activeConf.ConfigurationName + "|" + activeConf.PlatformName;
 
@@ -59,7 +58,7 @@ namespace Microsoft.Research.Vcc.VSPackage {
         return args.ToString();
     }
 
-    private static void AddSettingsForCompilerTool(CompilerSettings settings, VCCLCompilerTool compilerTool)
+    private static void AddSettingsForCompilerTool(CompilerSettings settings, dynamic compilerTool)
     {
         string prePro = compilerTool.PreprocessorDefinitions;
         if (prePro != null && settings.InheritPreprocessorDefinitions)
@@ -74,9 +73,9 @@ namespace Microsoft.Research.Vcc.VSPackage {
             settings.forcedIncludeFiles += forcedIncludes + ";";
     }
 
-    private static void AddSettingsForCompilerTool(CompilerSettings settings, VCNMakeTool nMakeTool)
+    private static void AddSettingsForCompilerToolNMake(CompilerSettings settings, dynamic nMakeTool)
     {
-        var additionalOptions = GetSettingsFromAdditionalOptions(nMakeTool);
+        var additionalOptions = GetSettingsFromAdditionalOptionsNMake(nMakeTool);
 
         string prePro = nMakeTool.PreprocessorDefinitions ?? "";
         if (settings.InheritPreprocessorDefinitions)
@@ -91,9 +90,9 @@ namespace Microsoft.Research.Vcc.VSPackage {
             settings.forcedIncludeFiles += forcedIncludes + ";" + additionalOptions.Item3 + ";";
     }
 
-    private static Tuple<string,string,string> GetSettingsFromAdditionalOptions(VCNMakeTool nMakeTool)
+    private static Tuple<string,string,string> GetSettingsFromAdditionalOptionsNMake(dynamic nMakeTool)
     {
-        string additionalOptionsString = GetAdditionalOptionsValue(nMakeTool);
+        string additionalOptionsString = GetAdditionalOptionsValueNMake(nMakeTool);
         if (!String.IsNullOrEmpty(additionalOptionsString))
         {
             string[] additionalOptions = additionalOptionsString.Split(new[] {' '},
@@ -127,7 +126,7 @@ namespace Microsoft.Research.Vcc.VSPackage {
         else return Tuple.Create("", "", "");
     }
 
-      private static string GetAdditionalOptionsValue(VCNMakeTool nMakeTool)
+      private static string GetAdditionalOptionsValueNMake(dynamic nMakeTool)
       {
           const BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.FlattenHierarchy |
                                             BindingFlags.NonPublic | BindingFlags.Public;
@@ -149,46 +148,46 @@ namespace Microsoft.Research.Vcc.VSPackage {
     /// <param name="ActiveSetting">Active Setting Debug/Release ...</param>
     /// <param name="settings"></param>
     /// <returns>IncludeDirs and PreprocessorDefines</returns>
-    private static void AddSettingsFromVCProject(CompilerSettings settings, VCProject Project, string ActiveSetting)
+    private static void AddSettingsFromVCProject(CompilerSettings settings, dynamic Project, string ActiveSetting)
     {
       //Projects can have there settings in a PropertySheet or Tools Collection.     
-      IVCCollection CollectionOfConfigurations = Project.Configurations as IVCCollection;
+      dynamic CollectionOfConfigurations = Project.Configurations;
        
       //Extract Config from Collection, with Name stored in ActiveSetting
-      VCConfiguration Configuration = CollectionOfConfigurations.Item(ActiveSetting) as VCConfiguration;
+      dynamic Configuration = CollectionOfConfigurations.Item(ActiveSetting);
       
       //1st collect Tool Data from Project Setting!  *****************************************************    
-      IVCCollection Tools = Configuration.Tools as IVCCollection;
+      dynamic Tools = Configuration.Tools;
 
       try {
         //Get VCCLCompilerTool
-        VCCLCompilerTool CompilerTool = Tools.Item("VCCLCompilerTool") as VCCLCompilerTool;
+        dynamic CompilerTool = Tools.Item("VCCLCompilerTool");
         if (CompilerTool != null) AddSettingsForCompilerTool(settings, CompilerTool);
       } catch { }
 
       try {
-          VCNMakeTool nMakeTool = Tools.Item("VCNMakeTool") as VCNMakeTool;
-          if (nMakeTool != null) AddSettingsForCompilerTool(settings, nMakeTool);
+          dynamic nMakeTool = Tools.Item("VCNMakeTool");
+          if (nMakeTool != null) AddSettingsForCompilerToolNMake(settings, nMakeTool);
       } catch {  }
 
       //2nd collect Tool Data from PropertySheets! *****************************************************
       //PropertySheets Collection
-      IVCCollection CollectionOfPropertySheets = Configuration.PropertySheets as IVCCollection;
+      dynamic CollectionOfPropertySheets = Configuration.PropertySheets;
       //Count Sheets...
       int SheetCount = CollectionOfPropertySheets.Count;
 
       for (int i = 0; i < SheetCount; i++) {
         try {
           //Get Sheet from Collection
-          VCPropertySheet PropertySheet = CollectionOfPropertySheets.Item(i + 1) as VCPropertySheet;
+          dynamic PropertySheet = CollectionOfPropertySheets.Item(i + 1);
           //Get Tools                
-          IVCCollection CollectionOfTools = PropertySheet.Tools as IVCCollection;
+          dynamic CollectionOfTools = PropertySheet.Tools;
           //Get VCCLCompilerTool
-          VCCLCompilerTool CompilerTool = CollectionOfTools.Item("VCCLCompilerTool") as VCCLCompilerTool;
+          dynamic CompilerTool = CollectionOfTools.Item("VCCLCompilerTool");
           if (CompilerTool != null) AddSettingsForCompilerTool(settings, CompilerTool);
 
-          VCNMakeTool nMakeTool = CollectionOfTools.Item("VCNMakeTool") as VCNMakeTool;
-          if (nMakeTool != null) AddSettingsForCompilerTool(settings, nMakeTool);
+          dynamic nMakeTool = CollectionOfTools.Item("VCNMakeTool");
+          if (nMakeTool != null) AddSettingsForCompilerToolNMake(settings, nMakeTool);
         } catch { }
       }
     }
@@ -197,24 +196,24 @@ namespace Microsoft.Research.Vcc.VSPackage {
     /// Gets current Settings for an VCFile.
     /// </summary>
     /// <returns>IncludeDirs and PreprocessorDefines</returns>
-    private static void AddSettingsFromVCFile(CompilerSettings settings, VCFile File, string ActiveSetting)
+    private static void AddSettingsFromVCFile(CompilerSettings settings, dynamic File, string ActiveSetting)
     {
-      IVCCollection CollectionOfFileConfigurations = File.FileConfigurations as IVCCollection;
       //Extract Config from Collection, with Name stored in ActiveSetting
-      VCFileConfiguration FileConfiguration = CollectionOfFileConfigurations.Item(ActiveSetting) as VCFileConfiguration;
+      dynamic CollectionOfFileConfigurations = File.FileConfigurations;
+      dynamic FileConfiguration = CollectionOfFileConfigurations.Item(ActiveSetting);
       
       try {
         //Get Tool  
-        VCCLCompilerTool CompilerTool = FileConfiguration.Tool as VCCLCompilerTool;
+        dynamic CompilerTool = FileConfiguration.Tool;
         if (CompilerTool != null) AddSettingsForCompilerTool(settings, CompilerTool);
       } catch { }
     }
 
-    private static string ExecuteMacroProject(VCProject Project, string ActiveConfiguration, string MacroToEvaluate)
+    private static string ExecuteMacroProject(dynamic Project, string ActiveConfiguration, string MacroToEvaluate)
     {
-      IVCCollection CollectionOfConfigurations = Project.Configurations as IVCCollection;
+      dynamic CollectionOfConfigurations = Project.Configurations;
       //Extract Config from Collection, with Name stored in ActiveSetting
-      VCConfiguration Configuration = CollectionOfConfigurations.Item(ActiveConfiguration) as VCConfiguration;
+      dynamic Configuration = CollectionOfConfigurations.Item(ActiveConfiguration);
       return Configuration.Evaluate(MacroToEvaluate);
     }
 
