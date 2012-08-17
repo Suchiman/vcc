@@ -292,10 +292,12 @@
       <ComponentRef Id="wiki_files"/>
       <ComponentRef Id="wiki_css_files"/>
       <ComponentRef Id="Shortcuts" />
+      <!--
       <MergeRef Id="VCCRTRedist" />
       <MergeRef Id="VCCRTRedistPol" />
       <MergeRef Id="VCOpenMPRedist" />
       <MergeRef Id="VCOpenMPRedistPol" />
+      -->
     </Feature>
     <Feature Id ="VisualStudio2010Integration" Title ="Visual Studio 2010 Integration" AllowAdvertise="no" Level="0">
       <Condition Level="1">DEVENV10_DIR</Condition>
