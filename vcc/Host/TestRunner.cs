@@ -206,7 +206,7 @@ namespace Microsoft.Research.Vcc
 
           try {
             int returnCode = RunTest(errorHandler, suiteNameWithoutExt, fileNameWithoutExt, source.ToString(), commandLineOptions, compilerParameters);
-            if (returnCode != 0)
+            if (returnCode < 0)
               actualOutput.Append("Non zero return code: " + returnCode);
           } catch (System.Reflection.TargetInvocationException e) {
             actualOutput.Append(e.InnerException);
