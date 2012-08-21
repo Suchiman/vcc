@@ -311,6 +311,8 @@ namespace Microsoft.Research.Vcc
       using (var ppEnum = processedFiles.GetEnumerator())
         while (fnEnum.MoveNext() && ppEnum.MoveNext())
           RunPlugin(fnEnum.Current, ppEnum.Current, commandLineOptions);
+
+      if (fileErrorCount > 0) errorCount++;
     }
 
     private static Plugin currentPlugin;
@@ -434,7 +436,7 @@ namespace Microsoft.Research.Vcc
           swVisitor.Stop();
         }
 
-        if (fileErrorCount > 0) return 0;
+        if (fileErrorCount > 0) return fileErrorCount;
 
         try
         {
