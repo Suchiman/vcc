@@ -2465,6 +2465,7 @@ namespace Microsoft.Research.Vcc
           B.Decl.Const { Unique = false; Name = "RZ#" + name; Type = rt }
           B.Decl.Axiom (B.Forall (Token.NoToken, ctorArgs, [[ctorCall]], [], bMultiAnd (szEq :: eqs)))
           B.Decl.Axiom (B.Forall (Token.NoToken, [("r", rt)], [], [], bEq (er "r") (bCall ("RC#" + name) injArgs)))
+          B.Decl.Axiom (B.Forall (Token.NoToken, [("r", rt)], [], [], B.Expr.Primitive ("<", [bInt 0; abstractSize (C.Type.Ref td) (er "r")])))
           B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bImpl (bMultiAnd (eqArgs)) eqAB))
           B.Decl.Axiom (B.Forall (Token.NoToken, ["a",rt; "b",rt], [[eqAB]], [],  bEq (eqAB) (bEq (er "a") (er "b"))))
         ] 
