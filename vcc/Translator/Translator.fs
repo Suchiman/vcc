@@ -201,7 +201,7 @@ namespace Microsoft.Research.Vcc
         | C.Type.Bool -> bFalse
         | C.Type.Map _ as t -> er ("$zero." + ctx.TypeIdToName(toTypeId t))
         | t -> helper.Panic ("don't know default value for type " + t.ToString())
-       
+      
       let mapEqAxioms t =
         let t1, t2 =
           match t with
@@ -328,15 +328,20 @@ namespace Microsoft.Research.Vcc
       let typeVarRef (tv : C.TypeVariable) = er (typeVarName tv)
       let trTypeVar (tv : C.TypeVariable) : B.Var = (typeVarName tv, trType C.Type.TypeIdT)
                   
+      
+      let trInRange t e =
+        match t with
+          | C.Type.MathInteger C.MathIntKind.Unsigned -> bCall "$in_range_nat" [e]
+          | C.Type.Integer k -> bCall ("$in_range_" + C.Type.IntSuffix k) [e]
+          | C.Type.PhysPtr t 
+          | C.Type.SpecPtr t -> bTrue // bCall "$is_spac_ptr" [varRef v; toTypeId t]
+          | _ -> bTrue
         
       let trWhereVar (v:C.Variable) =
         let v' = trVar v
-        match v.Type with
-          | C.Type.MathInteger C.MathIntKind.Unsigned -> (v', Some (bCall "$in_range_nat" [varRef v]))
-          | C.Type.Integer k -> (v', Some (bCall ("$in_range_" + C.Type.IntSuffix k) [varRef v]))
-          | C.Type.PhysPtr t 
-          | C.Type.SpecPtr t -> (v', None) // (v', Some (bCall "$is_spac_ptr" [varRef v; toTypeId t]))
-          | _ -> (v', None)
+        let wh = trInRange v.Type (varRef v)
+        if wh = bTrue then (v', None)
+        else (v', Some wh)
     
       let ptrType (expr:C.Expr) =
         match expr.Type with
@@ -563,6 +568,8 @@ namespace Microsoft.Research.Vcc
           | "prim_writes_check", [a] -> writesCheck env ec.Token true a
           | ("in_range_phys_ptr"|"in_range_spec_ptr") as in_range, [p] ->
             bCall ("$" + in_range) [self p]
+          | "in_int_range", [a] ->
+            trInRange a.Type (self a)
           | in_range, args when in_range.StartsWith ("in_range") -> bCall ("$" + in_range) (selfs args)
           | ("unchecked_sbits"|"unchecked_ubits"), args ->
             bCall ("$" + n) (selfs args)
@@ -2586,6 +2593,8 @@ namespace Microsoft.Research.Vcc
             | e -> trExpr env e
           let ensures = bMultiAnd (List.map (stripFreeFromEnsures >> tens) h.Ensures)
           let requires = bMultiAnd (List.map (stripFreeFromRequires >> te) h.Requires)
+          let range = h.InParameters |> List.fold (fun acc parm -> bAnd acc (trInRange parm.Type (er (ctx.VarName parm)))) bTrue
+          let requires = bAnd range requires
           let fname = "F#" + h.Name
           let retType = trType h.RetType
           (*
