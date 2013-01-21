@@ -439,8 +439,9 @@ namespace Microsoft.Research.Vcc
             Some (Expr.Ref (c, subst.[v]))
           | _ -> None
         let subst (e:Expr) = e.SelfMap subst
-        
-        let preconds = f.Requires |> List.map( function | Macro(_, "_vcc_assume", [e]) -> e | e -> e)  |> List.map (fun e -> Expr.MkAssume (subst e)) 
+
+        let ranges = f.InParameters |> List.map (fun p -> Expr.Macro (boolBogusEC(), "in_int_range", [Expr.Ref ({ bogusEC with Type = p.Type }, p)]))
+        let preconds = (f.Requires @ ranges) |> List.map( function | Macro(_, "_vcc_assume", [e]) -> e | e -> e)  |> List.map (fun e -> Expr.MkAssume (subst e)) 
         let fixupHavocOthers self = function
           | Stmt (_, CallMacro (ec, "_vcc_reads_havoc", _, [])) as call ->
             let isSame (expr:Expr) =
