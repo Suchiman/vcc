@@ -98,6 +98,7 @@ namespace Z3AxiomProfiler
         for (idx = 0; idx < args.Length; idx++)
         {
             args[idx] = stripCygdrive(args[idx]);
+            if (args[idx].StartsWith("-")) args[idx] = "/" + args[idx].Substring(1);
             if (args[idx].StartsWith("/")) {
               // parse command line parameter switches
               if (args[idx].StartsWith("/f:")) {
